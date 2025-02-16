@@ -14,7 +14,7 @@ export default withAuth(
     const isAuthPage = req.nextUrl.pathname.startsWith("/login");
 
     if (isAuthPage && isAuth) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("https://lawyer-office.vercel.app", req.url));
     }
     if (!isAuth && !isAuthPage) {
       return NextResponse.redirect(new URL("/login", req.url));
