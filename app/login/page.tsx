@@ -2,7 +2,9 @@
 
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { signIn, useSession } from "next-auth/react";
+
 import toast from "react-hot-toast";
 
 interface Login {
@@ -19,17 +21,6 @@ export default function SignIn() {
     password: "",
   });
 
-  // ✅ التحقق من الـ session وإعادة التوجيه للصفحة الرئيسية بعد تسجيل الدخول
-  useEffect(() => {
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-
-    if (session) {
-      router.replace("/");
-    }
-  }, [session, router]);
-
-  // ✅ التحقق من صحة البريد الإلكتروني
   const isValidEmail = (email: string) => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     return emailRegex.test(email);
@@ -42,31 +33,28 @@ export default function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (!isValidEmail(data.email)) {
       setError("حساب غير صالح");
       return;
     }
-
     if (!data.password || data.password.length < 8) {
       setError("يجب أن تكون كلمة السر 8 أحرف أو أرقام على الأقل");
       toast.error("خطأ في كلمة السر");
       return;
     }
-
-    // ✅ إضافة callbackUrl لضمان إعادة التوجيه بعد تسجيل الدخول
     const res = await signIn("credentials", {
       redirect: false,
       email: data?.email,
       password: data?.password,
-      callbackUrl: "/", // إعادة التوجيه بعد نجاح تسجيل الدخول
     });
-
     if (res?.ok) {
+      router.push("/"); // تحويل المستخدم بعد تسجيل الدخول
       toast.success("تم تسجيل الدخول بنجاح");
-    } else {
+    }
+    if (res?.error) {
       setError("خطأ في الحساب أو كلمة السر");
-      toast.error("خطأ في الحساب أو كلمة السر");
+    } else {
+      setError("");
     }
   };
 
@@ -76,6 +64,7 @@ export default function SignIn() {
         <div className="mx-auto max-w-lg text-center">
           <h1 className="text-2xl font-bold sm:text-3xl">Login🔐</h1>
         </div>
+
         <form
           action="#"
           className="mx-auto mb-0 mt-8 max-w-md space-y-4"
@@ -85,6 +74,7 @@ export default function SignIn() {
             <label htmlFor="email" className="sr-only">
               Email
             </label>
+
             <div className="relative">
               <input
                 type="email"
@@ -101,6 +91,7 @@ export default function SignIn() {
             <label htmlFor="password" className="sr-only">
               Password
             </label>
+
             <div className="relative">
               <input
                 type="password"

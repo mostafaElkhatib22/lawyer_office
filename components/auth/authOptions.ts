@@ -1,24 +1,25 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
+import clientPromise from "@/lib/db";
 import connectMongoDB from "@/lib/db_connect";
-
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       name?: string | null;
       email?: string | null;
-      password?: string;
+      password: string;
     };
   }
 }
-
 export const authOptions: NextAuthOptions = {
-  debug: true, // تمكين الـ debug لمتابعة أي مشاكل في Vercel
-  secret: process.env.AUTH_SECRET, // التأكد من استخدام NEXTAUTH_SECRET
+  secret: process.env.AUTH_SECRET,
+  adapter: MongoDBAdapter(clientPromise),
   session: {
+    // Set it as jwt instead of database
     strategy: "jwt",
   },
   providers: [
@@ -38,31 +39,36 @@ export const authOptions: NextAuthOptions = {
         const email = credentials?.email;
         const password = credentials?.password;
 
-        if (!email || !password) return null;
-
+        if (!email || !password) {
+          return null;
+        }
         const user = await User.findOne({ email });
-        if (!user) return null;
-
         const passwordOk =
-          user.password && bcrypt.compareSync(password, user.password);
-        if (!passwordOk) return null;
+          user &&
+          password &&
+          typeof user.password === "string" &&
+          bcrypt.compareSync(password, user.password);
 
-        return {
-          id: (user as any)._id.toString(),
-          name: (user as any).username,
-          email: user.email,
-        };
+        if (passwordOk) {
+          return {
+            id: user._id!.toString(),
+            name: (user as any).username,
+            email: user.email,
+          };
+        }
+        return null;
       },
     }),
   ],
   callbacks: {
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = token.sub!;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user}) {
+
       if (user) {
         token.sub = user.id;
       }
@@ -71,4 +77,3 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export default NextAuth(authOptions);

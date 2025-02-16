@@ -11,7 +11,7 @@ function createWindow () {
     }
   });
 
-  mainWindow.loadURL('http://localhost:3000'); // أو المسار لتطبيق Next.js الخاص بك
+  mainWindow.loadURL('https://lawyer-office.vercel.app/'); // أو المسار لتطبيق Next.js الخاص بك
 }
 
 app.on('ready', createWindow);
