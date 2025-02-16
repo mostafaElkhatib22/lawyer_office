@@ -1,10 +1,11 @@
-import NextAuth, { NextAuthOptions, getServerSession } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import clientPromise from "@/lib/db";
 import connectMongoDB from "@/lib/db_connect";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -15,6 +16,7 @@ declare module "next-auth" {
     };
   }
 }
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.AUTH_SECRET,
   adapter: MongoDBAdapter(clientPromise),
@@ -42,21 +44,22 @@ export const authOptions: NextAuthOptions = {
         if (!email || !password) {
           return null;
         }
-        const user = await User.findOne({ email });
-        const passwordOk =
-          user &&
-          password &&
-          typeof user.password === "string" &&
-          bcrypt.compareSync(password, user.password);
 
-        if (passwordOk) {
-          return {
-            id: user._id!.toString(),
-            name: (user as any).username,
-            email: user.email,
-          };
+        const user = await User.findOne({ email });
+        if (!user) {
+          return null;
         }
-        return null;
+
+        const passwordOk = user.password && bcrypt.compareSync(password, user.password);
+        if (!passwordOk) {
+          return null;
+        }
+
+        return {
+          id: user._id!.toString(),
+          name: (user as any).username,
+          email: user.email,
+        };
       },
     }),
   ],
@@ -76,3 +79,4 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
+export default NextAuth(authOptions);
