@@ -9,7 +9,7 @@ export default withAuth(
       secret: process.env.AUTH_SECRET,
     });
 
-    console.log("token", token);
+    console.log("token:", token); // ✅ تتبع الجلسة في Vercel Logs
 
     const isAuth = !!token;
     const isAuthPage = req.nextUrl.pathname.startsWith("/login");
@@ -26,13 +26,15 @@ export default withAuth(
   },
   {
     callbacks: {
-      async authorized() {
-        return true;
+      async authorized({ req }) {
+        const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+        return !!token; // ✅ السماح فقط للمستخدمين المصادقين
       },
     },
   }
 );
 
+// ✅ تجنب التأثير على API Routes الخاصة بالمصادقة
 export const config = {
-  matcher: ["/:path*"],
+  matcher: ["/((?!api/auth).*)"],
 };

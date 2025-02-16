@@ -19,12 +19,17 @@ export default function SignIn() {
     password: "",
   });
 
+  // ✅ التحقق من الـ session وإعادة التوجيه للصفحة الرئيسية بعد تسجيل الدخول
   useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+    console.log("Session status:", status);
+    console.log("Session data:", session);
 
+    if (session) {
+      router.replace("/");
+    }
+  }, [session, router]);
+
+  // ✅ التحقق من صحة البريد الإلكتروني
   const isValidEmail = (email: string) => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
     return emailRegex.test(email);
@@ -49,10 +54,12 @@ export default function SignIn() {
       return;
     }
 
+    // ✅ إضافة callbackUrl لضمان إعادة التوجيه بعد تسجيل الدخول
     const res = await signIn("credentials", {
       redirect: false,
       email: data?.email,
       password: data?.password,
+      callbackUrl: "/", // إعادة التوجيه بعد نجاح تسجيل الدخول
     });
 
     if (res?.ok) {
