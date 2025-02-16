@@ -43,11 +43,12 @@ export default function SignIn() {
       return;
     }
     const res = await signIn("credentials", {
-      redirect: true,
+      redirect: false,
       email: data?.email,
       password: data?.password,
     });
     if (res?.ok) {
+      router.refresh()
       router.replace("/"); // تحويل المستخدم بعد تسجيل الدخول
       toast.success("تم تسجيل الدخول بنجاح");
     }
