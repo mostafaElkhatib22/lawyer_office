@@ -48,7 +48,6 @@ export default function SignIn() {
       password: data?.password,
     });
     if (res?.ok) {
-      window.location.reload()
       router.push("/"); // تحويل المستخدم بعد تسجيل الدخول
       toast.success("تم تسجيل الدخول بنجاح");
     }

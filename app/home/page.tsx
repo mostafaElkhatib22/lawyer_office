@@ -62,6 +62,8 @@ function HomePage() {
           <div className="flex flex-col justify-center items-center w-full h-screen">
             <h1 className="text-[16px] md:text-4xl lg:text-6xl font-extrabold font-sans">
               الاستاذ/ مصطفى الخطيب
+              <br />
+              الاستاذ/ السيد الشيشيني
             </h1>
             <p className="text-[16px] md:text-4xl lg:text-6xl font-extrabold font-sans">
               للاستشارات القانونية{" "}
