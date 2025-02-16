@@ -48,7 +48,7 @@ export default function SignIn() {
       password: data?.password,
     });
     if (res?.ok) {
-      router.push("/"); // تحويل المستخدم بعد تسجيل الدخول
+      router.push("https://lawyer-office.vercel.app"); // تحويل المستخدم بعد تسجيل الدخول
       toast.success("تم تسجيل الدخول بنجاح");
     }
     if (res?.error) {
