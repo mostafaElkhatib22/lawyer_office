@@ -43,7 +43,7 @@ export default function SignIn() {
       return;
     }
     const res = await signIn("credentials", {
-      redirect: false,
+      redirect: true,
       email: data?.email,
       password: data?.password,
     });
