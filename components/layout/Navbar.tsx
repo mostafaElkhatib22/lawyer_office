@@ -72,7 +72,7 @@ function Navbar() {
         >
           <Sidebar_Items
             lable="الرئيسية"
-            href="/"
+            href="/home"
             icons={<MdOutlineDashboardCustomize size={20} />}
           />
         </ul>
