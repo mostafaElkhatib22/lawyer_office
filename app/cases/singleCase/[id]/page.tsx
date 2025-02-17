@@ -167,11 +167,11 @@ function SingleCasepage({ params }: { params: Promise<{ id: string }> }) {
       </div>
       <div className="flex justify-center gap-5 w-[900px] h-[450px] no-print">
         {singleCase?.files?.map((el, i) => (
-          <div key={i} className="max-w-[400px] bg-slate-300 max-h-[400px]">
+          <div key={i} className="max-w-[100px] mt-8 bg-slate-300 max-h-[100px]">
             <img
               src={el}
               alt=""
-              className="w-[200px] h-[400px] cursor-pointer"
+              className="w-[100px] h-[100px] cursor-pointer"
               onClick={() => {
                 setOpenFullScreenimage(true);
                 setFullImage(el);
