@@ -17,7 +17,8 @@ import { useSession } from "next-auth/react";
 
 function Navbar() {
   const { isDarkMode } = useTheme();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  console.log(session?.user?.name)
   const router = useRouter();
   const currentPath = usePathname();
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
@@ -141,6 +142,7 @@ function Navbar() {
           />
         </ul>
         {status === "authenticated" ? <LogoutButton /> : ""}
+        Hello, {session?.user?.email?.trim()}
       </nav>
     </header>
   );

@@ -48,8 +48,8 @@ export default function SignIn() {
       password: data?.password,
     });
     if (res?.ok) {
-      router.refresh()
-      router.replace("/"); // تحويل المستخدم بعد تسجيل الدخول
+      
+      router.push("/home"); // تحويل المستخدم بعد تسجيل الدخول
       toast.success("تم تسجيل الدخول بنجاح");
     }
     if (res?.error) {

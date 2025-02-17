@@ -28,7 +28,10 @@ interface Client {
   caseCount: number;
 }
 
-const fetchData = async (url: string, setData: React.Dispatch<React.SetStateAction<any>>) => {
+const fetchData = async (
+  url: string,
+  setData: React.Dispatch<React.SetStateAction<any>>
+) => {
   try {
     const res = await axios.get(url);
     setData(res.data.data);
@@ -49,7 +52,7 @@ function HomePage() {
   console.log(cases, clients);
 
   return (
-    <div className="flex flex-col justify-center items-center w-full">
+    <div className="flex flex-col justify-center items-center w-full bg-purple-100 h-screen">
       <div className="flex flex-col justify-center items-center w-full h-screen">
         <div className="flex justify-between items-center gap-6 w-full h-screen mb-4">
           <div className="w-full h-screen flex justify-center items-center">
@@ -84,7 +87,7 @@ function HomePage() {
         <div className="flex flex-col justify-center items-center hover:scale-[1.2] transition-all ease-linear">
           <RiCustomerService2Line size={60} />
           <h1 className="text-[13px] md:text-2xl lg:text-2xl font-semibold">
-            {clients.length }
+            {clients.length}
           </h1>
           <p className="text-[13px] md:text-2xl lg:text-2xl font-semibold">
             عدد الموكلين
@@ -93,14 +96,18 @@ function HomePage() {
         <div className="flex flex-col justify-center items-center hover:scale-[1.2] transition-all ease-linear">
           <SiSession size={60} />
           <h1 className="text-[13px] md:text-2xl lg:text-2xl font-semibold">
-            {cases.filter(e => {
-              const sessionDate = new Date(e.sessiondate);
-              const tomorrow = new Date();
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              return sessionDate.getDate() === tomorrow.getDate() &&
-                     sessionDate.getMonth() === tomorrow.getMonth() &&
-                     sessionDate.getFullYear() === tomorrow.getFullYear();
-            }).length}
+            {
+              cases.filter((e) => {
+                const sessionDate = new Date(e.sessiondate);
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return (
+                  sessionDate.getDate() === tomorrow.getDate() &&
+                  sessionDate.getMonth() === tomorrow.getMonth() &&
+                  sessionDate.getFullYear() === tomorrow.getFullYear()
+                );
+              }).length
+            }
           </h1>
           <p className="text-[13px] md:text-2xl lg:text-2xl font-semibold">
             جلسات غدا
