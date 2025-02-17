@@ -142,7 +142,8 @@ function Navbar() {
           />
         </ul>
         {status === "authenticated" ? <LogoutButton /> : ""}
-        Hello, {session?.user?.email?.trim()}
+        {status === "authenticated" ? `Hello, ${session?.user?.email?.trim()}` : ""}
+        
       </nav>
     </header>
   );
