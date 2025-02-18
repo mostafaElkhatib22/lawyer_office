@@ -65,7 +65,7 @@ function Navbar() {
       >
         <ul
           className={
-            currentPath === "/"
+            currentPath === "/home"
               ? "text-violet-600 flex justify-center items-center"
               : "flex justify-center items-center"
           }
