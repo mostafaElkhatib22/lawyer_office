@@ -58,8 +58,10 @@ function HomePage() {
           <div className="w-full h-screen flex justify-center items-center">
             <img
               src="https://static.vecteezy.com/system/resources/previews/023/477/709/non_2x/ai-generative-justice-measuring-scales-illustration-free-png.png"
+
               alt="Logo Home"
               className="w-full lg:w-full lg:h-screen"
+              loading="lazy"
             />
           </div>
           <div className="flex flex-col justify-center items-center w-full h-screen">

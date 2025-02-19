@@ -18,7 +18,7 @@ import { useSession } from "next-auth/react";
 function Navbar() {
   const { isDarkMode } = useTheme();
   const { data: session, status } = useSession();
-  console.log(session?.user?.name)
+  console.log(session?.user?.name);
   const router = useRouter();
   const currentPath = usePathname();
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(false);
@@ -45,9 +45,10 @@ function Navbar() {
       <div className="flex justify-between items-center gap-[15rem] md:gap-[40rem] lg:gap-[60rem]">
         <Link href={"/"} className="rounded-full">
           <img
-      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy8tacvk2TpY7c7N2auO4HgF_CWMVMFLPydQ&s"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy8tacvk2TpY7c7N2auO4HgF_CWMVMFLPydQ&s"
             alt="logo"
             className="w-[80px] h-[80px] rounded-full"
+            loading="lazy"
           />
         </Link>
         <div>
@@ -142,14 +143,12 @@ function Navbar() {
           />
         </ul>
         {status === "authenticated" ? <LogoutButton /> : ""}
-        {status === "authenticated" ? `Hello, ${session?.user?.email?.trim()}` : ""}
-        
+        {status === "authenticated"
+          ? `Hello, ${session?.user?.email?.trim()}`
+          : ""}
       </nav>
     </header>
   );
 }
 
 export default Navbar;
-
-
-    
