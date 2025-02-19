@@ -57,7 +57,7 @@ function HomePage() {
         <div className="flex justify-between items-center gap-6 w-full h-screen mb-4">
           <div className="w-full h-screen flex justify-center items-center">
             <img
-              src="https://lawyer-consultancy-web-frontent.vercel.app/3d-cartoon-portrait-person-practicing-law-profession.png"
+              src="https://res.cloudinary.com/dbtbxt0fj/image/upload/v1739993853/lawyer_office/ftxt9a8zudsp3dfz09hr.png"
 
               alt="Logo Home"
               className="w-full lg:w-full lg:h-screen"

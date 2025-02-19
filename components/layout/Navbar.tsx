@@ -41,17 +41,17 @@ function Navbar() {
   };
 
   return (
-    <header className="flex flex-col justify-between w-full items-center rounded-l-lg rounded-r-lg z-[1000] shadow-md shadow-violet-400 no-print">
-      <div className="flex justify-between items-center gap-[15rem] md:gap-[40rem] lg:gap-[60rem]">
-        <Link href={"/"} className="rounded-full">
+    <header className="flex flex-col justify-between w-full items-center rounded-l-lg rounded-r-lg z-[1000] shadow-md shadow-violet-700 no-print bg-slate-200 mb-1">
+      <div className="flex justify-between items-center gap-[3rem] md:gap-[30rem] lg:gap-[40rem] w-full">
+        <Link href={"/"} className="rounded-full w-full">
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy8tacvk2TpY7c7N2auO4HgF_CWMVMFLPydQ&s"
+            src="https://res.cloudinary.com/dbtbxt0fj/image/upload/v1739993862/lawyer_office/appecsgy6emn6pre5gbp.png"
             alt="logo"
-            className="w-[80px] h-[80px] rounded-full"
+            className="w-[200px] h-[80px] rounded-full"
             loading="lazy"
           />
         </Link>
-        <div>
+        <div className="m-2">
           <Button variant={"destructive"} size={"icon"} onClick={toggleSidebar}>
             <FiAlignLeft className="scale-[1.5]" />
           </Button>
@@ -60,15 +60,15 @@ function Navbar() {
       <nav
         className={`${
           isSidebarVisible
-            ? "flex flex-col gap-10 md:flex lg:flex lg:justify-between lg:items-center lg:gap-[50px] lg:flex-row"
+            ? "flex flex-col gap-10 md:flex lg:flex lg:justify-between lg:items-center lg:gap-[50px] lg:flex-row mb-1"
             : "hidden"
         }`}
       >
         <ul
           className={
             currentPath === "/home"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center"
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
+              :"flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -80,8 +80,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/cases/all-cases"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center"
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -93,8 +93,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/client/add"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center "
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -106,8 +106,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/cases/add-case"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center"
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -119,8 +119,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/client"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center"
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center "
+              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -132,8 +132,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/sessions"
-              ? "text-violet-600 flex justify-center items-center"
-              : "flex justify-center items-center"
+              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
