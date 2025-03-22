@@ -77,22 +77,22 @@ function All_Cases() {
           
       </div>
 
-      <Table className="text-center">
-        <TableCaption>اجمالي عدد القضايا ({cases.length})</TableCaption>
+      <Table className="text-center text-black">
+        <TableCaption className="text-black">اجمالي عدد القضايا ({cases.length})</TableCaption>
         <TableHeader className="text-lg">
-          <TableRow>
-            <TableHead className="text-center">رقم الدعوى</TableHead>
-            <TableHead className="text-center">اسم الموكل</TableHead>
-            <TableHead className="text-center">اسم الخصم</TableHead>
-            <TableHead className="text-center">تاريخ الدعوى</TableHead>
-            <TableHead className="text-center">تاريخ الجلسة</TableHead>
-            <TableHead className="text-center">نوع الدعوى</TableHead>
-            <TableHead className="text-center">طبيعة الدعوى</TableHead>
-            <TableHead className="text-center">رقم التوكيل</TableHead>
-            <TableHead className="text-center">المحكمة</TableHead>
-            <TableHead className="text-center">قرار الجلسة</TableHead>
-            <TableHead className="text-center">ملاحظات</TableHead>
-            <TableHead className="text-center">تعديل او حذف</TableHead>
+          <TableRow >
+            <TableHead className="text-center text-black">رقم الدعوى</TableHead>
+            <TableHead className="text-center text-black">اسم الموكل</TableHead>
+            <TableHead className="text-center text-black">اسم الخصم</TableHead>
+            <TableHead className="text-center text-black">تاريخ الدعوى</TableHead>
+            <TableHead className="text-center text-black">تاريخ الجلسة</TableHead>
+            <TableHead className="text-center text-black">نوع الدعوى</TableHead>
+            <TableHead className="text-center text-black">طبيعة الدعوى</TableHead>
+            <TableHead className="text-center text-black">رقم التوكيل</TableHead>
+            <TableHead className="text-center text-black">المحكمة</TableHead>
+            <TableHead className="text-center text-black">قرار الجلسة</TableHead>
+            <TableHead className="text-center text-black">ملاحظات</TableHead>
+            <TableHead className="text-center text-black">تعديل او حذف</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -29,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="custom-scrollbar bg-gradient-to-r from-[#00d2ff] to-[#3a7bd5]">
         <AppProvider>
           <ThemeProvider>
             <Toaster />

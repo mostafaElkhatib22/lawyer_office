@@ -1,11 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -155,5 +153,33 @@ body {
     padding: 8px;
     width: 100%;
     box-sizing: border-box;
+  }
+}
+@layer utilities {
+  .custom-scrollbar{
+    scroll-behavior: smooth;
+  }
+  /* تخصيص لون شريط التمرير */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 15px; /* عرض السكروول */
+    height: 7px;
+  }
+
+  /* تخصيص لون الخلفية */
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #000000; /* لون الخلفية */
+  }
+
+  /* تخصيص لون المقبض */
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background:linear-gradient(rgb(131, 18, 131), rgb(199, 24, 199)); /* لون المقبض */
+    border-radius: 4px;
+    transition: all .5 ease;
+  }
+
+  /* عند تمرير الماوس فوق المقبض */
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #740669;
+    
   }
 }

@@ -71,13 +71,13 @@ export default function Clients() {
         <Button type="submit" variant={"destructive"} >Search</Button>
       </form>
 
-      <Table className="text-center bg-violet-200">
-        <TableCaption>A list of your clients ({clients.length})</TableCaption>
+      <Table className="text-center">
+        <TableCaption className="text-black">A list of your clients ({clients.length})</TableCaption>
         <TableHeader className="text-center">
           <TableRow>
-            <TableHead className="text-center">الموكل</TableHead>
-            <TableHead className="text-center">عدد القضايا</TableHead>
-            <TableHead className="text-center">تعديل او حذف</TableHead>
+            <TableHead className="text-center text-black">الموكل</TableHead>
+            <TableHead className="text-center text-black">عدد القضايا</TableHead>
+            <TableHead className="text-center text-black">تعديل او حذف</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

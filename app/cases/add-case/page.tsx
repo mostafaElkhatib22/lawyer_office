@@ -241,201 +241,201 @@ const AddCase = () => {
   );
 
   return (
-    <div className="mt-[20px] w-full items-center flex justify-center">
+    <div className=" w-full overflow-hidden  items-center flex justify-center scroll-smooth">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 max-w-[700px] flex justify-center items-center flex-col"
+        className=" flex justify-center items-center p-4 w-full shadow-md shadow-black"
       >
-        {renderInputField(
-          "المحكمة",
-          "ادخل اسم المحكمة",
-          "court",
-          data.court,
-          "text",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "نوع الدعوى",
-          "ادخل نوع الدعوى",
-          "caseTypeOF",
-          data.caseTypeOF,
-          "text",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "طبيعة الدعوى",
-          "ادخل طبيعة الدعوى",
-          "type",
-          data.type,
-          "text",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "رقم الدعوى",
-          "ادخل رقم الدعوى",
-          "caseNumber",
-          data.caseNumber,
-          "number",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "سنة الدعوى",
-          "ادخل سنه الدعوى",
-          "year",
-          data.year,
-          "number",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "رقم التوكيل",
-          "ادخل رقم التوكيل",
-          "attorneyNumber",
-          data.attorneyNumber,
-          "text",
-          "",
-          handleOnChange
-        )}
-        {renderInputField(
-          "تاريخ الدعوى",
-          "ادخل تاريخ الجلسة",
-          "caseDate",
-          data.caseDate,
-          "date",
-          "w-[230px] text-center",
-          handleOnChange
-        )}
-        {renderInputField(
-          "تاريخ الجلسة",
-          "ادخل تاريخ الجلسة",
-          "sessiondate",
-          data.sessiondate,
-          "date",
-          "w-[230px] text-center",
-          handleOnChange
-        )}
-
-        <div className="w-full h-[60px]">
-          <label>قرار الجلسة :</label>
-          <textarea
-            placeholder="ادخل قرار الجلسة"
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            name="decision"
-            value={data.decision}
-            onChange={handleOnChange}
-          />
-        </div>
-
-        <div className="w-full h-[60px] mt-4">
-          <label>الموكل:</label>
-          <Select
-            options={clientOptions as any}
-            value={selectedClient}
-            onChange={handleClientChange}
-            placeholder="اختار الموكل"
-            isSearchable
-            className="mt-1"
-          />
-        </div>
-
-        <label>الخصم :</label>
-        {data.opponents.map((opponent, index) => (
-          <div key={index} className="flex items-center mt-2">
-            <Input
-              type="text"
-              value={opponent}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                handleOpponentChange(index, e.target.value)
-              }
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => removeOpponent(index)}
-              className="ml-2 w-[130px] p-2 bg-red-500 text-white rounded"
-            >
-              إزالة الخصم
-            </button>
-            {index === data.opponents.length - 1 && (
-              <button
-                type="button"
-                onClick={addOpponent}
-                className="ml-2 p-2 w-[170px] bg-blue-500 text-white rounded"
-              >
-                إضافة خصم آخر
-              </button>
-            )}
-          </div>
-        ))}
-
-        <label htmlFor="image" className="mt-3">
-          ارفع صور المستندات الخاصة بالدعوى
-        </label>
-        <label htmlFor="uploadImage">
-          <div className="p-2 bg-slate-100 border rounded h-32 w-full flex justify-center items-center cursor-pointer">
-            <div className="text-slate-500 flex justify-center items-center flex-col gap-2">
-              <span className="text-4xl">
-                <FaCloudUploadAlt />
-              </span>
-              <p className="text-sm">ارفع صور الدعوى</p>
-              <input
-                type="file"
-                id="uploadImage"
-                multiple
-                className="hidden"
-                onChange={handleUploadImage}
-              />
-            </div>
-          </div>
-        </label>
-
-        <div>
-          {data?.files?.length > 0 ? (
-            <div className="flex justify-center items-center gap-6">
-              {data.files.map((el: string, i: number) => (
-                <div className="relative group" key={i}>
-                  <img
-                    src={el}
-                    onClick={() => {
-                      setOpenFullScreenImage(true);
-                      setFullImage(el);
-                    }}
-                    className="bg-slate-100 max-w-[100px] max-h-[100px] border transition-all duration-[1s] cursor-pointer"
-                  />
-                  <div
-                    className="absolute bottom-0 right-0 text-white bg-red-500 rounded-full hidden group-hover:block cursor-pointer"
-                    onClick={() => handleDeleteImage(i, el)}
-                  >
-                    <MdDelete />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-red-500">
-              من فضلك اضف صور المستندات الخاصة بالدعوى *
-            </p>
-          )}
-        </div>
-
-        <div className="flex justify-center items-center flex-col w-full">
-          <label>ملاحظات:</label>
-          <textarea
-            placeholder="ملاحظات"
-            name="nots"
-            value={data.nots}
-            onChange={handleOnChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-
-        <Button variant="destructive" type="submit">
-          إضافة الدعوى
-        </Button>
+       <div className="max-w-[400px] bg-white flex flex-col p-4 gap-4 justify-center items-center text-center rounded-2xl shadow-lg  shadow-black">
+         {renderInputField(
+           "المحكمة",
+           "ادخل اسم المحكمة",
+           "court",
+           data.court,
+           "text",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "نوع الدعوى",
+           "ادخل نوع الدعوى",
+           "caseTypeOF",
+           data.caseTypeOF,
+           "text",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "طبيعة الدعوى",
+           "ادخل طبيعة الدعوى",
+           "type",
+           data.type,
+           "text",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "رقم الدعوى",
+           "ادخل رقم الدعوى",
+           "caseNumber",
+           data.caseNumber,
+           "number",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "سنة الدعوى",
+           "ادخل سنه الدعوى",
+           "year",
+           data.year,
+           "number",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "رقم التوكيل",
+           "ادخل رقم التوكيل",
+           "attorneyNumber",
+           data.attorneyNumber,
+           "text",
+           "",
+           handleOnChange
+         )}
+         {renderInputField(
+           "تاريخ الدعوى",
+           "ادخل تاريخ الجلسة",
+           "caseDate",
+           data.caseDate,
+           "date",
+           "w-[230px] text-center",
+           handleOnChange
+         )}
+         {renderInputField(
+           "تاريخ الجلسة",
+           "ادخل تاريخ الجلسة",
+           "sessiondate",
+           data.sessiondate,
+           "date",
+           "w-[230px] text-center",
+           handleOnChange
+         )}
+           <label>قرار الجلسة :</label>
+           <textarea
+             placeholder="ادخل قرار الجلسة"
+             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+             name="decision"
+             value={data.decision}
+             onChange={handleOnChange}
+           />
+        
+        
+         <div className="w-full h-[60px] mt-4">
+           <label>الموكل:</label>
+           <Select
+             options={clientOptions as any}
+             value={selectedClient}
+             onChange={handleClientChange}
+             placeholder="اختار الموكل"
+             isSearchable
+             className="mt-1"
+           />
+         </div>
+        
+         <label>الخصم :</label>
+         {data.opponents.map((opponent, index) => (
+           <div key={index} className="flex items-center mt-2">
+             <Input
+               type="text"
+               value={opponent}
+               onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                 handleOpponentChange(index, e.target.value)
+               }
+               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+             />
+             <button
+               type="button"
+               onClick={() => removeOpponent(index)}
+               className="ml-2 w-[130px] p-2 bg-red-500 text-white rounded"
+             >
+               إزالة 
+             </button>
+             {index === data.opponents.length - 1 && (
+               <button
+                 type="button"
+                 onClick={addOpponent}
+                 className="ml-2 p-2 w-[170px] bg-blue-500 text-white rounded"
+               >
+                 إضافة  آخر
+               </button>
+             )}
+           </div>
+         ))}
+        
+         <label htmlFor="image" className="mt-3">
+           ارفع صور المستندات الخاصة بالدعوى
+         </label>
+         <label htmlFor="uploadImage">
+           <div className="p-2 bg-slate-100 border rounded h-32 w-full flex justify-center items-center cursor-pointer">
+             <div className="text-slate-500 flex justify-center items-center flex-col gap-2">
+               <span className="text-4xl">
+                 <FaCloudUploadAlt />
+               </span>
+               <p className="text-sm">ارفع صور الدعوى</p>
+               <input
+                 type="file"
+                 id="uploadImage"
+                 multiple
+                 className="hidden"
+                 onChange={handleUploadImage}
+               />
+             </div>
+           </div>
+         </label>
+        
+         <div className="w-full">
+           {data?.files?.length > 0 ? (
+             <div className="flex justify-center w-full items-center gap-6">
+               {data.files.map((el: string, i: number) => (
+                 <div className="relative group" key={i}>
+                   <img
+                     src={el}
+                     onClick={() => {
+                       setOpenFullScreenImage(true);
+                       setFullImage(el);
+                     }}
+                     className="bg-slate-100 max-w-[100px] max-h-[100px] border transition-all duration-[1s] cursor-pointer"
+                   />
+                   <div
+                     className="absolute bottom-0 right-0 text-white bg-red-500 rounded-full hidden group-hover:block cursor-pointer"
+                     onClick={() => handleDeleteImage(i, el)}
+                   >
+                     <MdDelete />
+                   </div>
+                 </div>
+               ))}
+             </div>
+           ) : (
+             <p className="text-red-500">
+               من فضلك اضف صور المستندات الخاصة بالدعوى *
+             </p>
+           )}
+         </div>
+        
+         <div className="flex justify-center items-center flex-col w-full">
+           <label>ملاحظات:</label>
+           <textarea
+             placeholder="ملاحظات"
+             name="nots"
+             value={data.nots}
+             onChange={handleOnChange}
+             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+           />
+         </div>
+        
+         <Button variant="destructive" type="submit" className="w-[200px] h-[45px] text-lg font-semibold">
+           إضافة الدعوى
+         </Button>
+       </div>
       </form>
       {openFullScreenImage && (
         <DisplayImage

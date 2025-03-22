@@ -41,7 +41,7 @@ function Navbar() {
   };
 
   return (
-    <header className="flex flex-col justify-between w-full items-center rounded-l-lg rounded-r-lg z-[1000] shadow-md shadow-violet-700 no-print bg-slate-200 mb-1">
+    <header className="flex flex-col justify-between w-full items-center rounded-l-lg rounded-r-lg z-[1000] shadow-md shadow-black no-print bg-gradient-to-r from-[#f2709c]  to-[#ff9472] mb-1">
       <div className="flex justify-between items-center gap-[3rem] md:gap-[30rem] lg:gap-[40rem] w-full">
         <Link href={"/"} className="rounded-full w-full">
           <img
@@ -67,8 +67,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/home"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
-              :"flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center"
+              :"flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -80,8 +80,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/cases/all-cases"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
-              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -93,8 +93,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/client/add"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
-              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -106,8 +106,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/cases/add-case"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
-              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -119,8 +119,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/client"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center "
-              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center "
+              : "flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items
@@ -132,8 +132,8 @@ function Navbar() {
         <ul
           className={
             currentPath === "/sessions"
-              ? "bg-violet-500 text-white rounded-md flex justify-center items-center"
-              : "flex justify-center items-center hover:bg-violet-500 hover:text-white hover:rounded-md transition-all duration-100 "
+              ? "bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] text-white rounded-md flex justify-center items-center"
+              : "flex justify-center items-center hover:bg-gradient-to-r from-[#3a7bd5] to-[#00d2ff] hover:text-white hover:rounded-md transition-all duration-100 "
           }
         >
           <Sidebar_Items

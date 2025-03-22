@@ -52,7 +52,7 @@ function HomePage() {
   console.log(cases, clients);
 
   return (
-    <div className="flex flex-col justify-center items-center w-full bg-purple-100 ">
+    <div className="flex flex-col justify-center items-center w-full">
       <div className="flex flex-col justify-center items-center w-full h-screen">
         <div className="flex justify-between items-center gap-6 w-full h-screen mb-4">
           <div className="w-full h-screen flex justify-center items-center">
