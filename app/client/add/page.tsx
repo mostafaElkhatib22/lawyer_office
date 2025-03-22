@@ -51,10 +51,10 @@ function AddClient() {
   };
 
   return (
-    <div className=" w-full items-center flex justify-center m-4">
+    <div className="max-w-[700px] h-[400px] items-center overflow-hidden flex justify-center">
       <form
         onSubmit={handleSubmit}
-        className="max-w-[400px] bg-white flex flex-col p-4 gap-4 justify-center items-center text-center rounded-2xl shadow-lg shadow-black"
+        className="max-w-[400px] bg-white flex flex-col p-4 gap-4 justify-center overflow-hidden items-center text-center rounded-2xl shadow-lg shadow-black"
       >
         <div>
           <label>اسم الموكل :</label>
