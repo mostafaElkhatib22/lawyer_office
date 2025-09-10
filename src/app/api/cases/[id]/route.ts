@@ -13,12 +13,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// دالة GET لجلب تفاصيل دعوى محددة
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+// ---------------- GET ----------------
+export async function GET(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   await dbConnect();
-  const { id } =await context.params; // تم التعديل هنا
+  const { id } = context.params;
+
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.id) {
+  if (!session || !session.user?.id) {
     return NextResponse.json(
       { success: false, message: "غير مصرح لك بالوصول" },
       { status: 401 }
@@ -27,7 +31,6 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
 
   try {
     const caseDetails = await Case.findById(id).populate("client");
-
     if (!caseDetails) {
       return NextResponse.json(
         { success: false, message: "الدعوى غير موجودة" },
@@ -35,7 +38,6 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
       );
     }
 
-    // تحقق من أن المستخدم هو صاحب الدعوى
     if (caseDetails.owner.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "غير مصرح لك بالوصول إلى هذه الدعوى" },
@@ -53,13 +55,16 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
   }
 }
 
-// دالة DELETE لحذف دعوى محددة
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+// ---------------- DELETE ----------------
+export async function DELETE(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   await dbConnect();
-  const { id } =await context.params; // تم التعديل هنا
-console.log(id)
+  const { id } = context.params;
+
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.id) {
+  if (!session || !session.user?.id) {
     return NextResponse.json(
       { success: false, message: "غير مصرح لك بالحذف" },
       { status: 401 }
@@ -67,9 +72,7 @@ console.log(id)
   }
 
   try {
-    // العثور على الدعوى أولاً للتحقق من المالك ولجلب ملفات Cloudinary
     const caseToDelete = await Case.findById(id);
-console.log("caseToDelete", caseToDelete);
     if (!caseToDelete) {
       return NextResponse.json(
         { success: false, message: "الدعوى غير موجودة" },
@@ -77,7 +80,6 @@ console.log("caseToDelete", caseToDelete);
       );
     }
 
-    // التحقق من أن المستخدم الحالي هو مالك الدعوى
     if (caseToDelete.owner.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "غير مصرح لك بحذف هذه الدعوى" },
@@ -85,25 +87,17 @@ console.log("caseToDelete", caseToDelete);
       );
     }
 
-    // حذف الملفات المرتبطة من Cloudinary
-    if (caseToDelete.files && caseToDelete.files.length > 0) {
+    // حذف الملفات من Cloudinary
+    if (caseToDelete.files?.length > 0) {
       for (const fileUrl of caseToDelete.files) {
-        // استخراج الـ publicId من الـ URL (مثال: 'cases/abc123def')
-        // تحتاج إلى التأكد من أن هذا يتوافق مع كيفية تخزين الـ publicId الخاص بك في قاعدة البيانات
-        // إذا كانت ملفاتك في مجلدات فرعية في Cloudinary، فقد تحتاج إلى تعديل هذا.
-        // مثال: إذا كان الـ URL هو "https://res.cloudinary.com/.../v12345/folder/subfolder/publicid.ext"
-        // فإن publicId سيكون "folder/subfolder/publicid"
-        const parts = fileUrl.split('/');
-        const fileNameWithExtension = parts.pop(); // "publicid.ext"
-        let publicId = fileNameWithExtension?.split('.')[0]; // "publicid"
-        
-        // إذا كان هناك مجلد مخصص للملفات (مثل 'cases')
-        const folderIndex = parts.indexOf('cases');
+        const parts = fileUrl.split("/");
+        const fileNameWithExtension = parts.pop();
+        let publicId = fileNameWithExtension?.split(".")[0];
+
+        const folderIndex = parts.indexOf("cases");
         if (folderIndex !== -1 && publicId) {
-          const folderPath = parts.slice(folderIndex).join('/');
-          // إذا كان مسار الـ publicId يشمل المجلد، يجب أن يتطابق مع هذا
-          // مثال: 'cases/publicid' أو 'cases/subfolder/publicid'
-          publicId = `${folderPath}/${publicId}`; 
+          const folderPath = parts.slice(folderIndex).join("/");
+          publicId = `${folderPath}/${publicId}`;
         }
 
         if (publicId) {
@@ -113,9 +107,7 @@ console.log("caseToDelete", caseToDelete);
       }
     }
 
-    // حذف الدعوى من قاعدة البيانات
     const deletedCase = await Case.findByIdAndDelete(id);
-
     if (!deletedCase) {
       return NextResponse.json(
         { success: false, message: "فشل في حذف الدعوى بعد التحقق." },
@@ -127,7 +119,6 @@ console.log("caseToDelete", caseToDelete);
       { success: true, message: "تم حذف الدعوى والملفات المرتبطة بنجاح." },
       { status: 200 }
     );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Error deleting case:", error);
     return NextResponse.json(
@@ -137,13 +128,16 @@ console.log("caseToDelete", caseToDelete);
   }
 }
 
-// دالة PUT لتحديث تفاصيل دعوى محددة
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+// ---------------- PUT ----------------
+export async function PUT(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   await dbConnect();
-  const { id } =await context.params; // تم التعديل هنا
+  const { id } = context.params;
 
   const session = await getServerSession(authOptions);
-  if (!session || !session.user || !session.user.id) {
+  if (!session || !session.user?.id) {
     return NextResponse.json(
       { success: false, message: "غير مصرح لك بالتحديث" },
       { status: 401 }
@@ -152,11 +146,23 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
 
   try {
     const body = await req.json();
-    const { client, caseTypeOF, type, court, caseNumber, year, attorneyNumber, decision, nots, caseDate, sessiondate, opponents, files } = body;
+    const {
+      client,
+      caseTypeOF,
+      type,
+      court,
+      caseNumber,
+      year,
+      attorneyNumber,
+      decision,
+      nots,
+      caseDate,
+      sessiondate,
+      opponents,
+      files,
+    } = body;
 
-    // العثور على الدعوى للتحقق من المالك
     const existingCase = await Case.findById(id);
-
     if (!existingCase) {
       return NextResponse.json(
         { success: false, message: "الدعوى غير موجودة" },
@@ -164,7 +170,6 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
       );
     }
 
-    // التحقق من أن المستخدم الحالي هو مالك الدعوى
     if (existingCase.owner.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "غير مصرح لك بتحديث هذه الدعوى" },
@@ -172,14 +177,23 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
       );
     }
 
-    // إذا كانت هناك ملفات جديدة، قد تحتاج إلى منطق لحذف الملفات القديمة من Cloudinary
-    // وإضافة الملفات الجديدة. هذا الجزء يتطلب معالجة إضافية لسيناريوهات الملفات.
-    // للحفاظ على البساطة، سنقوم بتحديث الروابط الجديدة مباشرةً.
-    // في تطبيق حقيقي، ستحتاج إلى مقارنة 'files' القديمة والجديدة.
-    
     const updatedCase = await Case.findByIdAndUpdate(
       id,
-      { client, caseTypeOF, type, court, caseNumber, year, attorneyNumber, decision, nots, caseDate, sessiondate, opponents, files },
+      {
+        client,
+        caseTypeOF,
+        type,
+        court,
+        caseNumber,
+        year,
+        attorneyNumber,
+        decision,
+        nots,
+        caseDate,
+        sessiondate,
+        opponents,
+        files,
+      },
       { new: true, runValidators: true }
     ).populate("client");
 
