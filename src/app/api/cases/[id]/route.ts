@@ -16,11 +16,11 @@ cloudinary.config({
 // ---------------- GET ----------------
 export async function GET(
   req: NextRequest,
-  {params}: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
+   const params = await context.params;
   const { id } = params;
-
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
     return NextResponse.json(
