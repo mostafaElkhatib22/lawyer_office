@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/rules-of-hooks */
 "use client";
@@ -84,14 +85,18 @@ interface Client {
 }
 
 // Activity Indicator Component
-const ActivityIndicator = ({ size = "medium", color = "text-blue-500" }) => {
-  const sizeClasses = {
+type ActivityIndicatorSize = "small" | "medium" | "large";
+const ActivityIndicator = ({
+  size = "medium",
+  className = "text-blue-500",
+}: { size?: ActivityIndicatorSize; className?: string }) => {
+  const sizeClasses: Record<ActivityIndicatorSize, string> = {
     small: "h-4 w-4",
     medium: "h-8 w-8",
     large: "h-12 w-12",
   };
   return (
-    <Loader2 className={`animate-spin ${sizeClasses[size]} ${color}`} />
+    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
   );
 };
 
@@ -138,7 +143,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 flex items-center gap-2"
           >
-            {isLoading && <ActivityIndicator size="small" color="text-white" />}
+            {isLoading && <ActivityIndicator size="small" className="text-white" />}
             حذف
           </button>
         </div>
@@ -302,7 +307,7 @@ export default function EditCasePage({
   // Handle file selection (new files to upload)
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setNewFilesToUpload((prev) => [...prev, ...Array.from(e.target.files)]);
+      setNewFilesToUpload((prev) => e.target.files ? [...prev, ...Array.from(e.target.files)] : prev);
     }
   }, []);
 
@@ -530,7 +535,7 @@ export default function EditCasePage({
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <ActivityIndicator size="large" color="text-blue-600 dark:text-blue-400" />
+        <ActivityIndicator size="large" className="text-blue-600 dark:text-blue-400" />
         <span className="text-blue-600 text-lg ml-3 dark:text-blue-400">جاري تحميل تفاصيل الدعوى...</span>
       </div>
     );
@@ -850,7 +855,7 @@ export default function EditCasePage({
               disabled={isSaving}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving && <ActivityIndicator size="small" color="text-white" />}
+              {isSaving && <ActivityIndicator size="small" className="text-white" />}
               حفظ التعديلات
             </button>
           </div>

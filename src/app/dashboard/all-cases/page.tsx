@@ -55,16 +55,21 @@ interface CaseDetails {
 }
 
 // مكون بسيط لمؤشر النشاط (Activity Indicator)
-const ActivityIndicator = ({ size = "medium", color = "text-blue-500" }) => {
-  const sizeClasses = {
+type ActivityIndicatorSize = "small" | "medium" | "large";
+const ActivityIndicator = ({
+  size = "medium",
+  className = "text-blue-500",
+}: { size?: ActivityIndicatorSize; className?: string }) => {
+  const sizeClasses: Record<ActivityIndicatorSize, string> = {
     small: "h-4 w-4",
     medium: "h-8 w-8",
     large: "h-12 w-12",
   };
   return (
-    <Loader2 className={`animate-spin ${sizeClasses[size]} ${color}`} />
+    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
   );
 };
+
 
 // مكون مودال التأكيد (Enhanced Confirmation Modal)
 interface ConfirmationModalProps {
@@ -119,7 +124,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             disabled={isLoading}
             className={`px-6 py-3 ${danger ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'} text-white rounded-xl transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 disabled:opacity-50 flex items-center gap-2 font-medium`}
           >
-            {isLoading && <ActivityIndicator size="small" color="text-white" />}
+            {isLoading && <ActivityIndicator size="small" className="text-white" />}
             {confirmText}
           </button>
         </div>
@@ -162,8 +167,8 @@ const CaseCard = ({
   onDelete: (caseItem: CaseDetails) => void,
   formatDate: (date: string) => string
 }) => {
-  const caseId = caseItem._id || caseItem.id;
-  
+  const caseId: string = caseItem._id ?? caseItem.id ?? "";
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-300 group">
       <div className="flex items-start justify-between mb-4">
@@ -187,6 +192,7 @@ const CaseCard = ({
             onClick={() => onView(caseId)}
             className="p-2 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200"
             title="عرض التفاصيل"
+            disabled={!caseId}
           >
             <Eye className="h-4 w-4" />
           </button>
@@ -194,6 +200,7 @@ const CaseCard = ({
             onClick={() => onEdit(caseId)}
             className="p-2 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-lg transition-colors duration-200"
             title="تعديل"
+            disabled={!caseId}
           >
             <Edit className="h-4 w-4" />
           </button>
@@ -646,7 +653,7 @@ export default function AllCasesPage() {
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
           <div className="mb-6">
-            <ActivityIndicator size="large" color="text-blue-600 dark:text-blue-400" />
+            <ActivityIndicator size="large" className="text-blue-600 dark:text-blue-400" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">جاري تحميل الدعاوى</h2>
           <p className="text-gray-600 dark:text-gray-400">يرجى الانتظار...</p>
@@ -670,7 +677,7 @@ export default function AllCasesPage() {
             className="px-8 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 mx-auto font-medium transition-all duration-200"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="text-white" />
+              <ActivityIndicator size="small" className="text-white" />
             ) : (
               <RefreshCw className="h-5 w-5" />
             )}
@@ -971,16 +978,18 @@ export default function AllCasesPage() {
                             <td className="px-6 py-5 whitespace-nowrap text-center">
                               <div className="flex items-center justify-center gap-1 duration-200">
                                 <button
-                                  onClick={() => handleViewCase(caseId)}
+                                  onClick={() => caseId && handleViewCase(caseId)}
                                   className="p-2 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 hover:scale-110"
                                   title="عرض التفاصيل"
+                                  disabled={!caseId}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleEditCase(caseId)}
+                                  onClick={() => caseId && handleEditCase(caseId)}
                                   className="p-2 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-xl transition-all duration-200 hover:scale-110"
                                   title="تعديل"
+                                  disabled={!caseId}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </button>
