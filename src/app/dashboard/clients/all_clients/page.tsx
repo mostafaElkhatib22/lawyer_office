@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -23,13 +24,21 @@ interface Client {
 }
 
 // مكون تأكيد الحذف
+interface DeleteModalProps {
+  clientName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isLoading: boolean;
+  error: string | null;
+}
+
 const DeleteConfirmationModal = ({
   clientName,
   onConfirm,
   onCancel,
   isLoading,
   error,
-}) => {
+}: DeleteModalProps) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
       {/* الوضع الداكن: خلفية النموذج ومحتوياته */}
@@ -84,7 +93,7 @@ const DeleteConfirmationModal = ({
 
 // المكون الرئيسي لجدول الموكلين
 const ClientsUI = () => {
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +103,7 @@ const ClientsUI = () => {
     clientId: "",
     clientName: "",
   });
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // دالة لجلب البيانات من الـ API
   const fetchClients = async () => {
@@ -155,7 +164,7 @@ const ClientsUI = () => {
   };
 
   // دالة وهمية للتعديل
-  const handleEdit = (clientId) => {
+  const handleEdit = (clientId: any) => {
     console.log(`جارٍ تعديل الموكل ذي المعرّف: ${clientId}`);
   };
 
