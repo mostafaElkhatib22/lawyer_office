@@ -19,7 +19,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
-   const params = await context.params;
+  const params = await context.params;
   const { id } = params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
@@ -58,11 +58,11 @@ export async function GET(
 // ---------------- DELETE ----------------
 export async function DELETE(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
-  const { id } = context.params;
-
+  const params = await context.params;
+  const { id } = params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
     return NextResponse.json(
@@ -131,11 +131,11 @@ export async function DELETE(
 // ---------------- PUT ----------------
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   await dbConnect();
-  const { id } = context.params;
-
+  const params = await context.params;
+  const { id } = params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
     return NextResponse.json(
