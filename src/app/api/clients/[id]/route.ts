@@ -7,9 +7,10 @@ import Client from "@/models/Client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function GET(req: Request, { params }: { params: any }) {
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect();
+        const params = await context.params;
         const { id } = params;
         const session = await getServerSession(authOptions);
         if (!session || !session.user || !session.user.id) {
@@ -33,11 +34,12 @@ export async function GET(req: Request, { params }: { params: any }) {
 
 
 
-export async function DELETE(request: Request, context: { params: { id: string } }) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect();
 
-        const { id } = context.params;
+        const params = await context.params;
+        const { id } = params;
         const session = await getServerSession(authOptions);
 
         if (!session?.user?.id) {
@@ -106,10 +108,11 @@ export async function DELETE(request: Request, context: { params: { id: string }
         );
     }
 }
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect()
-        const { id } =context.params
+        const params = await context.params
+        const { id } = params
         const session = await getServerSession(authOptions);
         if (!session || !session.user || !session.user.id) {
             return NextResponse.json(
