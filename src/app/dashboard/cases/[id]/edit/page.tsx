@@ -148,7 +148,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 };
 
 // Main EditCasePage Component
-export default function EditCasePage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+export default function EditCasePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   // Use React.use to unwrap the params Promise if it's a Promise
   const unwrappedParams = use(params);
   const caseId = unwrappedParams.id;
