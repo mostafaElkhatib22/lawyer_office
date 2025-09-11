@@ -58,6 +58,7 @@ interface CaseDetails {
   court: string;
   caseNumber: string;
   year: string;
+  status:string;
   attorneyNumber: string;
   decision: string;
   nots: string;
@@ -453,7 +454,7 @@ export default function CaseDetailsPage() {
   const handlePrintReport = useCallback(() => {
     if (!caseDetails) return;
 
-    const generatePrintContent = (details: CaseDetails) => `
+   const generatePrintContent = (details: CaseDetails) => `
       <html>
         <head>
           <title>تقرير تفاصيل الدعوى - ${details.caseNumber}</title>
@@ -463,190 +464,267 @@ export default function CaseDetailsPage() {
               font-family: 'Arial', sans-serif; 
               direction: rtl; 
               text-align: right; 
-              color: #333; 
-              line-height: 1.6;
-              margin: 40px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: #2c3e50; 
+              line-height: 1.4;
+              margin: 15px;
+              font-size: 13px;
+              background: #f8f9fa;
             }
+            
+            .container {
+              max-width: 100%;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              overflow: hidden;
+            }
+            
             .header {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 30px;
-              background: white;
-              border-radius: 20px;
-              margin-bottom: 40px;
-              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+              background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+              color: white;
+              text-align: center;
+              padding: 20px;
+              margin: 0;
             }
+            
             .header h1 {
-              font-size: 32px;
-              font-weight: bold;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-            }
-            .logo-container {
-              width: 60px;
-              height: 60px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: #fff;
-              border-radius: 20px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin-left: 20px;
-              font-size: 28px;
-              font-weight: bold;
-              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-            }
-            .section {
-              margin-bottom: 30px;
-              background: white;
-              border-radius: 20px;
-              padding: 30px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            }
-            .section-title {
+              margin: 0;
               font-size: 24px;
               font-weight: bold;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-              border-right: 4px solid;
-              border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
-              padding-right: 15px;
-              margin-bottom: 25px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 15px;
             }
-            table {
+            
+            .logo {
+              font-size: 28px;
+            }
+            
+            .content {
+              padding: 20px;
+            }
+            
+            .main-table {
               width: 100%;
               border-collapse: collapse;
-              border-radius: 15px;
+              margin-bottom: 20px;
+              border: 2px solid #34495e;
+              border-radius: 8px;
               overflow: hidden;
-              box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             }
-            th, td {
-              padding: 15px 20px;
-              border: none;
-              text-align: right;
-            }
-            th {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            
+            .section-header {
+              background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
               color: white;
+              text-align: center;
               font-weight: bold;
+              font-size: 16px;
+              padding: 12px;
             }
-            td {
-              background-color: #f8f9ff;
-              border-bottom: 1px solid #e0e7ff;
+            
+            .main-table th {
+              background: #ecf0f1;
+              color: #2c3e50;
+              font-weight: bold;
+              padding: 12px 15px;
+              border: 1px solid #bdc3c7;
+              width: 25%;
+              text-align: right;
+              font-size: 14px;
             }
-            .notes, .decision, .opponents-list {
-              padding: 25px;
-              background: linear-gradient(135deg, #f8f9ff 0%, #e0e7ff 100%);
-              border: 2px solid #e0e7ff;
-              border-radius: 15px;
-              box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            
+            .main-table td {
+              padding: 12px 15px;
+              border: 1px solid #bdc3c7;
+              background: #ffffff;
+              font-size: 13px;
             }
+            
+            .two-column {
+              display: flex;
+              gap: 15px;
+              margin-bottom: 15px;
+            }
+            
+            .column {
+              flex: 1;
+            }
+            
+            .notes-section, .opponents-section, .decision-section {
+              margin-top: 15px;
+              border: 2px solid #3498db;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            
+            .notes-section .section-header,
+            .opponents-section .section-header,
+            .decision-section .section-header {
+              background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            }
+            
+            .content-box {
+              padding: 15px;
+              background: #f8f9fa;
+              min-height: 60px;
+              font-size: 13px;
+              line-height: 1.5;
+            }
+            
+            .opponents-list {
+              padding: 0;
+              margin: 0;
+            }
+            
+            .opponent-item {
+              padding: 8px 15px;
+              background: #ffffff;
+              border-bottom: 1px solid #ecf0f1;
+              font-size: 13px;
+            }
+            
+            .opponent-item:last-child {
+              border-bottom: none;
+            }
+            
+            .opponent-item:nth-child(even) {
+              background: #f8f9fa;
+            }
+            
             .footer {
               text-align: center;
-              margin-top: 50px;
-              padding: 30px;
-              background: white;
-              border-radius: 20px;
-              font-size: 16px;
-              color: #666;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+              margin-top: 20px;
+              padding: 15px;
+              background: #ecf0f1;
+              border-radius: 8px;
+              font-size: 12px;
+              color: #7f8c8d;
+              border-top: 3px solid #3498db;
             }
+            
             @media print {
-              body { margin: 0; background: white !important; }
-              .header, .footer, .section { -webkit-print-color-adjust: exact; color-adjust: exact; }
-              @page { size: A4; margin: 2cm; }
+              body { 
+                margin: 0; 
+                background: white !important; 
+                font-size: 12px;
+              }
+              
+              .container {
+                box-shadow: none;
+                border-radius: 0;
+              }
+              
+              .header, .section-header, .content-box {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+              }
+              
+              @page { 
+                size: A4; 
+                margin: 1.5cm;
+              }
+              
+              .two-column {
+                page-break-inside: avoid;
+              }
+              
+              .notes-section, .opponents-section, .decision-section {
+                page-break-inside: avoid;
+                margin-top: 10px;
+              }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="logo-container">⚖</div>
-            <h1>تقرير تفاصيل الدعوى</h1>
-          </div>
-
-          <div class="section">
-            <h2 class="section-title">معلومات أساسية</h2>
-            <table>
-              <tr>
-                <th>الموكل</th>
-                <td>${details.client?.name || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>رقم الدعوى</th>
-                <td>${details.caseNumber || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>السنة</th>
-                <td>${details.year || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>نوع الدعوى</th>
-                <td>${details.caseTypeOF || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>طبيعة الدعوى</th>
-                <td>${details.type || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>المحكمة</th>
-                <td>${details.court || "غير محدد"}</td>
-              </tr>
-              <tr>
-                <th>رقم التوكيل</th>
-                <td>${details.attorneyNumber || "غير محدد"}</td>
-              </tr>
-            </table>
-          </div>
-
-          <div class="section">
-            <h2 class="section-title">التواريخ المهمة</h2>
-            <table>
-              <tr>
-                <th>تاريخ الدعوى</th>
-                <td>${formatDate(details.caseDate)}</td>
-              </tr>
-              <tr>
-                <th>تاريخ الجلسة القادمة</th>
-                <td>${formatDate(details.sessiondate)}</td>
-              </tr>
-            </table>
-          </div>
-
-          ${details.opponents && details.opponents.length > 0 ? `
-          <div class="section">
-            <h2 class="section-title">الخصوم</h2>
-            <div class="opponents-list">
-              ${details.opponents.map(opp => `<p style="margin: 10px 0; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">${opp}</p>`).join('')}
+          <div class="container">
+            <div class="header">
+              <h1>
+                <span class="logo">⚖️</span>
+                تقرير تفاصيل الدعوى
+              </h1>
             </div>
-          </div>
-          ` : ''}
 
-          ${details.decision ? `
-          <div class="section">
-            <h2 class="section-title">القرار</h2>
-            <div class="decision">
-              <p>${details.decision}</p>
+            <div class="content">
+              <!-- الجدول الرئيسي -->
+              <table class="main-table">
+                <thead>
+                  <tr>
+                    <th colspan="4" class="section-header">المعلومات الأساسية والتواريخ المهمة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th>الموكل</th>
+                    <td>${details.client?.name || "غير محدد"}</td>
+                    <th>رقم الدعوى</th>
+                    <td>${details.caseNumber || "غير محدد"}</td>
+                  </tr>
+                  <tr>
+                  <th>السنة</th>
+                  <td>${details.year || "غير محدد"}</td>
+                  <th>نوع الدعوى</th>
+                  <td>${details.caseTypeOF || "غير محدد"}</td>
+                  </tr>
+                  <tr>
+                  <th>طبيعة الدعوى</th>
+                  <td>${details.type || "غير محدد"}</td>
+                  <th>المحكمة</th>
+                    <td>${details.court || "غير محدد"}</td>
+                  </tr>
+                  <tr>
+                    <th>رقم التوكيل</th>
+                    <td>${details.attorneyNumber || "غير محدد"}</td>
+                    <th>تاريخ الدعوى</th>
+                    <td>${formatDate(details.caseDate)}</td>
+                  </tr>
+                  <tr>
+                    <th>تاريخ الجلسة القادمة</th>
+                    <td colspan="3" style="font-weight: bold; color: #e74c3c;">${formatDate(details.sessiondate)}</td>
+                  </tr>
+                  <tr>
+                    <th>حالة الدعوى</th>
+                    <td>${details.status|| "غير محدد"}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- الأقسام الإضافية في صفوف -->
+              <div class="two-column">
+              ${details.opponents && details.opponents.length > 0 ? `
+                <div class="column">
+                  <div class="opponents-section">
+                    <div class="section-header">الخصوم (${details.opponents.length})</div>
+                    <div class="opponents-list">
+                      ${details.opponents.map((opp, index) => 
+                        `<div class="opponent-item">${index + 1}. ${opp}</div>`
+                      ).join('')}
+                    </div>
+                  </div>
+                </div>
+                ` : ''}
+
+                ${details.decision ? `
+                <div class="column">
+                  <div class="decision-section">
+                    <div class="section-header">القرار</div>
+                    <div class="content-box">${details.decision}</div>
+                  </div>
+                </div>
+                ` : ''}
+              </div>
+
+              ${details.nots ? `
+              <div class="notes-section">
+                <div class="section-header">الملاحظات</div>
+                <div class="content-box">${details.nots}</div>
+              </div>
+              ` : ''}
+
+              <div class="footer">
+                تم إنشاء هذا التقرير بتاريخ: ${formatDate(new Date().toISOString())} | نظام إدارة الدعاوى القانونية
+              </div>
             </div>
-          </div>
-          ` : ''}
-
-          ${details.nots ? `
-          <div class="section">
-            <h2 class="section-title">ملاحظات</h2>
-            <div class="notes">
-              <p>${details.nots}</p>
-            </div>
-          </div>
-          ` : ''}
-
-          <div class="footer">
-            تم إنشاء هذا التقرير في: ${formatDate(new Date().toISOString())}
           </div>
         </body>
       </html>
@@ -813,7 +891,7 @@ export default function CaseDetailsPage() {
                   </div>
                   <div className="hidden sm:flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
                     <Star className="h-5 w-5 text-yellow-300" />
-                    <span className="text-white font-medium">نشط</span>
+                    <span className="text-white font-medium">{caseDetails.status}</span>
                   </div>
                 </div>
               </div>

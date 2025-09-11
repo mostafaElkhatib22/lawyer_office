@@ -137,6 +137,7 @@ export async function PUT(
   const params = await context.params;
   const { id } = params;
   const session = await getServerSession(authOptions);
+  
   if (!session || !session.user?.id) {
     return NextResponse.json(
       { success: false, message: "غير مصرح لك بالتحديث" },
@@ -146,6 +147,12 @@ export async function PUT(
 
   try {
     const body = await req.json();
+    
+    // تأكد من طباعة البيانات المستلمة للتحقق
+    console.log("Received data:", body);
+    console.log("Case ID:", id);
+    console.log("Status value:", body.status);
+    
     const {
       client,
       caseTypeOF,
@@ -153,6 +160,7 @@ export async function PUT(
       court,
       caseNumber,
       year,
+      status,
       attorneyNumber,
       decision,
       nots,
@@ -162,6 +170,7 @@ export async function PUT(
       files,
     } = body;
 
+    // التحقق من وجود الدعوى
     const existingCase = await Case.findById(id);
     if (!existingCase) {
       return NextResponse.json(
@@ -170,6 +179,7 @@ export async function PUT(
       );
     }
 
+    // التحقق من صلاحية المستخدم
     if (existingCase.owner.toString() !== session.user.id) {
       return NextResponse.json(
         { success: false, message: "غير مصرح لك بتحديث هذه الدعوى" },
@@ -177,24 +187,36 @@ export async function PUT(
       );
     }
 
+    // إنشاء كائن التحديث مع التحقق من القيم
+    const updateData: any = {};
+    
+    // إضافة الحقول فقط إذا كانت موجودة في الطلب
+    if (client !== undefined) updateData.client = client;
+    if (caseTypeOF !== undefined) updateData.caseTypeOF = caseTypeOF;
+    if (type !== undefined) updateData.type = type;
+    if (court !== undefined) updateData.court = court;
+    if (caseNumber !== undefined) updateData.caseNumber = caseNumber;
+    if (year !== undefined) updateData.year = year;
+    if (status !== undefined) updateData.status = status;
+    if (attorneyNumber !== undefined) updateData.attorneyNumber = attorneyNumber;
+    if (decision !== undefined) updateData.decision = decision;
+    if (nots !== undefined) updateData.nots = nots;
+    if (caseDate !== undefined) updateData.caseDate = caseDate;
+    if (sessiondate !== undefined) updateData.sessiondate = sessiondate;
+    if (opponents !== undefined) updateData.opponents = opponents;
+    if (files !== undefined) updateData.files = files;
+
+    console.log("Update data:", updateData);
+
+    // التحديث باستخدام $set للتأكد من تحديث الحقول
     const updatedCase = await Case.findByIdAndUpdate(
       id,
-      {
-        client,
-        caseTypeOF,
-        type,
-        court,
-        caseNumber,
-        year,
-        attorneyNumber,
-        decision,
-        nots,
-        caseDate,
-        sessiondate,
-        opponents,
-        files,
-      },
-      { new: true, runValidators: true }
+      { $set: updateData },
+      { 
+        new: true, 
+        runValidators: true,
+        timestamps: true // للتأكد من تحديث updatedAt
+      }
     ).populate("client");
 
     if (!updatedCase) {
@@ -204,11 +226,29 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json({ success: true, data: updatedCase }, { status: 200 });
+    // التحقق من أن الحالة تم تحديثها فعلاً
+    console.log("Updated case status:", updatedCase.status);
+    console.log("Full updated case:", updatedCase);
+
+    return NextResponse.json(
+      { 
+        success: true, 
+        data: updatedCase,
+        message: "تم تحديث الدعوى بنجاح"
+      }, 
+      { status: 200 }
+    );
+    
   } catch (error: any) {
     console.error("Error updating case:", error);
+    console.error("Error stack:", error.stack);
+    
     return NextResponse.json(
-      { success: false, message: error.message || "فشل في تحديث الدعوى" },
+      { 
+        success: false, 
+        message: error.message || "فشل في تحديث الدعوى",
+        error: process.env.NODE_ENV === 'development' ? error.toString() : undefined
+      },
       { status: 500 }
     );
   }

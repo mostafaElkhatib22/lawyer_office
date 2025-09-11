@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 // src/app/dashboard/page.tsx
@@ -10,7 +12,7 @@ import { Scale, Users, CalendarCheck2 } from "lucide-react"; // أيقونات L
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // مكونات Shadcn UI
 import { ActivityIndicator } from "@/components/ui/activity-indicator"; // مؤشر تحميل مخصص
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 // هام جداً:
 // 1. لو هتستخدم الـ Proxy الحل المؤقت (next.config.js)، خليها "/api"
@@ -42,11 +44,16 @@ interface Client {
 }
 
 function HomePage() {
+    const { data: session, status } = useSession();
+
   const [cases, setCases] = useState<Case[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true); // حالة تحميل البيانات الأولية
   const [error, setError] = useState<string | null>(null); // حالة للتعامل مع الأخطاء
   const router = useRouter();
+  if (status==="unauthenticated") {
+    router.push("/auth/login")
+  }
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -108,7 +115,6 @@ function HomePage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center h-screen bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 p-4 rounded-lg">

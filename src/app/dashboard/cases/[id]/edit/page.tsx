@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/rules-of-hooks */
@@ -23,15 +24,17 @@ import { useRouter } from "next/navigation";
 // In a real Next.js application, you would use the actual `useSession` hook.
 const mockUseSession = () => {
   // Simulate an authenticated session with a dummy token
-  const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const [status, setStatus] = useState<
+    "loading" | "authenticated" | "unauthenticated"
+  >("loading");
   const [session, setSession] = useState<any>(null);
   useEffect(() => {
     // Simulate API call or session check delay
     const timer = setTimeout(() => {
-      setStatus('authenticated');
+      setStatus("authenticated");
       setSession({
-        user: { name: 'Mock User', email: 'mock@example.com' },
-        accessToken: 'mock_access_token_12345', // Provide a dummy token for API calls
+        user: { name: "Mock User", email: "mock@example.com" },
+        accessToken: "mock_access_token_12345", // Provide a dummy token for API calls
         expires: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
       });
     }, 100); // Short delay to simulate async behavior
@@ -55,7 +58,6 @@ const mockUseSession = () => {
 const useSession = mockUseSession;
 // --- END MOCK ---
 
-
 // Base URL for API calls
 const API_BASE_URL = "/api";
 
@@ -70,6 +72,7 @@ interface CaseDetails {
   year: string;
   attorneyNumber: string;
   decision: string;
+  status: string;
   nots: string;
   caseDate: string;
   sessiondate: string;
@@ -80,8 +83,8 @@ interface CaseDetails {
 }
 
 interface Client {
-    _id: string;
-    name: string;
+  _id: string;
+  name: string;
 }
 
 // Activity Indicator Component
@@ -89,7 +92,10 @@ type ActivityIndicatorSize = "small" | "medium" | "large";
 const ActivityIndicator = ({
   size = "medium",
   className = "text-blue-500",
-}: { size?: ActivityIndicatorSize; className?: string }) => {
+}: {
+  size?: ActivityIndicatorSize;
+  className?: string;
+}) => {
   const sizeClasses: Record<ActivityIndicatorSize, string> = {
     small: "h-4 w-4",
     medium: "h-8 w-8",
@@ -117,18 +123,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isLoading = false,
 }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto animate-in fade-in-0 zoom-in-95">
         <div className="flex items-center mb-4">
           <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-400 mr-3" />
-          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">تأكيد الحذف</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            تأكيد الحذف
+          </h3>
         </div>
 
-        <p className="text-gray-700 dark:text-gray-300 mb-6">
-          {message}
-        </p>
+        <p className="text-gray-700 dark:text-gray-300 mb-6">{message}</p>
 
         <div className="flex justify-end gap-3">
           <button
@@ -143,7 +149,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 flex items-center gap-2"
           >
-            {isLoading && <ActivityIndicator size="small" className="text-white" />}
+            {isLoading && (
+              <ActivityIndicator size="small" className="text-white" />
+            )}
             حذف
           </button>
         </div>
@@ -161,11 +169,11 @@ export default function EditCasePage({
   // Use React.use to unwrap the params Promise if it's a Promise
   const unwrappedParams = use(params);
   const caseId = unwrappedParams.id;
-  const router = useRouter()
+  const router = useRouter();
 
   // Authentication session
   const { data: session, status } = useSession();
-  
+
   // Component states
   const [caseData, setCaseData] = useState<Partial<CaseDetails>>({});
   const [loading, setLoading] = useState(true);
@@ -184,21 +192,31 @@ export default function EditCasePage({
   const [isDeletingFile, setIsDeletingFile] = useState(false);
 
   // Memoized case types and types of cases for dropdowns
-  const caseTypeOptions = useMemo(() => ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"], []);
+  const caseTypeOptions = useMemo(
+    () => ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"],
+    []
+  );
   const typeOptions = useMemo(() => ["ابتدائي", "استئناف", "نقض", "تنفيذ"], []);
+  const caseStatusOptions = useMemo(
+    () => ["مفتوحة", "مغلقة", "مؤجلة", "استئناف", "مشطوبة"],
+    []
+  );
 
   // Function to show toast messages
-  const showMessage = useCallback((msg: string, type: "success" | "error" | "warning" | "info") => {
-    if (type === "success") {
-      toast.success(msg);
-    } else if (type === "error") {
-      toast.error(msg);
-    } else if (type === "warning") {
-      toast.warning(msg);
-    } else if (type === "info") {
+  const showMessage = useCallback(
+    (msg: string, type: "success" | "error" | "warning" | "info") => {
+      if (type === "success") {
+        toast.success(msg);
+      } else if (type === "error") {
+        toast.error(msg);
+      } else if (type === "warning") {
+        toast.warning(msg);
+      } else if (type === "info") {
         toast.info(msg);
-    }
-  }, []);
+      }
+    },
+    []
+  );
 
   // Fetch all clients for the dropdown
   const fetchClients = useCallback(async () => {
@@ -207,7 +225,9 @@ export default function EditCasePage({
       return;
     }
     if (status === "unauthenticated" || !session?.accessToken) {
-      console.warn("Clients fetch: User unauthenticated or no access token. Skipping fetch.");
+      console.warn(
+        "Clients fetch: User unauthenticated or no access token. Skipping fetch."
+      );
       setClients([]);
       return;
     }
@@ -228,7 +248,9 @@ export default function EditCasePage({
         console.log("Clients fetched successfully:", data.data.length);
       } else {
         setClients([]);
-        console.log("Clients fetch: API response indicated no success or data.");
+        console.log(
+          "Clients fetch: API response indicated no success or data."
+        );
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);
@@ -240,19 +262,25 @@ export default function EditCasePage({
   const fetchCaseDetails = useCallback(async () => {
     // Only attempt to fetch if session status is resolved and caseId is available
     if (!caseId || status === "loading") {
-      console.log(`Case details fetch: Skipping. caseId=${caseId}, status=${status}`);
+      console.log(
+        `Case details fetch: Skipping. caseId=${caseId}, status=${status}`
+      );
       return;
     }
 
     if (status === "unauthenticated" || !session?.accessToken) {
       setError("غير مصرح لك بعرض هذه البيانات. يرجى تسجيل الدخول.");
       setLoading(false);
-      console.warn("Case details fetch: User unauthenticated or no access token. Skipping fetch.");
+      console.warn(
+        "Case details fetch: User unauthenticated or no access token. Skipping fetch."
+      );
       return;
     }
     setLoading(true);
     setError(null);
-    console.log(`Case details fetch: Attempting to fetch case details for ID: ${caseId}`);
+    console.log(
+      `Case details fetch: Attempting to fetch case details for ID: ${caseId}`
+    );
     try {
       const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
         headers: {
@@ -262,7 +290,9 @@ export default function EditCasePage({
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
       const result = await response.json();
       if (result.success && result.data) {
@@ -287,29 +317,45 @@ export default function EditCasePage({
 
   // Initial data fetch on component mount and when session status changes
   useEffect(() => {
-    if (status !== "loading") { // Only fetch when session status is resolved
+    if (status !== "loading") {
+      // Only fetch when session status is resolved
       fetchClients();
       fetchCaseDetails();
     }
   }, [fetchClients, fetchCaseDetails, status]);
 
   // Handle form field changes
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCaseData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >
+    ) => {
+      const { name, value } = e.target;
+      setCaseData((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
 
   // Handle client selection change
-  const handleClientChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedClient(e.target.value);
-  }, []);
+  const handleClientChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setSelectedClient(e.target.value);
+    },
+    []
+  );
 
   // Handle file selection (new files to upload)
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewFilesToUpload((prev) => e.target.files ? [...prev, ...Array.from(e.target.files)] : prev);
-    }
-  }, []);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        setNewFilesToUpload((prev) =>
+          e.target.files ? [...prev, ...Array.from(e.target.files)] : prev
+        );
+      }
+    },
+    []
+  );
 
   // Remove a newly selected file before upload
   const removeNewFile = useCallback((fileToRemove: File) => {
@@ -371,46 +417,60 @@ export default function EditCasePage({
     const publicId = extractPublicId(fileToDelete);
 
     if (!publicId) {
-        showMessage("فشل استخراج معرف الملف للحذف.", "error");
-        setIsDeletingFile(false);
-        closeDeleteFileModal();
-        return;
+      showMessage("فشل استخراج معرف الملف للحذف.", "error");
+      setIsDeletingFile(false);
+      closeDeleteFileModal();
+      return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/images`, {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${session?.accessToken}`,
-            },
-            body: JSON.stringify({ publicId }),
-        });
+      const response = await fetch(`${API_BASE_URL}/images`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.accessToken}`,
+        },
+        body: JSON.stringify({ publicId }),
+      });
 
-        if (!response.ok && response.status !== 404) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `فشل حذف الملف من Cloudinary (Status: ${response.status})`);
-        }
+      if (!response.ok && response.status !== 404) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message ||
+            `فشل حذف الملف من Cloudinary (Status: ${response.status})`
+        );
+      }
 
-        setExistingFiles((prev) => prev.filter((url) => url !== fileToDelete));
-        showMessage(`تم حذف الملف بنجاح.`, "success");
-        console.log(`File ${fileToDelete} deleted from Cloudinary and removed from state.`);
-
+      setExistingFiles((prev) => prev.filter((url) => url !== fileToDelete));
+      showMessage(`تم حذف الملف بنجاح.`, "success");
+      console.log(
+        `File ${fileToDelete} deleted from Cloudinary and removed from state.`
+      );
     } catch (err: any) {
-        console.error("Error deleting file from Cloudinary:", err);
-        showMessage(err.message || "فشل حذف الملف من Cloudinary.", "error");
+      console.error("Error deleting file from Cloudinary:", err);
+      showMessage(err.message || "فشل حذف الملف من Cloudinary.", "error");
     } finally {
-        setIsDeletingFile(false);
-        closeDeleteFileModal();
+      setIsDeletingFile(false);
+      closeDeleteFileModal();
     }
-  }, [fileToDelete, extractPublicId, session, showMessage, closeDeleteFileModal]);
+  }, [
+    fileToDelete,
+    extractPublicId,
+    session,
+    showMessage,
+    closeDeleteFileModal,
+  ]);
 
   // Upload new files to Cloudinary
-  const uploadNewFilesToCloudinary = useCallback(async (): Promise<string[]> => {
+  const uploadNewFilesToCloudinary = useCallback(async (): Promise<
+    string[]
+  > => {
     if (newFilesToUpload.length === 0) return [];
 
     const uploadedUrls: string[] = [];
-    console.log(`Uploading ${newFilesToUpload.length} new files to Cloudinary.`);
+    console.log(
+      `Uploading ${newFilesToUpload.length} new files to Cloudinary.`
+    );
 
     for (const file of newFilesToUpload) {
       const reader = new FileReader();
@@ -428,15 +488,18 @@ export default function EditCasePage({
             "Content-Type": "application/json",
             Authorization: `Bearer ${session?.accessToken}`,
           },
-          body: JSON.stringify({ 
-            imageBase64: base64File, 
-            folder: "cases_files" 
+          body: JSON.stringify({
+            imageBase64: base64File,
+            folder: "cases_files",
           }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || `فشل تحميل الملف ${file.name} (Status: ${response.status})`);
+          throw new Error(
+            errorData.message ||
+              `فشل تحميل الملف ${file.name} (Status: ${response.status})`
+          );
         }
 
         const data = await response.json();
@@ -452,79 +515,108 @@ export default function EditCasePage({
   }, [newFilesToUpload, session, showMessage]);
 
   // Handle form submission
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!caseId) {
-      showMessage("معرف الدعوى غير موجود.", "error");
-      return;
-    }
-    if (status === "unauthenticated" || !session?.accessToken) {
-      showMessage("يجب تسجيل الدخول لتعديل الدعوى.", "error");
-      return;
-    }
-
-    setIsSaving(true);
-    console.log("Attempting to save case details...");
-
-    try {
-      // 1. Upload new files to Cloudinary
-      const newlyUploadedFileUrls = await uploadNewFilesToCloudinary();
-
-      // 2. Combine existing files with newly uploaded files
-      const finalFileUrls = [...existingFiles, ...newlyUploadedFileUrls];
-
-      // 3. Prepare data for updating the case - متوافق مع الباك إند
-      const updatedCasePayload = {
-        client: selectedClient || null, // إرسال ID فقط أو null
-        caseTypeOF: caseData.caseTypeOF,
-        type: caseData.type,
-        court: caseData.court,
-        caseNumber: caseData.caseNumber,
-        year: caseData.year,
-        attorneyNumber: caseData.attorneyNumber,
-        decision: caseData.decision,
-        nots: caseData.nots,
-        caseDate: caseData.caseDate,
-        sessiondate: caseData.sessiondate,
-        opponents: caseData.opponents || [],
-        files: finalFileUrls,
-      };
-      console.log("Payload for case update:", updatedCasePayload);
-
-      // 4. Update case in the database
-      const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify(updatedCasePayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `فشل تحديث الدعوى (Status: ${response.status})`);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!caseId) {
+        showMessage("معرف الدعوى غير موجود.", "error");
+        return;
+      }
+      if (status === "unauthenticated" || !session?.accessToken) {
+        showMessage("يجب تسجيل الدخول لتعديل الدعوى.", "error");
+        return;
       }
 
-      const result = await response.json();
-      
-      if (result.success) {
-        showMessage("تم تحديث الدعوى بنجاح!", "success");
-        console.log("Case updated successfully.");
-        setNewFilesToUpload([]);
-        router.back()
-        fetchCaseDetails(); // Re-fetch to ensure UI is in sync
-      } else {
-        throw new Error(result.message || "فشل في تحديث الدعوى");
+      setIsSaving(true);
+      console.log("Attempting to save case details...");
+
+      try {
+        // 1. Upload new files to Cloudinary
+        const newlyUploadedFileUrls = await uploadNewFilesToCloudinary();
+
+        // 2. Combine existing files with newly uploaded files
+        const finalFileUrls = [...existingFiles, ...newlyUploadedFileUrls];
+
+        // 3. Prepare data for updating the case - متوافق مع الباك إند
+        const updatedCasePayload = {
+          client: selectedClient || null,
+          caseTypeOF: caseData.caseTypeOF,
+          type: caseData.type,
+          court: caseData.court,
+          caseNumber: caseData.caseNumber,
+          year: caseData.year,
+          status: caseData.status, // 👈 هنا الحالة
+          attorneyNumber: caseData.attorneyNumber,
+          decision: caseData.decision,
+          nots: caseData.nots,
+          caseDate: caseData.caseDate,
+          sessiondate: caseData.sessiondate,
+          opponents: caseData.opponents || [],
+          files: finalFileUrls,
+        };
+        console.log("Payload for case update:", updatedCasePayload);
+
+        // 4. Update case in the database
+        const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.accessToken}`,
+          },
+          body: JSON.stringify(updatedCasePayload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || `فشل تحديث الدعوى (Status: ${response.status})`
+          );
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage("تم تحديث الدعوى بنجاح!", "success");
+          console.log("Case updated successfully.");
+          setNewFilesToUpload([]);
+          router.back();
+          fetchCaseDetails(); // Re-fetch to ensure UI is in sync
+        } else {
+          throw new Error(result.message || "فشل في تحديث الدعوى");
+        }
+      } catch (err: any) {
+        console.error("Error updating case:", err);
+        showMessage(err.message || "حدث خطأ أثناء تحديث الدعوى.", "error");
+      } finally {
+        setIsSaving(false);
+        console.log(
+          "Finished saving case details. IsSaving state set to false."
+        );
       }
-    } catch (err: any) {
-      console.error("Error updating case:", err);
-      showMessage(err.message || "حدث خطأ أثناء تحديث الدعوى.", "error");
-    } finally {
-      setIsSaving(false);
-      console.log("Finished saving case details. IsSaving state set to false.");
-    }
-  }, [caseId, status, session?.accessToken, showMessage, uploadNewFilesToCloudinary, existingFiles, selectedClient, caseData.caseTypeOF, caseData.type, caseData.court, caseData.caseNumber, caseData.year, caseData.attorneyNumber, caseData.decision, caseData.nots, caseData.caseDate, caseData.sessiondate, caseData.opponents, router, fetchCaseDetails]);
+    },
+    [
+      caseId,
+      session?.accessToken,
+      showMessage,
+      uploadNewFilesToCloudinary,
+      existingFiles,
+      selectedClient,
+      caseData.caseTypeOF,
+      caseData.type,
+      caseData.court,
+      caseData.caseNumber,
+      caseData.year,
+      caseData.attorneyNumber,
+      caseData.decision,
+      caseData.status,
+      caseData.nots,
+      caseData.caseDate,
+      caseData.sessiondate,
+      caseData.opponents,
+      router,
+      fetchCaseDetails,
+    ]
+  );
 
   // Navigation back
   const goBack = useCallback(() => {
@@ -535,8 +627,13 @@ export default function EditCasePage({
   if (status === "loading" || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <ActivityIndicator size="large" className="text-blue-600 dark:text-blue-400" />
-        <span className="text-blue-600 text-lg ml-3 dark:text-blue-400">جاري تحميل تفاصيل الدعوى...</span>
+        <ActivityIndicator
+          size="large"
+          className="text-blue-600 dark:text-blue-400"
+        />
+        <span className="text-blue-600 text-lg ml-3 dark:text-blue-400">
+          جاري تحميل تفاصيل الدعوى...
+        </span>
       </div>
     );
   }
@@ -546,7 +643,9 @@ export default function EditCasePage({
       <div className="min-h-screen flex items-center justify-center bg-red-50 p-4 dark:bg-red-950 dark:text-red-100">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-700 dark:text-red-200 mb-2">حدث خطأ</h2>
+          <h2 className="text-xl font-bold text-red-700 dark:text-red-200 mb-2">
+            حدث خطأ
+          </h2>
           <p className="text-red-600 dark:text-red-300 mb-6">{error}</p>
           <button
             onClick={fetchCaseDetails}
@@ -582,7 +681,10 @@ export default function EditCasePage({
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
           {/* Client Selection */}
           <div>
-            <label htmlFor="client" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="client"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               الموكل
             </label>
             <select
@@ -603,7 +705,10 @@ export default function EditCasePage({
 
           {/* Case Number */}
           <div>
-            <label htmlFor="caseNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="caseNumber"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               رقم الدعوى
             </label>
             <input
@@ -619,7 +724,33 @@ export default function EditCasePage({
 
           {/* Case Type OF */}
           <div>
-            <label htmlFor="caseTypeOF" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              حالة الدعوى
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={caseData.status || ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+              required
+            >
+              <option value="">اختر حالة الدعوى</option>
+              {caseStatusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="caseTypeOF"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               نوع الدعوى
             </label>
             <select
@@ -641,7 +772,10 @@ export default function EditCasePage({
 
           {/* Type (Classification) */}
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="type"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               التصنيف
             </label>
             <select
@@ -663,7 +797,10 @@ export default function EditCasePage({
 
           {/* Court */}
           <div>
-            <label htmlFor="court" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="court"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               المحكمة
             </label>
             <input
@@ -679,7 +816,10 @@ export default function EditCasePage({
 
           {/* Year */}
           <div>
-            <label htmlFor="year" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="year"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               السنة
             </label>
             <input
@@ -694,7 +834,10 @@ export default function EditCasePage({
 
           {/* Attorney Number */}
           <div>
-            <label htmlFor="attorneyNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="attorneyNumber"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               رقم التوكيل
             </label>
             <input
@@ -709,7 +852,10 @@ export default function EditCasePage({
 
           {/* Decision */}
           <div>
-            <label htmlFor="decision" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="decision"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               القرار
             </label>
             <textarea
@@ -724,7 +870,10 @@ export default function EditCasePage({
 
           {/* Notes */}
           <div>
-            <label htmlFor="nots" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="nots"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               ملاحظات
             </label>
             <textarea
@@ -739,14 +888,21 @@ export default function EditCasePage({
 
           {/* Case Date */}
           <div>
-            <label htmlFor="caseDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="caseDate"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               تاريخ الدعوى
             </label>
             <input
               type="date"
               id="caseDate"
               name="caseDate"
-              value={caseData.caseDate ? new Date(caseData.caseDate).toISOString().split('T')[0] : ''}
+              value={
+                caseData.caseDate
+                  ? new Date(caseData.caseDate).toISOString().split("T")[0]
+                  : ""
+              }
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
             />
@@ -754,14 +910,21 @@ export default function EditCasePage({
 
           {/* Session Date */}
           <div>
-            <label htmlFor="sessiondate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="sessiondate"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               تاريخ الجلسة
             </label>
             <input
               type="date"
               id="sessiondate"
               name="sessiondate"
-              value={caseData.sessiondate ? new Date(caseData.sessiondate).toISOString().split('T')[0] : ''}
+              value={
+                caseData.sessiondate
+                  ? new Date(caseData.sessiondate).toISOString().split("T")[0]
+                  : ""
+              }
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
             />
@@ -769,7 +932,10 @@ export default function EditCasePage({
 
           {/* Opponents */}
           <div>
-            <label htmlFor="opponents" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="opponents"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               الخصوم (افصل بفاصلة)
             </label>
             <input
@@ -777,7 +943,12 @@ export default function EditCasePage({
               id="opponents"
               name="opponents"
               value={caseData.opponents ? caseData.opponents.join(", ") : ""}
-              onChange={(e) => setCaseData((prev) => ({ ...prev, opponents: e.target.value.split(",").map(s => s.trim()) }))}
+              onChange={(e) =>
+                setCaseData((prev) => ({
+                  ...prev,
+                  opponents: e.target.value.split(",").map((s) => s.trim()),
+                }))
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
             />
           </div>
@@ -787,9 +958,17 @@ export default function EditCasePage({
             <label htmlFor="file-upload" className="cursor-pointer">
               <UploadCloud className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
               <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100">
-                اسحب الملفات وأفلتها هنا أو <span className="text-blue-600 hover:text-blue-800">تصفح</span>
+                اسحب الملفات وأفلتها هنا أو{" "}
+                <span className="text-blue-600 hover:text-blue-800">تصفح</span>
               </span>
-              <input id="file-upload" name="file-upload" type="file" multiple className="sr-only" onChange={handleFileChange} />
+              <input
+                id="file-upload"
+                name="file-upload"
+                type="file"
+                multiple
+                className="sr-only"
+                onChange={handleFileChange}
+              />
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               PDF, DOC, DOCX, JPG, PNG, GIF (حتى 10MB)
@@ -798,13 +977,24 @@ export default function EditCasePage({
             {/* Display new files to upload */}
             {newFilesToUpload.length > 0 && (
               <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 text-right">ملفات جديدة للتحميل:</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 text-right">
+                  ملفات جديدة للتحميل:
+                </p>
                 <ul className="space-y-2">
                   {newFilesToUpload.map((file, index) => (
-                    <li key={file.name + index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                    <li
+                      key={file.name + index}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-3 rounded-md"
+                    >
                       <div className="flex items-center">
-                        {file.type.startsWith('image/') ? <Image className="h-5 w-5 mr-2 text-blue-500" /> : <File className="h-5 w-5 mr-2 text-gray-500" />}
-                        <span className="text-sm text-gray-700 dark:text-gray-200">{file.name}</span>
+                        {file.type.startsWith("image/") ? (
+                          <Image className="h-5 w-5 mr-2 text-blue-500" />
+                        ) : (
+                          <File className="h-5 w-5 mr-2 text-gray-500" />
+                        )}
+                        <span className="text-sm text-gray-700 dark:text-gray-200">
+                          {file.name}
+                        </span>
                       </div>
                       <button
                         type="button"
@@ -823,14 +1013,28 @@ export default function EditCasePage({
             {/* Display existing files */}
             {existingFiles.length > 0 && (
               <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 text-right">الملفات الحالية:</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3 text-right">
+                  الملفات الحالية:
+                </p>
                 <ul className="space-y-2">
                   {existingFiles.map((fileUrl) => (
-                    <li key={fileUrl} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+                    <li
+                      key={fileUrl}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-3 rounded-md"
+                    >
                       <div className="flex items-center">
-                        {fileUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? <Image className="h-5 w-5 mr-2 text-blue-500" /> : <File className="h-5 w-5 mr-2 text-gray-500" />}
-                        <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                          {fileUrl.substring(fileUrl.lastIndexOf('/') + 1)}
+                        {fileUrl.match(/\.(jpeg|jpg|gif|png)$/) != null ? (
+                          <Image className="h-5 w-5 mr-2 text-blue-500" />
+                        ) : (
+                          <File className="h-5 w-5 mr-2 text-gray-500" />
+                        )}
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          {fileUrl.substring(fileUrl.lastIndexOf("/") + 1)}
                         </a>
                       </div>
                       <button
@@ -855,7 +1059,9 @@ export default function EditCasePage({
               disabled={isSaving}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving && <ActivityIndicator size="small" className="text-white" />}
+              {isSaving && (
+                <ActivityIndicator size="small" className="text-white" />
+              )}
               حفظ التعديلات
             </button>
           </div>
@@ -865,7 +1071,9 @@ export default function EditCasePage({
       {/* Delete File Confirmation Modal */}
       <ConfirmationModal
         isOpen={isDeleteFileModalOpen}
-        message={`هل أنت متأكد أنك تريد حذف الملف "${fileToDelete?.substring(fileToDelete.lastIndexOf('/') + 1)}"؟ سيتم حذف الملف نهائياً من التخزين السحابي.`}
+        message={`هل أنت متأكد أنك تريد حذف الملف "${fileToDelete?.substring(
+          fileToDelete.lastIndexOf("/") + 1
+        )}"؟ سيتم حذف الملف نهائياً من التخزين السحابي.`}
         onConfirm={handleDeleteExistingFile}
         onCancel={closeDeleteFileModal}
         isLoading={isDeletingFile}

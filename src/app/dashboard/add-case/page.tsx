@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
@@ -49,7 +50,8 @@ import {
   Rocket,
   Book,
   StickyNote,
-  ArrowRight, // Added ArrowRight for Next button
+  ArrowRight,
+  ChartColumnBig, // Added ArrowRight for Next button
 } from "lucide-react";
 
 // --- START MOCK for next-auth/react (for environment compatibility) ---
@@ -105,13 +107,16 @@ const useRouter = mockUseRouter;
 
 // --- START INLINE ActivityIndicator (if external component not resolved) ---
 // If "@/components/ui/activity-indicator" cannot be resolved, this inline version will be used.
-type ActivityIndicatorSize = "small" | "medium" | "large";
+type SizeType = "small" | "medium" | "large";
 
 const ActivityIndicator = ({
-  size = "medium",
+  size = "medium" as SizeType,
   className = "text-blue-500",
-}: { size?: ActivityIndicatorSize; className?: string }) => {
-  const sizeClasses: Record<ActivityIndicatorSize, string> = {
+}: {
+  size?: SizeType;
+  className?: string;
+}) => {
+  const sizeClasses = {
     small: "h-4 w-4",
     medium: "h-8 w-8",
     large: "h-12 w-12",
@@ -160,6 +165,7 @@ interface FormData {
   attorneyNumber: string;
   decision: string;
   nots: string;
+  status: string;
   caseDate: string;
   sessiondate: string;
   opponents: string[];
@@ -173,7 +179,7 @@ export default function AddCasePage() {
   // Memoized case types and types of cases for dropdowns
   const caseTypeOptions = useMemo(() => ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"], []);
   const typeOptions = useMemo(() => ["ابتدائي", "استئناف", "نقض", "تنفيذ"], []);
-
+const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجلة", "استئناف","مشطوبة"], []);
   const [formData, setFormData] = useState<FormData>({
     client: "",
     caseTypeOF: "",
@@ -184,6 +190,7 @@ export default function AddCasePage() {
     year: new Date().getFullYear().toString(),
     attorneyNumber: "",
     decision: "",
+    status: "مفتوحة",
     nots: "",
     sessiondate: new Date().toISOString().split("T")[0],
     opponents: [],
@@ -226,6 +233,7 @@ export default function AddCasePage() {
       } else {
         throw new Error(response.data?.message || "فشل في جلب قائمة الموكلين");
       }
+      router.push("/auth/login");
     } catch (err: any) {
       console.error("Error fetching clients:", err);
       const errorMessage =
@@ -563,6 +571,7 @@ export default function AddCasePage() {
           caseTypeOF: "",
           type: "",
           court: "",
+          status: "مفتوحة",
           caseNumber: "",
           caseDate: new Date().toISOString().split("T")[0],
           year: new Date().getFullYear().toString(),
@@ -903,6 +912,14 @@ export default function AddCasePage() {
                   true,
                   Gavel,
                   caseTypeOptions
+                )}
+                {renderSelectField(
+                  "status",
+                  "حالة الدعوى",
+                  "اختر حالة الدعوى",
+                  true,
+                  ChartColumnBig ,
+                  caseStatusOptions
                 )}
 
                 {/* Type Selection */}

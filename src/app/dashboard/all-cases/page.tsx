@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // تحديد الـ Base URL للـ API
 const API_BASE_URL = "/api";
@@ -43,6 +44,7 @@ interface CaseDetails {
   court: string;
   caseNumber: string;
   year: string;
+  status: string;
   attorneyNumber: string;
   decision: string;
   nots: string;
@@ -267,7 +269,7 @@ export default function AllCasesPage() {
   const [caseToDelete, setCaseToDelete] = useState<CaseDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-
+const router = useRouter()
   // Function to show toast messages
   const showMessage = useCallback((msg: string, type: "success" | "error" | "warning" | "info") => {
     if (type === "success") {
@@ -291,6 +293,7 @@ export default function AllCasesPage() {
   const fetchCases = useCallback(async () => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
+      router.push('/auth/login')
       setError("غير مصرح لك بعرض هذه البيانات. يرجى تسجيل الدخول.");
       setLoading(false);
       return;
@@ -333,7 +336,7 @@ export default function AllCasesPage() {
     } finally {
       setLoading(false);
     }
-  }, [session, status]);
+  }, [router, session?.user?.id, status]);
 
   useEffect(() => {
     fetchCases();

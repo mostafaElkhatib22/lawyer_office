@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/app/api/cases/route.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dbConnect from "@/lib/dbConnect";
 import Case from "@/models/Case";
+import Client from "@/models/Client"; // ✅ أضف هذا السطر
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -22,6 +24,7 @@ export async function GET(req: Request) {
   const lawyerId = session.user.id;
   try {
     // استخدم populate("client") لملء بيانات الموكل
+     await Client.findOne({ owner: lawyerId });
     const cases = await Case.find({ owner: lawyerId }).sort({ createdAt: -1 }).populate("client");
     console.log(lawyerId)
     console.log("cases fetched with populate:", cases);
@@ -61,6 +64,7 @@ export async function POST(req: Request) {
       attorneyNumber,
       decision,
       nots,
+      status,
       caseDate,
       sessiondate,
       opponents,
@@ -93,6 +97,7 @@ export async function POST(req: Request) {
       court,
       caseNumber,
       year,
+      status,
       attorneyNumber,
       decision: decision || "",
       nots: nots || "",

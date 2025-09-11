@@ -3,29 +3,29 @@ import mongoose from 'mongoose';
 
 const CaseSchema = new mongoose.Schema({
   client: {
-    type: mongoose.Schema.Types.ObjectId, // <--- تم التعديل هنا: الآن هو ObjectId
-    ref: 'Client', // <--- وتم إضافة 'ref' للإشارة إلى موديل Client
-    required: [true, 'Please add a client.'], // <--- تعديل الرسالة لتناسب ObjectId
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Client',
+    required: [true, 'من فضلك اختر عميل.'],
   },
   caseTypeOF: {
     type: String,
-    required: [true, 'Please add a case type.'],
+    required: [true, 'من فضلك أضف نوع الدعوى.'],
   },
   type: {
     type: String,
-    required: [true, 'Please add the nature of the case.'],
+    required: [true, 'من فضلك أضف طبيعة الدعوى.'],
   },
   court: {
     type: String,
-    required: [true, 'Please add the court name.'],
+    required: [true, 'من فضلك أضف اسم المحكمة.'],
   },
   caseNumber: {
     type: String,
-    required: [true, 'Please add the case number.'],
+    required: [true, 'من فضلك أضف رقم الدعوى.'],
   },
   year: {
     type: String,
-    required: [true, 'Please add the case year.'],
+    required: [true, 'من فضلك أضف سنة الدعوى.'],
   },
   decision: {
     type: String,
@@ -33,7 +33,7 @@ const CaseSchema = new mongoose.Schema({
   },
   attorneyNumber: {
     type: String,
-    required: [true, 'Please add the attorney number.'],
+    required: [true, 'من فضلك أضف رقم التوكيل.'],
   },
   caseDate: {
     type: Date,
@@ -44,7 +44,7 @@ const CaseSchema = new mongoose.Schema({
     default: Date.now,
   },
   opponents: {
-    type: [String], // Array of opponent names
+    type: [String],
     default: [],
   },
   nots: {
@@ -52,12 +52,17 @@ const CaseSchema = new mongoose.Schema({
     default: '',
   },
   files: {
-    type: [String], // Array of Cloudinary image URLs
+    type: [String],
     default: [],
+  },
+  status: {
+    type: String,
+    enum: ['مفتوحة', 'مغلقة', 'مؤجلة', 'مسئنفة','مشطوبة'], // القيم المسموح بيها
+    default: 'مفتوحة',
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // References the 'User' model
+    ref: 'User',
     required: true,
   },
 }, {
