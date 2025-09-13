@@ -215,27 +215,27 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    let hashedPassword: string;
-    try {
-      hashedPassword = await bcrypt.hash(password, 12); // Increased salt rounds for better security
-    } catch (hashError) {
-      console.error("Password hashing error:", hashError);
-      const bcryptError = hashError as BcryptError;
-      return NextResponse.json(
-        { 
-          success: false,
-          message: `Error securing password: ${bcryptError.message || 'Unknown hashing error'}` 
-        },
-        { status: 500 }
-      );
-    }
+    // let hashedPassword: string;
+    // try {
+    //   hashedPassword = await bcrypt.hash(password, 12); // Increased salt rounds for better security
+    // } catch (hashError) {
+    //   console.error("Password hashing error:", hashError);
+    //   const bcryptError = hashError as BcryptError;
+    //   return NextResponse.json(
+    //     { 
+    //       success: false,
+    //       message: `Error securing password: ${bcryptError.message || 'Unknown hashing error'}` 
+    //     },
+    //     { status: 500 }
+    //   );
+    // }
 
     // Create new user
     try {
       const newUser = await User.create({
         name: trimmedName,
         email: trimmedEmail,
-        password: hashedPassword,
+        password,
         role: "lawyer",
       });
 
