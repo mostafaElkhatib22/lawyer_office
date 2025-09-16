@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 // تحديث صلاحيات موظف
 export async function PUT(
   req: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params: Promise<{ employeeId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,7 +30,8 @@ export async function PUT(
     }
 
     await dbConnect();
-    const { employeeId } = context.params;
+    const params = await context.params;
+    const { employeeId } = params;
     const { permissions } = await req.json();
 
     const employee = await User.findById(employeeId);
@@ -84,7 +85,7 @@ export async function PUT(
 // الحصول على صلاحيات موظف محدد
 export async function GET(
   req: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params: Promise<{ employeeId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -96,7 +97,8 @@ export async function GET(
     }
 
     await dbConnect();
-    const { employeeId } = context.params;
+    const params = await context.params;
+    const { employeeId } = params;
 
     const employee = await User.findById(employeeId).select(
       "name email role department permissions accountType ownerId"
