@@ -3,12 +3,12 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // تحديث صلاحيات موظف
 export async function PUT(
-  req: Request,
-  { params }: { params: { employeeId: string } }
+  req: NextRequest,
+  context: { params: { employeeId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,8 +19,10 @@ export async function PUT(
       );
     }
 
-    // التحقق من صلاحية إدارة الموظفين
-    if (session.user.accountType !== 'owner' && !session.user.permissions?.employees?.managePermissions) {
+    if (
+      session.user.accountType !== "owner" &&
+      !session.user.permissions?.employees?.managePermissions
+    ) {
       return NextResponse.json(
         { success: false, message: "ليس لديك صلاحية لتعديل صلاحيات الموظفين." },
         { status: 403 }
@@ -28,11 +30,9 @@ export async function PUT(
     }
 
     await dbConnect();
-
-    const { employeeId } = params;
+    const { employeeId } = context.params;
     const { permissions } = await req.json();
 
-    // البحث عن الموظف
     const employee = await User.findById(employeeId);
     if (!employee) {
       return NextResponse.json(
@@ -41,10 +41,10 @@ export async function PUT(
       );
     }
 
-    // التحقق من أن الموظف تابع لنفس المكتب
-    const ownerId = session.user.accountType === 'owner' 
-      ? session.user.id 
-      : session.user.ownerId;
+    const ownerId =
+      session.user.accountType === "owner"
+        ? session.user.id
+        : session.user.ownerId;
 
     if (employee.ownerId?.toString() !== ownerId) {
       return NextResponse.json(
@@ -53,15 +53,13 @@ export async function PUT(
       );
     }
 
-    // التحقق من أن المستخدم لا يحاول تعديل صلاحيات صاحب المكتب
-    if (employee.accountType === 'owner') {
+    if (employee.accountType === "owner") {
       return NextResponse.json(
         { success: false, message: "لا يمكن تعديل صلاحيات صاحب المكتب." },
         { status: 400 }
       );
     }
 
-    // تحديث الصلاحيات
     employee.permissions = permissions;
     await employee.save();
 
@@ -71,10 +69,9 @@ export async function PUT(
       data: {
         id: employee._id,
         name: employee.name,
-        permissions: employee.permissions
-      }
+        permissions: employee.permissions,
+      },
     });
-
   } catch (error: any) {
     console.error("Error updating employee permissions:", error);
     return NextResponse.json(
@@ -86,8 +83,8 @@ export async function PUT(
 
 // الحصول على صلاحيات موظف محدد
 export async function GET(
-  req: Request,
-  { params }: { params: { employeeId: string } }
+  req: NextRequest,
+  context: { params: { employeeId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -99,10 +96,11 @@ export async function GET(
     }
 
     await dbConnect();
-    const { employeeId } = params;
+    const { employeeId } = context.params;
 
-    // البحث عن الموظف
-    const employee = await User.findById(employeeId).select('name email role department permissions accountType ownerId');
+    const employee = await User.findById(employeeId).select(
+      "name email role department permissions accountType ownerId"
+    );
     if (!employee) {
       return NextResponse.json(
         { success: false, message: "الموظف غير موجود." },
@@ -110,14 +108,14 @@ export async function GET(
       );
     }
 
-    // التحقق من الصلاحية
-    const ownerId = session.user.accountType === 'owner' 
-      ? session.user.id 
-      : session.user.ownerId;
+    const ownerId =
+      session.user.accountType === "owner"
+        ? session.user.id
+        : session.user.ownerId;
 
-    const canView = 
-      employee.ownerId?.toString() === ownerId || // نفس المكتب
-      employee._id.toString() === session.user.id; // المستخدم نفسه
+    const canView =
+      employee.ownerId?.toString() === ownerId ||
+      employee._id.toString() === session.user.id;
 
     if (!canView) {
       return NextResponse.json(
@@ -135,10 +133,9 @@ export async function GET(
         role: employee.role,
         department: employee.department,
         permissions: employee.permissions,
-        accountType: employee.accountType
-      }
+        accountType: employee.accountType,
+      },
     });
-
   } catch (error: any) {
     console.error("Error fetching employee permissions:", error);
     return NextResponse.json(
