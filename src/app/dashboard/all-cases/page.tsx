@@ -604,7 +604,8 @@ const router = useRouter()
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `فشل حذف الدعوى (Status: ${response.status})`);
+        alert(errorData.message || `فشل حذف الدعوى (Status: ${response.status})`);
+        // throw new Error(errorData.message || `فشل حذف الدعوى (Status: ${response.status})`);
       }
 
       showMessage("تم حذف الدعوى بنجاح!", "success");

@@ -5,6 +5,7 @@ import Case from "@/models/Case";
 import { getServerSession } from "next-auth";
 import { v2 as cloudinary } from "cloudinary";
 import { authOptions } from "@/lib/auth";
+import User from "@/models/User";
 
 // تهيئة Cloudinary
 cloudinary.config({
@@ -21,16 +22,27 @@ export async function GET(
   await dbConnect();
   const params = await context.params;
   const { id } = params;
+
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.id) {
+
+  if (!session || !session.user || !session.user.id) {
     return NextResponse.json(
-      { success: false, message: "غير مصرح لك بالوصول" },
+      { success: false, message: "Authentication required." },
       { status: 401 }
     );
   }
 
   try {
-    const caseDetails = await Case.findById(id).populate("client");
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    const caseDetails = await Case.findById(id)
+      .populate("client")
     if (!caseDetails) {
       return NextResponse.json(
         { success: false, message: "الدعوى غير موجودة" },
@@ -38,14 +50,56 @@ export async function GET(
       );
     }
 
-    if (caseDetails.owner.toString() !== session.user.id) {
-      return NextResponse.json(
-        { success: false, message: "غير مصرح لك بالوصول إلى هذه الدعوى" },
-        { status: 403 }
-      );
+    // السماح أو المنع حسب نوع الحساب والصلاحيات
+    if (user.accountType === "owner") {
+      // المالك لازم يكون هو الـ owner
+      if (caseDetails.owner.toString() !== user._id.toString()) {
+        return NextResponse.json(
+          { success: false, message: "غير مصرح لك بالوصول إلى هذه الدعوى" },
+          { status: 403 }
+        );
+      }
+    } else {
+      // employee
+      const ownerId = user.ownerId;
+      if (!ownerId) {
+        return NextResponse.json(
+          { success: false, message: "لا يوجد مالك مرتبط بهذا الموظف" },
+          { status: 400 }
+        );
+      }
+
+      if (typeof user.hasPermission === "function" && user.hasPermission("cases", "viewAll")) {
+        // الموظف شايف كل قضايا المكتب
+        if (caseDetails.owner.toString() !== ownerId.toString()) {
+          return NextResponse.json(
+            { success: false, message: "غير مصرح لك بالوصول إلى هذه الدعوى" },
+            { status: 403 }
+          );
+        }
+      } else if (typeof user.hasPermission === "function" && user.hasPermission("cases", "view")) {
+        // الموظف شايف القضايا المعيّنة له أو اللي هو أنشأها
+        if (
+          caseDetails.assignedTo?.toString() !== user._id.toString() &&
+          caseDetails.createdBy?.toString() !== user._id.toString()
+        ) {
+          return NextResponse.json(
+            { success: false, message: "غير مصرح لك بالوصول إلى هذه الدعوى" },
+            { status: 403 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { success: false, message: "ليس لديك صلاحية لعرض القضايا" },
+          { status: 403 }
+        );
+      }
     }
 
-    return NextResponse.json({ success: true, data: caseDetails }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: caseDetails },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Error fetching case details:", error);
     return NextResponse.json(
@@ -55,6 +109,7 @@ export async function GET(
   }
 }
 
+
 // ---------------- DELETE ----------------
 export async function DELETE(
   req: NextRequest,
@@ -63,6 +118,7 @@ export async function DELETE(
   await dbConnect();
   const params = await context.params;
   const { id } = params;
+
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
     return NextResponse.json(
@@ -72,6 +128,14 @@ export async function DELETE(
   }
 
   try {
+    const currentUser = await User.findById(session.user.id);
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, message: "المستخدم غير موجود" },
+        { status: 404 }
+      );
+    }
+
     const caseToDelete = await Case.findById(id);
     if (!caseToDelete) {
       return NextResponse.json(
@@ -80,14 +144,30 @@ export async function DELETE(
       );
     }
 
-    if (caseToDelete.owner.toString() !== session.user.id) {
-      return NextResponse.json(
-        { success: false, message: "غير مصرح لك بحذف هذه الدعوى" },
-        { status: 403 }
-      );
+    // ✅ التحقق من الصلاحيات
+    if (currentUser.accountType === "owner") {
+      if (caseToDelete.owner.toString() !== currentUser._id.toString()) {
+        return NextResponse.json(
+          { success: false, message: "غير مصرح لك بحذف هذه الدعوى" },
+          { status: 403 }
+        );
+      }
+    } else if (currentUser.accountType === "employee") {
+      if (!currentUser.permissions?.cases?.delete) {
+        return NextResponse.json(
+          { success: false, message: "ليس لديك صلاحية لحذف القضايا" },
+          { status: 403 }
+        );
+      }
+      if (caseToDelete.owner.toString() !== currentUser.ownerId.toString()) {
+        return NextResponse.json(
+          { success: false, message: "غير مصرح لك بحذف قضايا خارج مكتبك" },
+          { status: 403 }
+        );
+      }
     }
 
-    // حذف الملفات من Cloudinary
+    // 🗑️ حذف الملفات من Cloudinary (نفس الكود بتاعك)
     if (caseToDelete.files?.length > 0) {
       for (const fileUrl of caseToDelete.files) {
         const parts = fileUrl.split("/");
@@ -107,13 +187,7 @@ export async function DELETE(
       }
     }
 
-    const deletedCase = await Case.findByIdAndDelete(id);
-    if (!deletedCase) {
-      return NextResponse.json(
-        { success: false, message: "فشل في حذف الدعوى بعد التحقق." },
-        { status: 500 }
-      );
-    }
+    await Case.findByIdAndDelete(id);
 
     return NextResponse.json(
       { success: true, message: "تم حذف الدعوى والملفات المرتبطة بنجاح." },
@@ -128,6 +202,7 @@ export async function DELETE(
   }
 }
 
+
 // ---------------- PUT ----------------
 export async function PUT(
   req: NextRequest,
@@ -136,8 +211,8 @@ export async function PUT(
   await dbConnect();
   const params = await context.params;
   const { id } = params;
+
   const session = await getServerSession(authOptions);
-  
   if (!session || !session.user?.id) {
     return NextResponse.json(
       { success: false, message: "غير مصرح لك بالتحديث" },
@@ -146,31 +221,15 @@ export async function PUT(
   }
 
   try {
-    const body = await req.json();
-    
-    // تأكد من طباعة البيانات المستلمة للتحقق
-    console.log("Received data:", body);
-    console.log("Case ID:", id);
-    console.log("Status value:", body.status);
-    
-    const {
-      client,
-      caseTypeOF,
-      type,
-      court,
-      caseNumber,
-      year,
-      status,
-      attorneyNumber,
-      decision,
-      nots,
-      caseDate,
-      sessiondate,
-      opponents,
-      files,
-    } = body;
+    const currentUser = await User.findById(session.user.id);
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, message: "المستخدم غير موجود" },
+        { status: 404 }
+      );
+    }
 
-    // التحقق من وجود الدعوى
+    const body = await req.json();
     const existingCase = await Case.findById(id);
     if (!existingCase) {
       return NextResponse.json(
@@ -179,76 +238,49 @@ export async function PUT(
       );
     }
 
-    // التحقق من صلاحية المستخدم
-    if (existingCase.owner.toString() !== session.user.id) {
-      return NextResponse.json(
-        { success: false, message: "غير مصرح لك بتحديث هذه الدعوى" },
-        { status: 403 }
-      );
+    // ✅ التحقق من الصلاحيات
+    if (currentUser.accountType === "owner") {
+      if (existingCase.owner.toString() !== currentUser._id.toString()) {
+        return NextResponse.json(
+          { success: false, message: "غير مصرح لك بتحديث هذه الدعوى" },
+          { status: 403 }
+        );
+      }
+    } else if (currentUser.accountType === "employee") {
+      if (!currentUser.permissions?.cases?.edit) {
+        return NextResponse.json(
+          { success: false, message: "ليس لديك صلاحية لتحديث القضايا" },
+          { status: 403 }
+        );
+      }
+      if (existingCase.owner.toString() !== currentUser.ownerId.toString()) {
+        return NextResponse.json(
+          { success: false, message: "غير مصرح لك بتحديث قضايا خارج مكتبك" },
+          { status: 403 }
+        );
+      }
     }
 
-    // إنشاء كائن التحديث مع التحقق من القيم
+    // 🟢 تجهيز بيانات التحديث
     const updateData: any = {};
-    
-    // إضافة الحقول فقط إذا كانت موجودة في الطلب
-    if (client !== undefined) updateData.client = client;
-    if (caseTypeOF !== undefined) updateData.caseTypeOF = caseTypeOF;
-    if (type !== undefined) updateData.type = type;
-    if (court !== undefined) updateData.court = court;
-    if (caseNumber !== undefined) updateData.caseNumber = caseNumber;
-    if (year !== undefined) updateData.year = year;
-    if (status !== undefined) updateData.status = status;
-    if (attorneyNumber !== undefined) updateData.attorneyNumber = attorneyNumber;
-    if (decision !== undefined) updateData.decision = decision;
-    if (nots !== undefined) updateData.nots = nots;
-    if (caseDate !== undefined) updateData.caseDate = caseDate;
-    if (sessiondate !== undefined) updateData.sessiondate = sessiondate;
-    if (opponents !== undefined) updateData.opponents = opponents;
-    if (files !== undefined) updateData.files = files;
+    for (const key in body) {
+      if (body[key] !== undefined) updateData[key] = body[key];
+    }
 
-    console.log("Update data:", updateData);
-
-    // التحديث باستخدام $set للتأكد من تحديث الحقول
     const updatedCase = await Case.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { 
-        new: true, 
-        runValidators: true,
-        timestamps: true // للتأكد من تحديث updatedAt
-      }
+      { new: true, runValidators: true, timestamps: true }
     ).populate("client");
 
-    if (!updatedCase) {
-      return NextResponse.json(
-        { success: false, message: "فشل في تحديث الدعوى" },
-        { status: 500 }
-      );
-    }
-
-    // التحقق من أن الحالة تم تحديثها فعلاً
-    console.log("Updated case status:", updatedCase.status);
-    console.log("Full updated case:", updatedCase);
-
     return NextResponse.json(
-      { 
-        success: true, 
-        data: updatedCase,
-        message: "تم تحديث الدعوى بنجاح"
-      }, 
+      { success: true, data: updatedCase, message: "تم تحديث الدعوى بنجاح" },
       { status: 200 }
     );
-    
   } catch (error: any) {
     console.error("Error updating case:", error);
-    console.error("Error stack:", error.stack);
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        message: error.message || "فشل في تحديث الدعوى",
-        error: process.env.NODE_ENV === 'development' ? error.toString() : undefined
-      },
+      { success: false, message: error.message || "فشل في تحديث الدعوى" },
       { status: 500 }
     );
   }

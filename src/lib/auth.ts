@@ -19,31 +19,51 @@ export const authOptions: NextAuthOptions = {
         const email = credentials?.email;
         const password = credentials?.password;
 
-        const user = await User.findOne({ email }).select("+password"); // Retrieve password for comparison
+        const user = await User.findOne({ email }).select("+password").populate('ownerId', 'name firmInfo.firmName');
 
         if (!user) {
-          throw new Error("No user found with this email.");
+          throw new Error("لا يوجد مستخدم بهذا البريد الإلكتروني.");
         }
-const passwordOk =
-          user && password && typeof user.password === "string" && bcrypt.compareSync(password, user.password);
-          console.log(passwordOk)
+
+        // التحقق من أن الحساب نشط
+        if (!user.isActive) {
+          throw new Error("تم تعطيل حسابك. يرجى الاتصال بالإدارة.");
+        }
+
+        const passwordOk = user && password && typeof user.password === "string" && 
+                          bcrypt.compareSync(password, user.password);
+
         if (!passwordOk) { 
-          throw new Error("Your password not correct.");
-         }
-        // const isMatch = await user.matchPassword(password);
-        // if (!isMatch) {
-        //   throw new Error("Your password not correct.");
-        // }
+          throw new Error("كلمة المرور غير صحيحة.");
+        }
 
-        // Return user object, NextAuth will automatically create a session
-        if(passwordOk){
+        // تحديث تاريخ آخر تسجيل دخول
+        user.lastLogin = new Date();
+        await user.save();
 
-          return {
-            id: user?._id.toString(), // Important: Convert ObjectId to string
-            name: user?.name,
-            email: user?.email,
-            role: user?.role,
+        // إرجاع بيانات المستخدم مع معلومات المكتب
+        if (passwordOk) {
+          const userData = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            accountType: user.accountType,
+            department: user.department,
+            permissions: user.permissions,
           };
+
+          // إضافة معلومات المكتب
+          if (user.accountType === 'owner') {
+            userData.firmInfo = user.firmInfo;
+            userData.ownerId = user._id.toString(); // المالك هو نفسه
+          } else if (user.ownerId) {
+            userData.ownerId = user.ownerId.toString();
+            userData.ownerName = user.ownerId.name;
+            userData.firmName = user.ownerId.firmInfo?.firmName || 'غير محدد';
+          }
+
+          return userData;
         }
         return null;
       },
@@ -54,20 +74,34 @@ const passwordOk =
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.accountType = user.accountType;
+        token.department = user.department;
+        token.permissions = user.permissions;
+        token.ownerId = user.ownerId;
+        token.firmInfo = user.firmInfo;
+        token.ownerName = user.ownerName;
+        token.firmName = user.firmName;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id as string; // Ensure id is string type
-        session.user.role = token.role as string; // Ensure role is string type
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.accountType = token.accountType as 'owner' | 'employee';
+        session.user.department = token.department as string;
+        session.user.permissions = token.permissions;
+        session.user.ownerId = token.ownerId as string;
+        session.user.firmInfo = token.firmInfo;
+        session.user.ownerName = token.ownerName as string;
+        session.user.firmName = token.firmName as string;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/auth/login", // Custom login page
-    error: "/auth/login", // Custom error page
+    signIn: "/auth/login",
+    error: "/auth/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: {

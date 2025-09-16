@@ -1,19 +1,21 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // src/app/api/cases/route.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// src/app/api/cases/route.ts
 import dbConnect from "@/lib/dbConnect";
 import Case from "@/models/Case";
-import Client from "@/models/Client"; // ✅ أضف هذا السطر
+import Client from "@/models/Client";
+import User from "@/models/User"; // 🟢 مهم عشان نجيب بيانات المستخدم
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(req: Request) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
-
+  console.log(session?.user)
   if (!session || !session.user || !session.user.id) {
     return NextResponse.json(
       { success: false, message: "Authentication required." },
@@ -21,15 +23,39 @@ export async function GET(req: Request) {
     );
   }
 
-  const lawyerId = session.user.id;
   try {
-    // استخدم populate("client") لملء بيانات الموكل
-     await Client.findOne({ owner: lawyerId });
-    const cases = await Case.find({ owner: lawyerId }).sort({ createdAt: -1 }).populate("client");
-    console.log(lawyerId)
-    console.log("cases fetched with populate:", cases);
+    // 🟢 نجيب المستخدم من قاعدة البيانات
+    const user = await User.findById(session.user.id);
+    console.log("user", user.permissions.cases.view)
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    let query: any = {};
+
+    if (user.accountType === "owner") {
+      // ✅ صاحب المكتب يشوف كل القضايا اللي تبع المكتب
+      query.owner = user._id;
+    } else if (user.accountType === "employee") {
+      if (user.hasPermission("cases", "viewAll")) {
+        // ✅ الموظف اللي عنده صلاحية viewAll يشوف كل القضايا
+        query.owner = user.ownerId;
+      } else {
+        // ✅ الموظف العادي يشوف القضايا الخاصة بيه فقط
+        query.owner = user.ownerId;
+        query.assignedTo = user._id; // لو عندك في Case field زي assignedTo
+      }
+    }
+
+    const cases = await Case.find(query)
+      .sort({ createdAt: -1 })
+      .populate("client");
+
     return NextResponse.json({ success: true, data: cases }, { status: 200 });
-  } catch (error: any) { // تم تغيير unknown إلى any ليتناسب مع console.error
+  } catch (error: any) {
     console.error("Error fetching cases:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch cases." },
@@ -38,11 +64,14 @@ export async function GET(req: Request) {
   }
 }
 
+
+
+
+
 export async function POST(req: Request) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
-
   if (!session || !session.user || !session.user.id) {
     return NextResponse.json(
       { success: false, message: "Authentication required." },
@@ -50,9 +79,26 @@ export async function POST(req: Request) {
     );
   }
 
-  const lawyerId = session.user.id;
-
   try {
+    const currentUser = await User.findById(session.user.id);
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    // 🟢 تحقق من الصلاحية
+    if (
+      currentUser.accountType === "employee" &&
+      !currentUser.permissions?.cases?.create
+    ) {
+      return NextResponse.json(
+        { success: false, message: "ليس لديك صلاحية لإضافة دعوى." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       client,
@@ -69,6 +115,7 @@ export async function POST(req: Request) {
       sessiondate,
       opponents,
       files,
+      assignedTo,
     } = body;
 
     if (
@@ -90,6 +137,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // 🟢 لو المستخدم Employee نخلي الـ owner هو صاحب المكتب
+    const ownerId =
+      currentUser.accountType === "owner"
+        ? currentUser._id
+        : currentUser.ownerId;
+
     const newCase = await Case.create({
       client,
       caseTypeOF,
@@ -105,21 +158,14 @@ export async function POST(req: Request) {
       sessiondate: sessiondate ? new Date(sessiondate) : new Date(),
       opponents: opponents || [],
       files: files || [],
-      owner: lawyerId,
+      owner: ownerId, // ✅ دايمًا الـ Owner هو صاحب المكتب
+      createdBy: currentUser._id, // ✅ المستخدم اللي أنشأ القضية
+      assignedTo: assignedTo || null,
     });
 
     return NextResponse.json({ success: true, data: newCase }, { status: 201 });
-  } catch (error: any) { // تم تغيير unknown إلى any ليتناسب مع console.error
+  } catch (error: any) {
     console.error("Error creating case:", error);
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map(
-        (val: any) => val.message
-      );
-      return NextResponse.json(
-        { success: false, message: messages.join(", ") },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { success: false, message: "Failed to create case." },
       { status: 500 }
