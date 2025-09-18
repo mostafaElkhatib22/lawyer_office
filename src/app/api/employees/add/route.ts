@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/api/employees/add/route.ts
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";

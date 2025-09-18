@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Eye, EyeOff, UserPlus, Settings, Shield, Users, Building2 } from 'lucide-react';
@@ -161,7 +162,7 @@ const UserManagementPage = () => {
   // تبديل حالة الموظف
   const toggleEmployeeStatus = async (employeeId) => {
     try {
-      const response = await fetch(`/api/employees/${employeeId}/status`, {
+      const response = await fetch(`/api/employees/${employeeId}/permissions`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -185,10 +186,10 @@ const UserManagementPage = () => {
   };
 
   // حذف موظف
-  const handleDeleteEmployee = async (employeeId) => {
+  const handleDeleteEmployee = async (employeeId: any) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
       try {
-        const response = await fetch(`/api/employees/${employeeId}`, {
+        const response = await fetch(`/api/employees/${employeeId}/permissions`, {
           method: 'DELETE'
         });
 

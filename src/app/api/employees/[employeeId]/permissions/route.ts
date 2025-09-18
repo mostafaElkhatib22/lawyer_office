@@ -1,14 +1,14 @@
-// src/app/api/employees/[employeeId]/permissions/route.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 // تحديث صلاحيات موظف
 export async function PUT(
   req: NextRequest,
-  context: { params: Promise<{ employeeId: string }> }
+  context: { params: { employeeId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,8 +30,7 @@ export async function PUT(
     }
 
     await dbConnect();
-    const params = await context.params;
-    const { employeeId } = params;
+    const { employeeId } = context.params;
     const { permissions } = await req.json();
 
     const employee = await User.findById(employeeId);
@@ -85,7 +84,7 @@ export async function PUT(
 // الحصول على صلاحيات موظف محدد
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ employeeId: string }> }
+  context: { params: { employeeId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,8 +96,7 @@ export async function GET(
     }
 
     await dbConnect();
-    const params = await context.params;
-    const { employeeId } = params;
+    const { employeeId } = context.params;
 
     const employee = await User.findById(employeeId).select(
       "name email role department permissions accountType ownerId"
@@ -117,7 +115,7 @@ export async function GET(
 
     const canView =
       employee.ownerId?.toString() === ownerId ||
-      employee._id.toString() === session.user.id;
+      employee.id.toString() === session.user.id;
 
     if (!canView) {
       return NextResponse.json(
@@ -142,6 +140,37 @@ export async function GET(
     console.error("Error fetching employee permissions:", error);
     return NextResponse.json(
       { success: false, message: "حدث خطأ أثناء جلب الصلاحيات." },
+      { status: 500 }
+    );
+  }
+}
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ employeeId: string }> }
+
+) {
+  try {
+    await dbConnect();
+
+    const params = await context.params
+    const { employeeId } = params;
+    const employee = await User.findByIdAndDelete(employeeId);
+
+    if (!employee) {
+      return NextResponse.json(
+        { success: false, message: "الموظف غير موجود" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { success: true, message: "تم حذف الموظف بنجاح" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting employee:", error);
+    return NextResponse.json(
+      { success: false, message: "حصل خطأ أثناء حذف الموظف" },
       { status: 500 }
     );
   }

@@ -26,7 +26,6 @@ export async function GET(req: Request) {
   try {
     // 🟢 نجيب المستخدم من قاعدة البيانات
     const user = await User.findById(session.user.id);
-    console.log("user", user.permissions.cases.view)
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found." },

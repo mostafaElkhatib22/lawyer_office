@@ -81,9 +81,9 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuButton
               asChild
-              isActive={pathname === "/dashboard/settings"}
+              isActive={pathname === "/dashboard/settings/user-management"}
             >
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings/user-management">
                 <Settings className="h-5 w-5" />
                 <span>الإعدادات</span>
               </Link>

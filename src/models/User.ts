@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/models/User.js
+// src/models/User.ts (rename from .js to .ts)
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { IUser, IUserModel, IFirmStats } from '../types/user';
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema<IUser>({
   name: {
     type: String,
     required: [true, 'Please provide a name for this user.'],
@@ -248,12 +248,12 @@ UserSchema.methods.matchPassword = async function (enteredPassword: string) {
 };
 
 // Method to check if user has specific permission
-UserSchema.methods.hasPermission = function(category, action) {
+UserSchema.methods.hasPermission = function(category: string, action: string) {
   return this.permissions[category] && this.permissions[category][action];
 };
 
 // Method to check if user can access department cases
-UserSchema.methods.canAccessDepartment = function(department) {
+UserSchema.methods.canAccessDepartment = function(department: string) {
   return this.department === department || this.hasPermission('cases', 'viewAll');
 };
 
@@ -269,27 +269,17 @@ UserSchema.methods.getEmployees = function() {
 };
 
 // Method to check if user belongs to specific firm
-UserSchema.methods.belongsToFirm = function(firmOwnerId: { toString: () => any; }) {
+UserSchema.methods.belongsToFirm = function(firmOwnerId: mongoose.Schema.Types.ObjectId) {
   if (this.accountType === 'owner') {
     return this._id.toString() === firmOwnerId.toString();
   }
   return this.ownerId && this.ownerId.toString() === firmOwnerId.toString();
 };
-// إضافة static method
-UserSchema.statics.getFirmStats = async function (ownerId: string) {
-  const totalEmployees = await this.countDocuments({ ownerId, accountType: "employee" });
-  const activeEmployees = await this.countDocuments({ ownerId, accountType: "employee", isActive: true });
-
-  return {
-    totalEmployees,
-    activeEmployees
-  };
-};
 
 // Static method to get firm statistics
-UserSchema.statics.getFirmStats = async function(ownerId) {
+UserSchema.statics.getFirmStats = async function(ownerId: string): Promise<IFirmStats> {
   const stats = await this.aggregate([
-    { $match: { ownerId:new mongoose.Types.ObjectId(ownerId), accountType: 'employee' } },
+    { $match: { ownerId: new mongoose.Types.ObjectId(ownerId), accountType: 'employee' } },
     {
       $group: {
         _id: null,
@@ -310,7 +300,7 @@ UserSchema.statics.getFirmStats = async function(ownerId) {
 };
 
 // Function to get default permissions based on role and account type
-function getDefaultPermissions(role, accountType) {
+function getDefaultPermissions(role: string, accountType: string) {
   const permissions = {
     cases: { view: false, create: false, edit: false, delete: false, assign: false, viewAll: false },
     clients: { view: false, create: false, edit: false, delete: false, viewContactInfo: false },
@@ -381,4 +371,7 @@ function getDefaultPermissions(role, accountType) {
   }
 }
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+// Create the model with proper typing
+const User = (mongoose.models.User as IUserModel) || mongoose.model<IUser, IUserModel>('User', UserSchema);
+
+export default User;

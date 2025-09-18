@@ -1,5 +1,5 @@
 // src/models/Case.js
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const CaseSchema = new mongoose.Schema({
   client: {
@@ -55,9 +55,11 @@ const CaseSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   status: {
     type: String,
-    enum: ['مفتوحة', 'مغلقة', 'مؤجلة', 'مسئنفة','مشطوبة'], // القيم المسموح بيها
+    enum: ['مفتوحة', 'مغلقة', 'مؤجلة', 'مسئنفة', 'مشطوبة'], // القيم المسموح بيها
     default: 'مفتوحة',
   },
   owner: {
