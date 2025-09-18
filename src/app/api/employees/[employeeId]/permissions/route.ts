@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 // تحديث صلاحيات موظف
 export async function PUT(
   req: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params:Promise< { employeeId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,7 +30,8 @@ export async function PUT(
     }
 
     await dbConnect();
-    const { employeeId } = context.params;
+    const params = context.params;
+    const { employeeId } = await params
     const { permissions } = await req.json();
 
     const employee = await User.findById(employeeId);
