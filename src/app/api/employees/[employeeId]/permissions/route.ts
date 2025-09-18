@@ -84,7 +84,7 @@ export async function PUT(
 // الحصول على صلاحيات موظف محدد
 export async function GET(
   req: NextRequest,
-  context: { params: { employeeId: string } }
+  context: { params: Promise<{ employeeId: string } >}
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -96,8 +96,8 @@ export async function GET(
     }
 
     await dbConnect();
-    const { employeeId } = context.params;
-
+    const params = context.params;
+    const { employeeId } = await params
     const employee = await User.findById(employeeId).select(
       "name email role department permissions accountType ownerId"
     );
