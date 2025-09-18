@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from "react";
@@ -222,11 +223,12 @@ const UserManagementPage = () => {
 
       if (response.ok) {
         setEmployees(
-          employees.map((emp) =>
-            emp._id.toString() === employeeId
+          employees.map((emp) => {
+            const EmpId = emp._id as any;
+            EmpId.toString() === employeeId
               ? { ...emp, isActive: !emp.isActive }
-              : emp
-          )
+              : emp;
+          })
         );
 
         const employee = employees.find((emp) => {
