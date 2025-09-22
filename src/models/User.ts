@@ -1,7 +1,50 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/models/User.ts (rename from .js to .ts)
-import mongoose from 'mongoose';
+import mongoose, { Model, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { IUser, IUserModel, IFirmStats } from '../types/user';
+import crypto from 'crypto';
+
+// Define interfaces if not importing from separate file
+interface IUser extends Document {
+  name: string;
+  email: string;
+  password: string;
+  accountType: 'owner' | 'employee';
+  ownerId?: mongoose.Schema.Types.ObjectId;
+  firmInfo: any;
+  role: string;
+  department: string;
+  permissions: any;
+  employeeInfo: any;
+  isActive: boolean;
+  lastLogin?: Date;
+  createdAt: Date;
+  createdBy?: mongoose.Schema.Types.ObjectId;
+  
+  // Reset Password fields
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
+  
+  // Methods
+  matchPassword(enteredPassword: string): Promise<boolean>;
+  hasPermission(category: string, action: string): boolean;
+  canAccessDepartment(department: string): boolean;
+  getEmployees(): any;
+  belongsToFirm(firmOwnerId: mongoose.Schema.Types.ObjectId): boolean;
+  getResetPasswordToken(): string;
+}
+
+interface IUserModel extends Model<IUser> {
+  getFirmStats(ownerId: string): Promise<any>;
+}
+
+interface IFirmStats {
+  totalEmployees: number;
+  activeEmployees: number;
+  byRole: string[];
+  byDepartment: string[];
+}
 
 const UserSchema = new mongoose.Schema<IUser>({
   name: {
@@ -34,7 +77,7 @@ const UserSchema = new mongoose.Schema<IUser>({
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: function() {
+    required: function(this: IUser): boolean {
       return this.accountType === 'employee';
     },
     index: true, // فهرس لتسريع البحث
@@ -189,6 +232,16 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  
+  // Reset Password fields
+  resetPasswordToken: {
+    type: String,
+    select: false,
+  },
+  resetPasswordExpire: {
+    type: Date,
+    select: false,
+  },
 });
 
 // فهرس مركب لضمان عدم تكرار رقم الموظف في نفس المكتب
@@ -204,14 +257,15 @@ UserSchema.index({ ownerId: 1, department: 1 });
 UserSchema.index({ accountType: 1 });
 
 // التحقق من حد الموظفين قبل الحفظ
-UserSchema.pre('save', async function(next) {
+UserSchema.pre<IUser>('save', async function(next) {
   if (this.isNew && this.accountType === 'employee') {
-    const owner = await this.constructor.findById(this.ownerId);
+    const UserModel = this.constructor as Model<IUser>;
+    const owner = await UserModel.findById(this.ownerId);
     if (!owner) {
       return next(new Error('صاحب المكتب غير موجود'));
     }
     
-    const employeeCount = await this.constructor.countDocuments({
+    const employeeCount = await UserModel.countDocuments({
       ownerId: this.ownerId,
       accountType: 'employee',
       isActive: true
@@ -225,7 +279,7 @@ UserSchema.pre('save', async function(next) {
 });
 
 // تطبيق الصلاحيات حسب الدور تلقائياً
-UserSchema.pre('save', function(next) {
+UserSchema.pre<IUser>('save', function(next) {
   if (this.isNew || this.isModified('role')) {
     this.permissions = getDefaultPermissions(this.role, this.accountType);
   }
@@ -233,7 +287,7 @@ UserSchema.pre('save', function(next) {
 });
 
 // Hash password before saving the user
-UserSchema.pre('save', async function (next) {
+UserSchema.pre<IUser>('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -243,17 +297,17 @@ UserSchema.pre('save', async function (next) {
 });
 
 // Method to compare entered password with hashed password
-UserSchema.methods.matchPassword = async function (enteredPassword: string) {
+UserSchema.methods.matchPassword = async function (enteredPassword: string): Promise<boolean> {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Method to check if user has specific permission
-UserSchema.methods.hasPermission = function(category: string, action: string) {
+UserSchema.methods.hasPermission = function(category: string, action: string): boolean {
   return this.permissions[category] && this.permissions[category][action];
 };
 
 // Method to check if user can access department cases
-UserSchema.methods.canAccessDepartment = function(department: string) {
+UserSchema.methods.canAccessDepartment = function(department: string): boolean {
   return this.department === department || this.hasPermission('cases', 'viewAll');
 };
 
@@ -262,18 +316,36 @@ UserSchema.methods.getEmployees = function() {
   if (this.accountType !== 'owner') {
     throw new Error('فقط صاحب المكتب يمكنه الحصول على قائمة الموظفين');
   }
-  return this.constructor.find({
+  const UserModel = this.constructor as Model<IUser>;
+  return UserModel.find({
     ownerId: this._id,
     accountType: 'employee'
   }).select('-password');
 };
 
 // Method to check if user belongs to specific firm
-UserSchema.methods.belongsToFirm = function(firmOwnerId: mongoose.Schema.Types.ObjectId) {
+UserSchema.methods.belongsToFirm = function(firmOwnerId: mongoose.Schema.Types.ObjectId): boolean {
   if (this.accountType === 'owner') {
     return this._id.toString() === firmOwnerId.toString();
   }
   return this.ownerId && this.ownerId.toString() === firmOwnerId.toString();
+};
+
+// Method to generate reset password token
+UserSchema.methods.getResetPasswordToken = function(): string {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+    
+  // Set expire - 10 minutes
+  this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
+  
+  return resetToken;
 };
 
 // Static method to get firm statistics
@@ -365,7 +437,71 @@ function getDefaultPermissions(role: string, accountType: string) {
         firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
       };
 
-    // باقي الأدوار...
+    case 'junior_lawyer':
+      // محامي مساعد
+      return {
+        cases: { view: true, create: true, edit: false, delete: false, assign: false, viewAll: false },
+        clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: true },
+        appointments: { view: true, create: true, edit: false, delete: false, viewAll: false },
+        documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
+        financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
+        employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+        reports: { viewBasic: true, viewDetailed: false, export: false, viewFinancial: false },
+        firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+      };
+
+    case 'legal_assistant':
+      // مساعد قانوني
+      return {
+        cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
+        appointments: { view: true, create: true, edit: true, delete: false, viewAll: false },
+        documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
+        financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
+        employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+        reports: { viewBasic: false, viewDetailed: false, export: false, viewFinancial: false },
+        firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+      };
+
+    case 'secretary':
+      // سكرتير
+      return {
+        cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        clients: { view: true, create: true, edit: true, delete: false, viewContactInfo: true },
+        appointments: { view: true, create: true, edit: true, delete: true, viewAll: true },
+        documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
+        financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
+        employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+        reports: { viewBasic: true, viewDetailed: false, export: false, viewFinancial: false },
+        firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+      };
+
+    case 'accountant':
+      // محاسب
+      return {
+        cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
+        appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
+        documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
+        financial: { viewReports: true, createInvoices: true, viewPayments: true, editPrices: true },
+        employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+        reports: { viewBasic: true, viewDetailed: true, export: true, viewFinancial: true },
+        firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+      };
+
+    case 'intern':
+      // متدرب
+      return {
+        cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
+        appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
+        documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
+        financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
+        employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+        reports: { viewBasic: false, viewDetailed: false, export: false, viewFinancial: false },
+        firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+      };
+
     default:
       return permissions;
   }

@@ -196,6 +196,7 @@ export async function POST(req: Request) {
 }
 
 // الحصول على قائمة الموظفين لصاحب المكتب
+// الحصول على قائمة الموظفين لصاحب المكتب
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -207,7 +208,10 @@ export async function GET() {
     }
 
     // التحقق من أن المستخدم هو صاحب مكتب أو له صلاحية عرض الموظفين
-    if (session.user.accountType !== 'owner' && !session.user.permissions?.employees?.view) {
+    if (
+      session.user.accountType !== "owner" &&
+      !session.user.permissions?.employees?.view
+    ) {
       return NextResponse.json(
         { success: false, message: "ليس لديك صلاحية لعرض الموظفين." },
         { status: 403 }
@@ -217,39 +221,43 @@ export async function GET() {
     await dbConnect();
 
     // تحديد المالك (إما المستخدم الحالي أو المالك إذا كان موظف)
-    const ownerId = session.user.accountType === 'owner' 
-      ? session.user.id 
-      : session.user.ownerId;
+    const ownerId =
+      session.user.accountType === "owner"
+        ? session.user.id
+        : session.user.ownerId;
 
-    // الحصول على قائمة الموظفين
+    // الحصول على قائمة الموظفين كـ plain objects
     const employees = await User.find({
       ownerId,
-      accountType: 'employee'
+      accountType: "employee",
     })
-    .select('-password')
-    .sort({ createdAt: -1 });
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .lean(); // <--- هنا التحويل لـ plain objects
 
     // إحصائيات المكتب
     const stats = await User.getFirmStats(ownerId);
-    
+
     // الحصول على بيانات المالك لمعرفة الحد الأقصى
-    const owner = await User.findById(ownerId).select('firmInfo.maxEmployees firmInfo.subscriptionPlan');
+    const owner = await User.findById(ownerId)
+      .select("firmInfo.maxEmployees firmInfo.subscriptionPlan")
+      .lean();
 
     return NextResponse.json({
       success: true,
       data: {
-        employees,
+        employees, // دلوقتي plain JSON objects
         stats: {
           total: stats.totalEmployees,
           active: stats.activeEmployees,
           inactive: stats.totalEmployees - stats.activeEmployees,
           maxAllowed: owner?.firmInfo?.maxEmployees || 5,
-          remainingSlots: (owner?.firmInfo?.maxEmployees || 5) - stats.activeEmployees,
-          subscriptionPlan: owner?.firmInfo?.subscriptionPlan || 'basic'
-        }
-      }
+          remainingSlots:
+            (owner?.firmInfo?.maxEmployees || 5) - stats.activeEmployees,
+          subscriptionPlan: owner?.firmInfo?.subscriptionPlan || "basic",
+        },
+      },
     });
-
   } catch (error: any) {
     console.error("Error fetching employees:", error);
     return NextResponse.json(

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
@@ -34,7 +35,7 @@ const routePermissions: Record<string, RoutePermission> = {
   "/dashboard/documents/[id]": { category: "documents", action: "view" },
 
   // Financial
-  "/dashboard/reports/financial": { category: "reports", action: "viewFinancial" },
+  "/dashboard/reports": { category: "reports", action: "viewFinancial" },
   "/dashboard/financial": { category: "financial", action: "viewReports" },
   "/dashboard/invoices": { category: "financial", action: "createInvoices" },
 

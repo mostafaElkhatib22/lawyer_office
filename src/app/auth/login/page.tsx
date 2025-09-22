@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ActivityIndicator } from '@/components/ui/activity-indicator'; // Custom loading indicator
+import Link from 'next/link';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -68,6 +69,12 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+            <div>
+              <Link href="/auth/forgot-password" className="text-sm underline text-primary">
+
+                Forgot Password?
+              </Link>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <ActivityIndicator className="mr-2" /> : null}

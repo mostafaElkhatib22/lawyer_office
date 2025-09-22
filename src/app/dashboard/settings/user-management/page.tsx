@@ -1,25 +1,28 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  UserPlus,
-  Settings,
-  Shield,
-  Users,
-  Building2,
-} from "lucide-react";
-import { useSession } from "next-auth/react";
-import { IUser } from "@/types/user";
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, UserPlus,  Shield, Users, Building2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
-// Define interfaces for better type safety
-interface EmployeeStats {
+// Interfaces for data structures
+interface Employee {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  isActive: boolean;
+  employeeInfo: {
+    employeeId: string;
+    phone: string;
+    specialization: string[];
+    contractType: string;
+    hireDate: string;
+  };
+  permissions?: Permissions;
+}
+
+interface Stats {
   total: number;
   active: number;
   inactive: number;
@@ -28,10 +31,10 @@ interface EmployeeStats {
   subscriptionPlan: string;
 }
 
-interface NewEmployeeForm {
+interface NewEmployee {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role: string;
   department: string;
   employeeId: string;
@@ -40,261 +43,228 @@ interface NewEmployeeForm {
   contractType: string;
 }
 
+interface PermissionCategory {
+  title: string;
+  permissions: { [key: string]: string };
+}
+
+interface Permissions {
+  cases: { view: boolean; create: boolean; edit: boolean; delete: boolean; assign: boolean; viewAll: boolean };
+  clients: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewContactInfo: boolean };
+  appointments: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean };
+  documents: { view: boolean; upload: boolean; download: boolean; delete: boolean; editSensitive: boolean };
+  financial: { viewReports: boolean; createInvoices: boolean; viewPayments: boolean; editPrices: boolean };
+  employees?: { view: boolean; create: boolean; edit: boolean; delete: boolean; managePermissions: boolean };
+  reports: { viewBasic: boolean; viewDetailed: boolean; export: boolean; viewFinancial: boolean };
+  firmSettings: { viewSettings: boolean; editSettings: boolean; manageSubscription: boolean; manageBackup: boolean };
+}
+
 interface PermissionModalProps {
-  employee: IUser;
+  employee: Employee;
   onClose: () => void;
-  onSave: (updatedPermissions: any) => void;
+  onSave: (updatedPermissions: Permissions) => void;
 }
 
 const UserManagementPage = () => {
   const { data: session } = useSession();
-  const [employees, setEmployees] = useState<IUser[]>([]); // Properly typed
-  const [stats, setStats] = useState<EmployeeStats>({
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [stats, setStats] = useState<Stats>({
     total: 0,
     active: 0,
     inactive: 0,
     maxAllowed: 5,
     remainingSlots: 5,
-    subscriptionPlan: "basic",
+    subscriptionPlan: 'basic'
   });
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
-  const [showPermissionModal, setShowPermissionModal] =
-    useState<boolean>(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<IUser | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterDepartment, setFilterDepartment] = useState<string>("all");
+  const [showPermissionModal, setShowPermissionModal] = useState<boolean>(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(true);
 
-  const [newEmployee, setNewEmployee] = useState<NewEmployeeForm>({
-    name: "",
-    email: "",
-    password: "",
-    role: "lawyer",
-    department: "general",
-    employeeId: "",
-    phone: "",
+  const [newEmployee, setNewEmployee] = useState<NewEmployee>({
+    name: '',
+    email: '',
+    password: '',
+    role: 'lawyer',
+    department: 'general',
+    employeeId: '',
+    phone: '',
     specialization: [],
-    contractType: "full_time",
+    contractType: 'full_time'
   });
 
   // خيارات الأدوار والأقسام
-  const roles: Record<string, string> = {
-    partner: "شريك",
-    senior_lawyer: "محامي أول",
-    lawyer: "محامي",
-    junior_lawyer: "محامي مساعد",
-    legal_assistant: "مساعد قانوني",
-    secretary: "سكرتير",
-    accountant: "محاسب",
-    intern: "متدرب",
+  const roles: { [key: string]: string } = {
+    partner: 'شريك',
+    senior_lawyer: 'محامي أول',
+    lawyer: 'محامي',
+    junior_lawyer: 'محامي مساعد',
+    legal_assistant: 'مساعد قانوني',
+    secretary: 'سكرتير',
+    accountant: 'محاسب',
+    intern: 'متدرب'
   };
 
-  const departments: Record<string, string> = {
-    civil_law: "القانون المدني",
-    criminal_law: "القانون الجنائي",
-    commercial_law: "القانون التجاري",
-    family_law: "الأحوال الشخصية",
-    labor_law: "قانون العمل",
-    real_estate: "العقارات",
-    corporate_law: "قانون الشركات",
-    tax_law: "القانون الضريبي",
-    administrative: "الإدارة",
-    accounting: "المحاسبة",
-    general: "عام",
+  const departments: { [key: string]: string } = {
+    civil_law: 'القانون المدني',
+    criminal_law: 'القانون الجنائي',
+    commercial_law: 'القانون التجاري',
+    family_law: 'الأحوال الشخصية',
+    labor_law: 'قانون العمل',
+    real_estate: 'العقارات',
+    corporate_law: 'قانون الشركات',
+    tax_law: 'القانون الضريبي',
+    administrative: 'الإدارة',
+    accounting: 'المحاسبة',
+    general: 'عام'
   };
 
-  const contractTypes: Record<string, string> = {
-    full_time: "دوام كامل",
-    part_time: "دوام جزئي",
-    contract: "مؤقت",
-    intern: "متدرب",
+  const contractTypes: { [key: string]: string } = {
+    full_time: 'دوام كامل',
+    part_time: 'دوام جزئي',
+    contract: 'مؤقت',
+    intern: 'متدرب'
   };
 
   // جلب قائمة الموظفين
   useEffect(() => {
-    if (session?.user?.accountType === "owner") {
+    if (session?.user?.accountType === 'owner') {
       fetchEmployees();
     }
   }, [session]);
 
-  const fetchEmployees = async (): Promise<void> => {
+  const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/employees/add");
+      const response = await fetch('/api/employees/add');
       if (response.ok) {
         const result = await response.json();
         setEmployees(result.data.employees);
         setStats(result.data.stats);
       } else {
-        console.error("Failed to fetch employees");
+        console.error('Failed to fetch employees');
       }
     } catch (error) {
-      console.error("Error fetching employees:", error);
+      console.error('Error fetching employees:', error);
     } finally {
       setLoading(false);
     }
   };
 
   // تصفية الموظفين
-  const filteredEmployees = employees.filter((employee: IUser) => {
-    const matchesSearch =
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredEmployees = employees.filter(employee => {
+    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (employee.employeeInfo?.employeeId || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === "all" || employee.role === filterRole;
-    const matchesDepartment =
-      filterDepartment === "all" || employee.department === filterDepartment;
-
+      (employee.employeeInfo?.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' || employee.role === filterRole;
+    const matchesDepartment = filterDepartment === 'all' || employee.department === filterDepartment;
+    
     return matchesSearch && matchesRole && matchesDepartment;
   });
 
   // إضافة موظف جديد
-  const handleAddEmployee = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     try {
-      const response = await fetch("/api/employees/add", {
-        method: "POST",
+      const response = await fetch('/api/employees/add', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: newEmployee.name,
-          email: newEmployee.email,
-          password: newEmployee.password,
-          role: newEmployee.role,
-          department: newEmployee.department,
-          employeeId: newEmployee.employeeId,
-          phone: newEmployee.phone,
-          specialization: newEmployee.specialization,
-          contractType: newEmployee.contractType,
-        }),
+        body: JSON.stringify(newEmployee),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        setEmployees([...employees, result.employee]);
-        setStats((prev) => ({
+        setEmployees([...employees, result.data]);
+        setStats(prev => ({
           ...prev,
           total: prev.total + 1,
           active: prev.active + 1,
-          remainingSlots: prev.remainingSlots - 1,
+          remainingSlots: prev.remainingSlots - 1
         }));
         setShowAddModal(false);
         setNewEmployee({
-          name: "",
-          email: "",
-          password: "",
-          role: "lawyer",
-          department: "general",
-          employeeId: "",
-          phone: "",
+          name: '',
+          email: '',
+          password: '',
+          role: 'lawyer',
+          department: 'general',
+          employeeId: '',
+          phone: '',
           specialization: [],
-          contractType: "full_time",
+          contractType: 'full_time'
         });
-        alert("تم إضافة الموظف بنجاح!");
+        // استخدام رسالة بدلاً من alert()
+        console.log('تم إضافة الموظف بنجاح!'); 
       } else {
-        alert(`خطأ: ${result.message}`);
+        console.error(`خطأ: ${result.message}`);
       }
     } catch (error) {
-      console.error("Error adding employee:", error);
-      alert("حدث خطأ أثناء إضافة الموظف");
+      console.error('Error adding employee:', error);
+      console.error('حدث خطأ أثناء إضافة الموظف'); 
     }
   };
 
   // تبديل حالة الموظف
-  const toggleEmployeeStatus = async (employeeId: string): Promise<void> => {
+  const toggleEmployeeStatus = async (employeeId: string) => {
     try {
-      const response = await fetch(
-        `/api/employees/${employeeId}/toggle-status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetch(`/api/employees/${employeeId}/permissions`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         }
-      );
+      });
 
       if (response.ok) {
-        setEmployees(
-          employees.map((emp) => {
-            const EmpId = emp._id as any;
-            EmpId.toString() === employeeId
-              ? { ...emp, isActive: !emp.isActive }
-              : emp;
-          })
-        );
-
-        const employee = employees.find((emp) => {
-          const EmpId = emp._id as any;
-          return EmpId.toString() === employeeId;
-        });
+        setEmployees(employees.map(emp => 
+          emp._id === employeeId ? { ...emp, isActive: !emp.isActive } : emp
+        ));
+        
+        const employee = employees.find(emp => emp._id === employeeId);
         if (employee) {
-          setStats((prev) => ({
+          setStats(prev => ({
             ...prev,
-            active: employee.isActive ? prev.active - 1 : prev.active + 1,
-            inactive: employee.isActive ? prev.inactive + 1 : prev.inactive - 1,
+            active: employee.isActive ? prev.active - 1 : prev.active + 1
           }));
         }
       }
     } catch (error) {
-      console.error("Error toggling employee status:", error);
+      console.error('Error toggling employee status:', error);
     }
   };
 
   // حذف موظف
-  const handleDeleteEmployee = async (employeeId: string): Promise<void> => {
-    if (window.confirm("هل أنت متأكد من حذف هذا الموظف؟")) {
+  const handleDeleteEmployee = async (employeeId: string) => {
+    if (window.confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
       try {
-        const response = await fetch(`/api/employees/${employeeId}`, {
-          method: "DELETE",
+        const response = await fetch(`/api/employees/${employeeId}/permissions`, {
+          method: 'DELETE'
         });
 
         if (response.ok) {
-          const deletedEmployee = employees.find((emp) => {
-            const EmpId = emp._id as any;
-            return EmpId.toString() === employeeId;
-          });
-          setEmployees(
-            employees.filter((emp) => {
-              const EmpId = emp._id as any;
-              return EmpId.toString() !== employeeId;
-            })
-          );
-          setStats((prev) => ({
+          setEmployees(employees.filter(emp => emp._id !== employeeId));
+          setStats(prev => ({
             ...prev,
             total: prev.total - 1,
-            active: deletedEmployee?.isActive ? prev.active - 1 : prev.active,
-            inactive: deletedEmployee?.isActive
-              ? prev.inactive
-              : prev.inactive - 1,
-            remainingSlots: prev.remainingSlots + 1,
+            remainingSlots: prev.remainingSlots + 1
           }));
-          alert("تم حذف الموظف بنجاح");
-        } else {
-          const result = await response.json();
-          alert(`خطأ: ${result.message}`);
         }
       } catch (error) {
-        console.error("Error deleting employee:", error);
-        alert("حدث خطأ أثناء حذف الموظف");
+        console.error('Error deleting employee:', error);
       }
     }
   };
 
   // التحقق من الصلاحيات
-  if (!session?.user || session.user.accountType !== "owner") {
+  if (!session?.user || session.user.accountType !== 'owner') {
     return (
-      <div
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
-        dir="rtl"
-      >
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
         <div className="text-center">
           <Building2 size={64} className="mx-auto text-gray-400 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">غير مصرح</h2>
@@ -306,10 +276,7 @@ const UserManagementPage = () => {
 
   if (loading) {
     return (
-      <div
-        className="min-h-screen bg-gray-50 flex items-center justify-center"
-        dir="rtl"
-      >
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">جاري تحميل البيانات...</p>
@@ -325,28 +292,23 @@ const UserManagementPage = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                إدارة الموظفين
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">إدارة الموظفين</h1>
               <p className="text-gray-600">
-                {session.user.firmInfo?.firmName || "مكتب المحاماة"} - إدارة
-                حسابات الموظفين وصلاحياتهم
+                {session.user.firmInfo?.firmName || 'مكتب المحاماة'} - إدارة حسابات الموظفين وصلاحياتهم
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-500 text-center">
-                <div className="font-medium">
-                  {stats.active} / {stats.maxAllowed}
-                </div>
+                <div className="font-medium">{stats.active} / {stats.maxAllowed}</div>
                 <div>موظف نشط</div>
               </div>
               <button
                 onClick={() => setShowAddModal(true)}
                 disabled={stats.remainingSlots === 0}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                  stats.remainingSlots === 0
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
+                  stats.remainingSlots === 0 
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
                 <UserPlus size={20} />
@@ -360,52 +322,38 @@ const UserManagementPage = () => {
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-600 text-sm font-medium">
-                    إجمالي الموظفين
-                  </p>
-                  <p className="text-2xl font-bold text-blue-900">
-                    {stats.total}
-                  </p>
+                  <p className="text-blue-600 text-sm font-medium">إجمالي الموظفين</p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
             </div>
-
+            
             <div className="bg-green-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-600 text-sm font-medium">
-                    الموظفين النشطين
-                  </p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {stats.active}
-                  </p>
+                  <p className="text-green-600 text-sm font-medium">الموظفين النشطين</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
                 </div>
                 <Eye className="h-8 w-8 text-green-600" />
               </div>
             </div>
-
+            
             <div className="bg-orange-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-600 text-sm font-medium">
-                    غير النشطين
-                  </p>
-                  <p className="text-2xl font-bold text-orange-900">
-                    {stats.inactive}
-                  </p>
+                  <p className="text-orange-600 text-sm font-medium">غير النشطين</p>
+                  <p className="text-2xl font-bold text-orange-900">{stats.inactive}</p>
                 </div>
                 <EyeOff className="h-8 w-8 text-orange-600" />
               </div>
             </div>
-
+            
             <div className="bg-purple-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-600 text-sm font-medium">المتاح</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {stats.remainingSlots}
-                  </p>
+                  <p className="text-2xl font-bold text-purple-900">{stats.remainingSlots}</p>
                 </div>
                 <Plus className="h-8 w-8 text-purple-600" />
               </div>
@@ -418,10 +366,7 @@ const UserManagementPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* البحث */}
             <div className="relative">
-              <Search
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={20}
-              />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
                 placeholder="البحث بالاسم أو البريد أو رقم الموظف..."
@@ -439,9 +384,7 @@ const UserManagementPage = () => {
             >
               <option value="all">جميع الأدوار</option>
               {Object.entries(roles).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
-                </option>
+                <option key={key} value={key}>{value}</option>
               ))}
             </select>
 
@@ -453,17 +396,13 @@ const UserManagementPage = () => {
             >
               <option value="all">جميع الأقسام</option>
               {Object.entries(departments).map(([key, value]) => (
-                <option key={key} value={key}>
-                  {value}
-                </option>
+                <option key={key} value={key}>{value}</option>
               ))}
             </select>
 
             {/* عدد النتائج */}
             <div className="flex items-center justify-center text-gray-600">
-              <span>
-                النتائج: {filteredEmployees.length} من {employees.length}
-              </span>
+              <span>النتائج: {filteredEmployees.length} من {employees.length}</span>
             </div>
           </div>
         </div>
@@ -495,7 +434,7 @@ const UserManagementPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredEmployees.map((employee: IUser, index) => (
+                {filteredEmployees.map((employee,index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -507,52 +446,38 @@ const UserManagementPage = () => {
                           </div>
                         </div>
                         <div className="mr-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {employee.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {employee.email}
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                          <div className="text-sm text-gray-500">{employee.email}</div>
                           <div className="text-xs text-gray-400">
-                            ID:{" "}
-                            {employee.employeeInfo?.employeeId || "غير محدد"}
+                            ID: {employee.employeeInfo?.employeeId || 'غير محدد'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {roles[employee.role]}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {departments[employee.department]}
-                      </div>
+                      <div className="text-sm text-gray-900">{roles[employee.role]}</div>
+                      <div className="text-sm text-gray-500">{departments[employee.department]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {contractTypes[
-                          employee.employeeInfo?.contractType || "full_time"
-                        ] || "غير محدد"}
+                        {contractTypes[employee.employeeInfo?.contractType] || 'غير محدد'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {employee.isActive ? "نشط" : "غير نشط"}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        employee.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {employee.isActive ? 'نشط' : 'غير نشط'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {employee.employeeInfo?.hireDate
-                          ? new Date(
-                              employee.employeeInfo.hireDate
-                            ).toLocaleDateString("ar-EG")
-                          : "غير محدد"}
+                        {employee.employeeInfo?.hireDate 
+                          ? new Date(employee.employeeInfo.hireDate).toLocaleDateString('ar-EG')
+                          : 'غير محدد'
+                        }
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -568,28 +493,14 @@ const UserManagementPage = () => {
                           <Shield size={16} />
                         </button>
                         <button
-                          onClick={() => {
-                            const EmployeeId = employee._id as any;
-                            return toggleEmployeeStatus(EmployeeId.toString());
-                          }}
-                          className={`p-1 rounded ${
-                            employee.isActive
-                              ? "text-orange-600 hover:text-orange-900"
-                              : "text-green-600 hover:text-green-900"
-                          }`}
-                          title={employee.isActive ? "إلغاء تفعيل" : "تفعيل"}
+                          onClick={() => toggleEmployeeStatus(employee._id)}
+                          className={`p-1 rounded ${employee.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                          title={employee.isActive ? 'إلغاء تفعيل' : 'تفعيل'}
                         >
-                          {employee.isActive ? (
-                            <EyeOff size={16} />
-                          ) : (
-                            <Eye size={16} />
-                          )}
+                          {employee.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                         <button
-                          onClick={() => {
-                            const EmployeeId = employee._id as any;
-                            return handleDeleteEmployee(EmployeeId.toString());
-                          }}
+                          onClick={() => handleDeleteEmployee(employee._id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="حذف"
                         >
@@ -601,13 +512,8 @@ const UserManagementPage = () => {
                 ))}
                 {filteredEmployees.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-4 text-center text-gray-500"
-                    >
-                      {employees.length === 0
-                        ? "لم يتم إضافة أي موظفين بعد"
-                        : "لا توجد نتائج مطابقة للبحث"}
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                      {employees.length === 0 ? 'لم يتم إضافة أي موظفين بعد' : 'لا توجد نتائج مطابقة للبحث'}
                     </td>
                   </tr>
                 )}
@@ -621,168 +527,104 @@ const UserManagementPage = () => {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  إضافة موظف جديد
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">إضافة موظف جديد</h3>
                 <form onSubmit={handleAddEmployee} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        الاسم *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">الاسم *</label>
                       <input
                         type="text"
                         required
                         value={newEmployee.name}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            name: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        البريد الإلكتروني *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني *</label>
                       <input
                         type="email"
                         required
                         value={newEmployee.email}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            email: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        كلمة المرور *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور *</label>
                       <input
                         type="password"
                         required
                         minLength={6}
                         value={newEmployee.password}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            password: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        رقم الموظف *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">رقم الموظف *</label>
                       <input
                         type="text"
                         required
                         value={newEmployee.employeeId}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            employeeId: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, employeeId: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        رقم الهاتف
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
                       <input
                         type="tel"
                         value={newEmployee.phone}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            phone: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        الدور *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">الدور *</label>
                       <select
                         value={newEmployee.role}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            role: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, role: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {Object.entries(roles).map(([key, value]) => (
-                          <option key={key} value={key}>
-                            {value}
-                          </option>
+                          <option key={key} value={key}>{value}</option>
                         ))}
                       </select>
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        القسم *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">القسم *</label>
                       <select
                         value={newEmployee.department}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            department: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {Object.entries(departments).map(([key, value]) => (
-                          <option key={key} value={key}>
-                            {value}
-                          </option>
+                          <option key={key} value={key}>{value}</option>
                         ))}
                       </select>
                     </div>
-
+                    
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        نوع التعاقد
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">نوع التعاقد</label>
                       <select
                         value={newEmployee.contractType}
-                        onChange={(e) =>
-                          setNewEmployee({
-                            ...newEmployee,
-                            contractType: e.target.value,
-                          })
-                        }
+                        onChange={(e) => setNewEmployee({...newEmployee, contractType: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {Object.entries(contractTypes).map(([key, value]) => (
-                          <option key={key} value={key}>
-                            {value}
-                          </option>
+                          <option key={key} value={key}>{value}</option>
                         ))}
                       </select>
                     </div>
                   </div>
-
+                  
                   <div className="flex justify-end gap-3 mt-6">
                     <button
                       type="button"
@@ -806,19 +648,15 @@ const UserManagementPage = () => {
 
         {/* Permissions Modal */}
         {showPermissionModal && selectedEmployee && (
-          <PermissionModal
+          <PermissionModal 
             employee={selectedEmployee}
             onClose={() => setShowPermissionModal(false)}
-            onSave={(updatedPermissions: string) => {
-              setEmployees(
-                employees.map((emp) => {
-                  const EmpId = emp._id as any;
-                  const SelectedEmp = selectedEmployee._id as any;
-                  return EmpId.toString() === SelectedEmp.toString()
-                    ? { ...emp, permissions: updatedPermissions }
-                    : emp;
-                })
-              );
+            onSave={(updatedPermissions) => {
+              setEmployees(employees.map(emp => 
+                emp._id === selectedEmployee._id 
+                  ? { ...emp, permissions: updatedPermissions }
+                  : emp
+              ));
               setShowPermissionModal(false);
             }}
           />
@@ -828,163 +666,111 @@ const UserManagementPage = () => {
   );
 };
 
-// مكون إدارة الصلاح
 // مكون إدارة الصلاحيات
-const PermissionModal = ({ employee, onClose, onSave }) => {
-  const [permissions, setPermissions] = useState(
-    employee.permissions || {
-      cases: {
-        view: true,
-        create: false,
-        edit: false,
-        delete: false,
-        assign: false,
-        viewAll: false,
-      },
-      clients: {
-        view: true,
-        create: false,
-        edit: false,
-        delete: false,
-        viewContactInfo: true,
-      },
-      appointments: {
-        view: true,
-        create: false,
-        edit: false,
-        delete: false,
-        viewAll: false,
-      },
-      documents: {
-        view: true,
-        upload: false,
-        download: true,
-        delete: false,
-        editSensitive: false,
-      },
-      financial: {
-        viewReports: false,
-        createInvoices: false,
-        viewPayments: false,
-        editPrices: false,
-      },
-      employees: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false,
-        managePermissions: false,
-      },
-      reports: {
-        viewBasic: true,
-        viewDetailed: false,
-        export: false,
-        viewFinancial: false,
-      },
-      firmSettings: {
-        viewSettings: false,
-        editSettings: false,
-        manageSubscription: false,
-        manageBackup: false,
-      },
-    }
-  );
+const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, onSave }) => {
+  const [permissions, setPermissions] = useState<Permissions>(employee.permissions || {
+    cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+    clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: true },
+    appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
+    documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
+    financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
+    employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
+    reports: { viewBasic: true, viewDetailed: false, export: false, viewFinancial: false },
+    firmSettings: { viewSettings: false, editSettings: false, manageSubscription: false, manageBackup: false },
+  });
 
-  const permissionLabels = {
+  const permissionLabels: { [key: string]: PermissionCategory } = {
     cases: {
-      title: "إدارة القضايا",
+      title: 'إدارة القضايا',
       permissions: {
-        view: "عرض القضايا",
-        create: "إنشاء قضايا جديدة",
-        edit: "تعديل القضايا",
-        delete: "حذف القضايا",
-        assign: "تكليف القضايا",
-        viewAll: "عرض جميع القضايا",
-      },
+        view: 'عرض القضايا',
+        create: 'إنشاء قضايا جديدة',
+        edit: 'تعديل القضايا',
+        delete: 'حذف القضايا',
+        assign: 'تكليف القضايا',
+        viewAll: 'عرض جميع القضايا'
+      }
     },
     clients: {
-      title: "إدارة العملاء",
+      title: 'إدارة العملاء',
       permissions: {
-        view: "عرض العملاء",
-        create: "إضافة عملاء جدد",
-        edit: "تعديل بيانات العملاء",
-        delete: "حذف العملاء",
-        viewContactInfo: "عرض بيانات الاتصال",
-      },
+        view: 'عرض العملاء',
+        create: 'إضافة عملاء جدد',
+        edit: 'تعديل بيانات العملاء',
+        delete: 'حذف العملاء',
+        viewContactInfo: 'عرض بيانات الاتصال'
+      }
     },
     appointments: {
-      title: "إدارة المواعيد",
+      title: 'إدارة المواعيد',
       permissions: {
-        view: "عرض المواعيد",
-        create: "إنشاء مواعيد جديدة",
-        edit: "تعديل المواعيد",
-        delete: "حذف المواعيد",
-        viewAll: "عرض جميع المواعيد",
-      },
+        view: 'عرض المواعيد',
+        create: 'إنشاء مواعيد جديدة',
+        edit: 'تعديل المواعيد',
+        delete: 'حذف المواعيد',
+        viewAll: 'عرض جميع المواعيد'
+      }
     },
     documents: {
-      title: "إدارة المستندات",
+      title: 'إدارة المستندات',
       permissions: {
-        view: "عرض المستندات",
-        upload: "رفع مستندات جديدة",
-        download: "تحميل المستندات",
-        delete: "حذف المستندات",
-        editSensitive: "تعديل المستندات الحساسة",
-      },
+        view: 'عرض المستندات',
+        upload: 'رفع مستندات جديدة',
+        download: 'تحميل المستندات',
+        delete: 'حذف المستندات',
+        editSensitive: 'تعديل المستندات الحساسة'
+      }
     },
     financial: {
-      title: "الإدارة المالية",
+      title: 'الإدارة المالية',
       permissions: {
-        viewReports: "عرض التقارير المالية",
-        createInvoices: "إنشاء فواتير",
-        viewPayments: "عرض المدفوعات",
-        editPrices: "تعديل الأسعار",
-      },
+        viewReports: 'عرض التقارير المالية',
+        createInvoices: 'إنشاء فواتير',
+        viewPayments: 'عرض المدفوعات',
+        editPrices: 'تعديل الأسعار'
+      }
     },
     reports: {
-      title: "التقارير",
+      title: 'التقارير',
       permissions: {
-        viewBasic: "عرض التقارير الأساسية",
-        viewDetailed: "عرض التقارير المفصلة",
-        export: "تصدير التقارير",
-        viewFinancial: "عرض التقارير المالية",
-      },
-    },
+        viewBasic: 'عرض التقارير الأساسية',
+        viewDetailed: 'عرض التقارير المفصلة',
+        export: 'تصدير التقارير',
+        viewFinancial: 'عرض التقارير المالية'
+      }
+    }
   };
 
-  const handlePermissionChange = (category, permission) => {
-    setPermissions((prev) => ({
+  const handlePermissionChange = (category: string, permission: string) => {
+    setPermissions(prev => ({
       ...prev,
       [category]: {
-        ...prev[category],
-        [permission]: !prev[category][permission],
-      },
+        ...prev[category as keyof Permissions],
+        [permission]: !prev[category as keyof Permissions][permission as keyof PermissionCategory['permissions']]
+      }
     }));
   };
 
   const handleSave = async () => {
     try {
-      const response = await fetch(
-        `/api/employees/${employee._id}/permissions`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ permissions }),
-        }
-      );
+      const response = await fetch(`/api/employees/${employee._id}/permissions`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ permissions }),
+      });
 
       if (response.ok) {
         onSave(permissions);
-        alert("تم تحديث الصلاحيات بنجاح");
+        console.log('تم تحديث الصلاحيات بنجاح');
       } else {
         const result = await response.json();
-        alert(`خطأ: ${result.message}`);
+        console.error(`خطأ: ${result.message}`);
       }
     } catch (error) {
-      console.error("Error updating permissions:", error);
-      alert("حدث خطأ أثناء تحديث الصلاحيات");
+      console.error('Error updating permissions:', error);
+      console.error('حدث خطأ أثناء تحديث الصلاحيات');
     }
   };
 
@@ -1000,38 +786,28 @@ const PermissionModal = ({ employee, onClose, onSave }) => {
               الدور: {employee.role} | القسم: {employee.department}
             </div>
           </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto">
-            {Object.entries(permissionLabels).map(
-              ([category, categoryData]) => (
-                <div key={category} className="border rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    {categoryData.title}
-                  </h4>
-                  <div className="space-y-2">
-                    {Object.entries(categoryData.permissions).map(
-                      ([permission, label]) => (
-                        <label key={permission} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              permissions[category]?.[permission] || false
-                            }
-                            onChange={() =>
-                              handlePermissionChange(category, permission)
-                            }
-                            className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <span className="text-sm text-gray-700">{label}</span>
-                        </label>
-                      )
-                    )}
-                  </div>
+            {Object.entries(permissionLabels).map(([category, categoryData]) => (
+              <div key={category} className="border rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">{categoryData.title}</h4>
+                <div className="space-y-2">
+                  {Object.entries(categoryData.permissions).map(([permission, label]) => (
+                    <label key={permission} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={(permissions as any)[category]?.[permission] || false}
+                        onChange={() => handlePermissionChange(category, permission)}
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{label}</span>
+                    </label>
+                  ))}
                 </div>
-              )
-            )}
+              </div>
+            ))}
           </div>
-
+          
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={onClose}
