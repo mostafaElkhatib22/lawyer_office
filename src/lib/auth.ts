@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/lib/auth.ts
 import type { NextAuthOptions } from "next-auth";
@@ -43,7 +44,7 @@ export const authOptions: NextAuthOptions = {
 
         // إرجاع بيانات المستخدم مع معلومات المكتب
         if (passwordOk) {
-          const userData = {
+          let userData : any = {
            id: (user as any)._id.toString(),
             name: user.name,
             email: user.email,
@@ -56,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           // إضافة معلومات المكتب
           if (user.accountType === 'owner') {
             userData.firmInfo = user.firmInfo;
-            userData.ownerId = user._id.toString(); // المالك هو نفسه
+            userData.ownerId = (user as any)._id.toString(); // المالك هو نفسه
           } else if (user.ownerId) {
             userData.ownerId = user.ownerId.toString();
             userData.ownerName = user.ownerId.name;
