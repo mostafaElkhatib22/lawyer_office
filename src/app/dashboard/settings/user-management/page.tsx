@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, UserPlus,  Shield, Users, Building2 } from 'lucide-react';
+import { Plus, Search,  Trash2, Eye, EyeOff, UserPlus,  Shield, Users, Building2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 // Interfaces for data structures
@@ -742,13 +742,15 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
   };
 
   const handlePermissionChange = (category: string, permission: string) => {
-    setPermissions(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category as keyof Permissions],
-        [permission]: !prev[category as keyof Permissions][permission as keyof PermissionCategory['permissions']]
-      }
-    }));
+   setPermissions(prev => ({
+  ...prev,
+  [category]: {
+    ...prev[category as keyof Permissions] || {}, // fallback لو undefined
+    [permission]: !(
+      (prev[category as keyof Permissions] as any)?.[permission]
+    ),
+  },
+}));
   };
 
   const handleSave = async () => {
