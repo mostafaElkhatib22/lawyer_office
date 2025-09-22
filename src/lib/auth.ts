@@ -44,7 +44,7 @@ export const authOptions: NextAuthOptions = {
         // إرجاع بيانات المستخدم مع معلومات المكتب
         if (passwordOk) {
           const userData = {
-            id: user._id.toString(),
+           id: (user as any)._id.toString(),
             name: user.name,
             email: user.email,
             role: user.role,
