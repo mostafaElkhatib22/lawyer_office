@@ -133,7 +133,8 @@ export async function middleware(req: NextRequest) {
         permissions: nextAuthToken.permissions,
         isActive: nextAuthToken.isActive,
         ownerId: nextAuthToken.ownerId,
-        ...nextAuthToken.user,
+        // Fix: Only spread if user exists and is an object
+        ...(nextAuthToken.user && typeof nextAuthToken.user === 'object' ? nextAuthToken.user : {}),
       };
     }
   } catch (error) {
