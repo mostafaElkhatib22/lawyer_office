@@ -6,6 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -60,8 +61,10 @@ export const authOptions: NextAuthOptions = {
             userData.ownerId = (user as any)._id.toString(); // المالك هو نفسه
           } else if (user.ownerId) {
             userData.ownerId = user.ownerId.toString();
-            userData.ownerName = user.ownerId.name;
-            userData.firmName = user.ownerId.firmInfo?.firmName || 'غير محدد';
+            // Fix: Cast to any to access populated fields or check if populated
+            const populatedOwner = user.ownerId as any;
+            userData.ownerName = populatedOwner.name;
+            userData.firmName = populatedOwner.firmInfo?.firmName || 'غير محدد';
           }
 
           return userData;
