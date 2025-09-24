@@ -50,6 +50,7 @@ interface PermissionCategory {
 
 interface Permissions {
   cases: { view: boolean; create: boolean; edit: boolean; delete: boolean; assign: boolean; viewAll: boolean };
+  sessions: { view: boolean };
   clients: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewContactInfo: boolean };
   appointments: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean };
   documents: { view: boolean; upload: boolean; download: boolean; delete: boolean; editSensitive: boolean };
@@ -670,6 +671,7 @@ const UserManagementPage = () => {
 const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, onSave }) => {
   const [permissions, setPermissions] = useState<Permissions>(employee.permissions || {
     cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+    sessions: { view: true },
     clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: true },
     appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
     documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
@@ -701,6 +703,12 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
         viewContactInfo: 'عرض بيانات الاتصال'
       }
     },
+    sessions: {
+      title: 'إدارة الجلسات',
+      permissions: {  
+        view: 'عرض الجلسات'
+      }
+    },  
     appointments: {
       title: 'إدارة المواعيد',
       permissions: {

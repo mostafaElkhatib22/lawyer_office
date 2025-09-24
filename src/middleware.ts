@@ -29,7 +29,8 @@ const routePermissions: Record<string, RoutePermission> = {
   "/dashboard/appointments/add": { category: "appointments", action: "create" },
   "/dashboard/appointments/[id]": { category: "appointments", action: "view" },
   "/dashboard/appointments/[id]/edit": { category: "appointments", action: "edit" },
-
+// sessions
+  "/dashboard/sessions": { category: "sessions", action: "view" },
   // Documents
   "/dashboard/documents/upload": { category: "documents", action: "upload" },
   "/dashboard/documents/[id]": { category: "documents", action: "view" },

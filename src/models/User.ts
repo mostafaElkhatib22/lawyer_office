@@ -386,6 +386,7 @@ UserSchema.statics.getFirmStats = async function (ownerId: string): Promise<IFir
 function getDefaultPermissions(role: string, accountType: string) {
   const permissions = {
     cases: { view: false, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: true},
     clients: { view: false, create: false, edit: false, delete: false, viewContactInfo: false },
     appointments: { view: false, create: false, edit: false, delete: false, viewAll: false },
     documents: { view: false, upload: false, download: false, delete: false, editSensitive: false },
@@ -400,6 +401,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // صاحب المكتب - صلاحيات كاملة
       return {
         cases: { view: true, create: true, edit: true, delete: true, assign: true, viewAll: true },
+        sessions: { view: true},
         clients: { view: true, create: true, edit: true, delete: true, viewContactInfo: true },
         appointments: { view: true, create: true, edit: true, delete: true, viewAll: true },
         documents: { view: true, upload: true, download: true, delete: true, editSensitive: true },
@@ -413,6 +415,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // شريك - صلاحيات واسعة
       return {
         cases: { view: true, create: true, edit: true, delete: true, assign: true, viewAll: true },
+        sessions: { view: true},
         clients: { view: true, create: true, edit: true, delete: false, viewContactInfo: true },
         appointments: { view: true, create: true, edit: true, delete: true, viewAll: true },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: true },
@@ -426,6 +429,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // محامي أول
       return {
         cases: { view: true, create: true, edit: true, delete: false, assign: true, viewAll: true },
+        sessions: { view: false},
         clients: { view: true, create: true, edit: true, delete: false, viewContactInfo: true },
         appointments: { view: true, create: true, edit: true, delete: true, viewAll: false },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: true },
@@ -439,6 +443,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // محامي
       return {
         cases: { view: true, create: true, edit: true, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: true, edit: true, delete: false, viewContactInfo: true },
         appointments: { view: true, create: true, edit: true, delete: false, viewAll: false },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
@@ -452,6 +457,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // محامي مساعد
       return {
         cases: { view: true, create: true, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: true },
         appointments: { view: true, create: true, edit: false, delete: false, viewAll: false },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
@@ -465,6 +471,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // مساعد قانوني
       return {
         cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
         appointments: { view: true, create: true, edit: true, delete: false, viewAll: false },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
@@ -478,6 +485,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // سكرتير
       return {
         cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: true, edit: true, delete: false, viewContactInfo: true },
         appointments: { view: true, create: true, edit: true, delete: true, viewAll: true },
         documents: { view: true, upload: true, download: true, delete: false, editSensitive: false },
@@ -491,6 +499,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // محاسب
       return {
         cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
         appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
         documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
@@ -504,6 +513,7 @@ function getDefaultPermissions(role: string, accountType: string) {
       // متدرب
       return {
         cases: { view: true, create: false, edit: false, delete: false, assign: false, viewAll: false },
+        sessions: { view: false},
         clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: false },
         appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
         documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
