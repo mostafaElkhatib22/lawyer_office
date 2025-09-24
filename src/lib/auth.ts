@@ -53,6 +53,7 @@ export const authOptions: NextAuthOptions = {
             accountType: user.accountType,
             department: user.department,
             permissions: user.permissions,
+            isActive: user.isActive, // مهم للـ middleware
           };
 
           // إضافة معلومات المكتب
@@ -85,9 +86,11 @@ export const authOptions: NextAuthOptions = {
         token.firmInfo = user.firmInfo;
         token.ownerName = user.ownerName;
         token.firmName = user.firmName;
+        token.isActive = user.isActive; // مهم للـ middleware
       }
       return token;
     },
+
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
@@ -99,17 +102,77 @@ export const authOptions: NextAuthOptions = {
         session.user.firmInfo = token.firmInfo;
         session.user.ownerName = token.ownerName as string;
         session.user.firmName = token.firmName as string;
+        session.user.isActive = token.isActive as boolean;
       }
       return session;
     },
+
+    // 🔥 الجزء المهم - إضافة redirect callback
+    async redirect({ url, baseUrl }) {
+      console.log("🔄 NextAuth Redirect:", { url, baseUrl });
+      
+      // إذا المستخدم جاي من callbackUrl صحيحة
+      if (url.startsWith(baseUrl)) {
+        console.log("✅ Using provided callback URL:", url);
+        return url;
+      }
+      
+      // إذا الـ URL بيبدأ بـ "/" (relative URL)
+      if (url.startsWith("/")) {
+        const fullUrl = `${baseUrl}${url}`;
+        console.log("🔗 Creating full URL:", fullUrl);
+        return fullUrl;
+      }
+      
+      // تحقق من وجود callbackUrl في الـ query string
+      try {
+        const urlObj = new URL(url.startsWith('http') ? url : `${baseUrl}${url}`);
+        const callbackUrl = urlObj.searchParams.get('callbackUrl');
+        
+        if (callbackUrl) {
+          const decodedCallback = decodeURIComponent(callbackUrl);
+          if (decodedCallback.startsWith('/')) {
+            const finalUrl = `${baseUrl}${decodedCallback}`;
+            console.log("📍 Using decoded callback URL:", finalUrl);
+            return finalUrl;
+          }
+        }
+      } catch (error) {
+        console.log("⚠️ URL parsing error:", error);
+      }
+      
+      // الافتراضي - dashboard
+      const defaultUrl = `${baseUrl}/dashboard`;
+      console.log("🏠 Using default dashboard URL:", defaultUrl);
+      return defaultUrl;
+    }
   },
+
   pages: {
     signIn: "/auth/login",
     error: "/auth/login",
   },
+
   secret: process.env.NEXTAUTH_SECRET,
+  
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+
+  // إعدادات إضافية للتأكد من عمل الـ redirect
+  debug: process.env.NODE_ENV === "development",
+  
+  // تأكد من الـ cookies settings للـ production
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
 };
