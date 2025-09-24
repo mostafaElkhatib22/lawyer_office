@@ -1,8 +1,10 @@
 "use client"
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, Shield } from 'lucide-react';
+import { Suspense } from 'react';
 
-export default function UnauthorizedPage() {
+// Component that uses useSearchParams - needs to be wrapped in Suspense
+function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reason = searchParams.get('reason') || 'ليس لديك صلاحية للوصول إلى هذه الصفحة';
@@ -87,5 +89,32 @@ export default function UnauthorizedPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// Loading component to show while Suspense is loading
+function UnauthorizedLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <div className="rounded-full bg-red-100 p-3">
+            <Shield className="h-8 w-8 text-red-600 animate-pulse" />
+          </div>
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          جاري التحميل...
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+// Main component that wraps everything in Suspense
+export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={<UnauthorizedLoading />}>
+      <UnauthorizedContent />
+    </Suspense>
   );
 }
