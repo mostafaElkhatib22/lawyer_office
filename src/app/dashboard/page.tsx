@@ -18,7 +18,7 @@ import { useSession } from "next-auth/react";
 // 1. لو هتستخدم الـ Proxy الحل المؤقت (next.config.js)، خليها "/api"
 // 2. لو Backend بتاعك متظبط فيه CORS، خليها الـ URL الكامل "https://lawyer-officer.vercel.app/api"
 // 3. يفضل استخدام متغيرات البيئة (environment variables) هنا.
-const API_BASE_URL = "/api"; // تم التعديل هنا ليتوافق مع حل الـ Proxy في التطوير المحلي
+ // تم التعديل هنا ليتوافق مع حل الـ Proxy في التطوير المحلي
 
 interface Case {
   _id: string;
@@ -59,8 +59,8 @@ function HomePage() {
     setError(null);
     try {
       const [casesRes, clientsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/cases`),
-        axios.get(`${API_BASE_URL}/clients`),
+        axios.get(`api/cases`),
+        axios.get(`api/clients`),
       ]);
       setCases(casesRes.data.data);
       setClients(clientsRes.data.data);

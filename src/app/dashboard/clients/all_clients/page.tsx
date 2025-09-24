@@ -118,6 +118,7 @@ const ClientsUI = () => {
       } else {
         setError(data.message || "فشل في جلب قائمة الموكلين.");
       }
+      console.log(clients)
     } catch (err) {
       console.error("Fetch error:", err);
       setError("حدث خطأ غير متوقع أثناء الاتصال بالخادم.");

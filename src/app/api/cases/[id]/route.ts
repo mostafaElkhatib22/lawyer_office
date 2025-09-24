@@ -245,7 +245,7 @@ export async function PUT(
 
     // ✅ التحقق من الصلاحيات
     if (currentUser.accountType === "owner") {
-            const CurrentUser = currentUser._id as any;
+      const CurrentUser = currentUser._id as any;
 
       if (existingCase.owner.toString() !== CurrentUser.toString()) {
         return NextResponse.json(
@@ -291,7 +291,7 @@ export async function PUT(
     );
   } catch (error: any) {
     console.error("Error updating case:", error);
-    
+
     // Handle validation errors
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map((err: any) => err.message);

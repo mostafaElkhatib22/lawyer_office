@@ -152,13 +152,6 @@ function LoginFormContent() {
             Register here
           </a>
         </div>
-        
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
-            <strong>Debug Info:</strong><br />
-            Callback URL: {callbackUrl}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

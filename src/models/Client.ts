@@ -40,6 +40,10 @@ const ClientSchema: Schema = new Schema(
       ref: 'User', // يفترض أن لديك User model للمحامين
       required: [true, 'معرف المالك (المحامي) مطلوب.'],
     },
+     createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true, // لإضافة createdAt و updatedAt تلقائيًا
