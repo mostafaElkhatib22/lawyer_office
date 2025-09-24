@@ -55,23 +55,25 @@ export async function GET(req: Request) {
     }
 
     const sessionUser: any = session.user;
-    const sessionUserId = extractObjectId(sessionUser.id);
     const accountType = sessionUser.accountType || 'owner';
 
-    // Get the actual owner ID, ensuring it's a valid ObjectId
-    let firmOwnerIdString: string;
+    // Simplified approach - just use the session user ID directly
+    let firmOwnerId: any;
+    
     if (accountType === 'employee' && sessionUser.ownerId) {
-      firmOwnerIdString = extractObjectId(sessionUser.ownerId);
+      // For employees, use the ownerId
+      firmOwnerId = sessionUser.ownerId;
     } else {
-      firmOwnerIdString = sessionUserId;
+      // For owners, use their own ID
+      firmOwnerId = sessionUser.id;
     }
 
-    if (!firmOwnerIdString || !mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
-      console.error('Invalid firmOwnerIdString:', firmOwnerIdString);
-      return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+    // Convert to ObjectId if it's a string
+    if (typeof firmOwnerId === 'string' && mongoose.Types.ObjectId.isValid(firmOwnerId)) {
+      firmOwnerId = new mongoose.Types.ObjectId(firmOwnerId);
     }
 
-    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
+    console.log('Using firmOwnerId:', firmOwnerId);
 
     // Get all employees for this firm owner
     const employees = await User.find({ 
@@ -79,8 +81,10 @@ export async function GET(req: Request) {
       accountType: 'employee' 
     }).select('_id').lean();
     
-    const employeeIds = employees.map((e: any) => new mongoose.Types.ObjectId(e._id));
+    const employeeIds = employees.map((e: any) => e._id);
     const ownerIds = [firmOwnerId, ...employeeIds];
+
+    console.log('Searching with owner IDs:', ownerIds);
 
     const clients = await Client.aggregate([
       { $match: { owner: { $in: ownerIds } } },
@@ -93,8 +97,10 @@ export async function GET(req: Request) {
         }
       },
       { $addFields: { caseCount: { $size: '$cases' } } },
-      { $project: { cases: 0 } } // Don't return cases array to reduce payload size
+      { $project: { cases: 0 } }
     ]);
+
+    console.log('Found clients:', clients.length);
 
     return NextResponse.json({ success: true, data: clients }, { status: 200 });
   } catch (error) {
