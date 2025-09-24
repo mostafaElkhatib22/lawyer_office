@@ -524,8 +524,8 @@ const UserManagementPage = () => {
 
         {/* Add Employee Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-200 dark:bg-opacity-50">
-            <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-900  ">
+            <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800 dark:text-white">
               <div className="mt-3">
                 <h3 className="text-lg font-medium text-gray-900 mb-4 dark:text-gray-300">إضافة موظف جديد</h3>
                 <form onSubmit={handleAddEmployee} className="space-y-4">
@@ -537,7 +537,7 @@ const UserManagementPage = () => {
                         required
                         value={newEmployee.name}
                         onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500  dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                     
@@ -565,7 +565,7 @@ const UserManagementPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">رقم الموظف *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">رقم الموظف *</label>
                       <input
                         type="text"
                         required
@@ -576,7 +576,7 @@ const UserManagementPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">رقم الهاتف</label>
                       <input
                         type="tel"
                         value={newEmployee.phone}
@@ -777,7 +777,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-800">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-800 dark:bg-opacity-50">
       <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white dark:bg-gray-800 dark:text-white">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">

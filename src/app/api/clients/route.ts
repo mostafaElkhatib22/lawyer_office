@@ -15,6 +15,37 @@ function getErrorMessage(error: unknown): string {
   return 'An unknown error occurred';
 }
 
+// Helper function to extract ObjectId from various formats
+function extractObjectId(value: any): string {
+  if (!value) return '';
+  
+  // If it's already a string and looks like an ObjectId, return it
+  if (typeof value === 'string') {
+    // Check if it's a valid ObjectId format (24 hex characters)
+    if (/^[0-9a-fA-F]{24}$/.test(value)) {
+      return value;
+    }
+    // If it's a stringified object, try to parse it
+    if (value.includes('ObjectId')) {
+      const match = value.match(/ObjectId\('([0-9a-fA-F]{24})'\)/);
+      if (match) return match[1];
+    }
+    return '';
+  }
+  
+  // If it's an object with _id property
+  if (typeof value === 'object' && value._id) {
+    return extractObjectId(value._id);
+  }
+  
+  // If it's a mongoose ObjectId
+  if (value.toString && /^[0-9a-fA-F]{24}$/.test(value.toString())) {
+    return value.toString();
+  }
+  
+  return '';
+}
+
 export async function GET(req: Request) {
   try {
     await dbConnect();
@@ -24,17 +55,32 @@ export async function GET(req: Request) {
     }
 
     const sessionUser: any = session.user;
-    const sessionUserId = sessionUser.id;
+    const sessionUserId = extractObjectId(sessionUser.id);
     const accountType = sessionUser.accountType || 'owner';
 
-    // firmOwnerId = معرف صاحب المكتب الفعلي (لو المستخدم موظف ناخد ownerId من التوكن)
-    const firmOwnerId = (accountType === 'employee' && sessionUser.ownerId) ? sessionUser.ownerId : sessionUserId;
+    // Get the actual owner ID, ensuring it's a valid ObjectId
+    let firmOwnerIdString: string;
+    if (accountType === 'employee' && sessionUser.ownerId) {
+      firmOwnerIdString = extractObjectId(sessionUser.ownerId);
+    } else {
+      firmOwnerIdString = sessionUserId;
+    }
 
-    // عشان نغطي الحالة القديمة (لو بعض العملاء مخزنين owner = employeeId)
-    // نجلب كل الموظفين بتوع المكتب ونشوف العملاء اللي owner بين هؤلاء أو owner نفسه
-const employees = await User.find({ ownerId: firmOwnerId._id, accountType: 'employee' }).select('_id').lean();
-    const employeeIds = employees.map((e: any) => e._id.toString());
-    const ownerIds = [firmOwnerId, ...employeeIds].map(id => new mongoose.Types.ObjectId(id));
+    if (!firmOwnerIdString || !mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
+      console.error('Invalid firmOwnerIdString:', firmOwnerIdString);
+      return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+    }
+
+    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
+
+    // Get all employees for this firm owner
+    const employees = await User.find({ 
+      ownerId: firmOwnerId, 
+      accountType: 'employee' 
+    }).select('_id').lean();
+    
+    const employeeIds = employees.map((e: any) => new mongoose.Types.ObjectId(e._id));
+    const ownerIds = [firmOwnerId, ...employeeIds];
 
     const clients = await Client.aggregate([
       { $match: { owner: { $in: ownerIds } } },
@@ -47,7 +93,7 @@ const employees = await User.find({ ownerId: firmOwnerId._id, accountType: 'empl
         }
       },
       { $addFields: { caseCount: { $size: '$cases' } } },
-      { $project: { cases: 0 } } // ما نرجعش مصفوفة الملفات هنا لتقليل الحجم
+      { $project: { cases: 0 } } // Don't return cases array to reduce payload size
     ]);
 
     return NextResponse.json({ success: true, data: clients }, { status: 200 });
@@ -66,8 +112,21 @@ export async function POST(req: Request) {
     }
 
     const sessionUser: any = session.user;
+    const sessionUserId = extractObjectId(sessionUser.id);
     const accountType = sessionUser.accountType || 'owner';
-    const firmOwnerId = (accountType === 'employee' && sessionUser.ownerId) ? sessionUser.ownerId : sessionUser.id;
+    
+    let firmOwnerIdString: string;
+    if (accountType === 'employee' && sessionUser.ownerId) {
+      firmOwnerIdString = extractObjectId(sessionUser.ownerId);
+    } else {
+      firmOwnerIdString = sessionUserId;
+    }
+
+    if (!firmOwnerIdString || !mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
+      return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+    }
+
+    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
 
     const body = await req.json();
     const { name, email, phone, address } = body;
@@ -76,8 +135,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'اسم الموكل مطلوب.' }, { status: 400 });
     }
 
-    // تأكد ما فيش تكرار باسم الموكل ضمن نفس المكتب (owner = firmOwnerId)
-    const existingClient = await Client.findOne({ name: name.trim(), owner: firmOwnerId });
+    // Check for duplicate client name within the same firm
+    const existingClient = await Client.findOne({ 
+      name: name.trim(), 
+      owner: firmOwnerId 
+    });
+    
     if (existingClient) {
       return NextResponse.json({ success: false, message: 'هذا الموكل موجود بالفعل.' }, { status: 400 });
     }
@@ -87,8 +150,8 @@ export async function POST(req: Request) {
       email: email || '',
       phone: phone || '',
       address: address || '',
-      owner: firmOwnerId,     // **هنا نربط العميل بصاحب المكتب (owner) دائماً**
-      createdBy: sessionUser.id // مين اللي أنشأه
+      owner: firmOwnerId,
+      createdBy: new mongoose.Types.ObjectId(sessionUserId)
     });
 
     return NextResponse.json({ success: true, data: newClient }, { status: 201 });
