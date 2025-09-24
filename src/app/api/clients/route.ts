@@ -32,9 +32,10 @@ export async function GET(req: Request) {
 
     // عشان نغطي الحالة القديمة (لو بعض العملاء مخزنين owner = employeeId)
     // نجلب كل الموظفين بتوع المكتب ونشوف العملاء اللي owner بين هؤلاء أو owner نفسه
+    console.log("Firm Owner ID:", firmOwnerId);
     const employees = await User.find({ ownerId: firmOwnerId._id, accountType: 'employee' }).select('_id').lean();
     const employeeIds = employees.map((e: any) => e._id.toString());
-    const ownerIds = [firmOwnerId, ...employeeIds].map(id => new mongoose.Types.ObjectId(id));
+    const ownerIds = [firmOwnerId._id, ...employeeIds].map(id => new mongoose.Types.ObjectId(id));
 
     const clients = await Client.aggregate([
       { $match: { owner: { $in: ownerIds } } },
