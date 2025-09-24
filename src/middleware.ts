@@ -115,12 +115,16 @@ export async function middleware(req: NextRequest) {
   // Get NextAuth token with better error handling
   let token = null;
   try {
+    // Try different cookie names for production vs development
+    const cookieName = req.nextUrl.hostname.includes('vercel.app') 
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token';
+    
     token = await getToken({ 
       req, 
       secret: process.env.NEXTAUTH_SECRET,
-      cookieName: process.env.NODE_ENV === "production" 
-        ? "__Secure-next-auth.session-token" 
-        : "next-auth.session-token"
+      cookieName: cookieName,
+      secureCookie: req.nextUrl.hostname.includes('vercel.app')
     });
     
     debugLog("Token found:", token ? "✅" : "❌");
