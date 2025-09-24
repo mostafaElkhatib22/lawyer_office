@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
     // عشان نغطي الحالة القديمة (لو بعض العملاء مخزنين owner = employeeId)
     // نجلب كل الموظفين بتوع المكتب ونشوف العملاء اللي owner بين هؤلاء أو owner نفسه
-    const employees = await User.find({ ownerId: firmOwnerId, accountType: 'employee' }).select('_id').lean();
+    const employees = await User.find({ ownerId: firmOwnerId._id, accountType: 'employee' }).select('_id').lean();
     const employeeIds = employees.map((e: any) => e._id.toString());
     const ownerIds = [firmOwnerId, ...employeeIds].map(id => new mongoose.Types.ObjectId(id));
 

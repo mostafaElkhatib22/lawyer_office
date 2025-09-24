@@ -11,28 +11,28 @@ import { IUser } from "@/types/user";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
-    try {
-        await dbConnect();
-        const params = await context.params;
-        const { id } = params;
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user || !session.user.id) {
-            return NextResponse.json(
-                { success: false, message: "غير مصرح لك بالوصول" },
-                { status: 401 }
-            );
-        }
-        const singleClient = await Client.findOne({ _id: id });
-        if (!singleClient) {
-            return NextResponse.json({ message: "هذا الموكل غير موجود" }, { status: 200 });
-        }
-        return NextResponse.json({ singleClient }, { status: 200 });
-
-
-    } catch (error) {
-        return NextResponse.json({ error }, { status: 500 });
-
+  try {
+    await dbConnect();
+    const params = await context.params;
+    const { id } = params;
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: "غير مصرح لك بالوصول" },
+        { status: 401 }
+      );
     }
+    const singleClient = await Client.findOne({ _id: id });
+    if (!singleClient) {
+      return NextResponse.json({ message: "هذا الموكل غير موجود" }, { status: 200 });
+    }
+    return NextResponse.json({ singleClient }, { status: 200 });
+
+
+  } catch (error) {
+    return NextResponse.json({ error }, { status: 500 });
+
+  }
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
