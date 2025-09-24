@@ -51,16 +51,14 @@ const routePermissions: Record<string, RoutePermission> = {
 
 // 🔍 Debug helper
 function debugLog(message: string, data?: any) {
-  if (process.env.NODE_ENV === "development") {
-    console.log(`🔍 [Middleware Debug] ${message}`, data ? JSON.stringify(data, null, 2) : "");
-  }
+  console.log(`🔍 [Middleware] ${message}`, data ? JSON.stringify(data, null, 2) : "");
 }
 
 // 🛠️ دالة لمطابقة المسارات (ثابتة أو ديناميكية)
 function matchRoute(pathname: string): RoutePermission | null {
   for (const route in routePermissions) {
     if (route.includes("[id]")) {
-      const regex = new RegExp("^" + route.replace("[id]", "[^/]+") + "$");
+      const regex = new RegExp("^" + route.replace(/\[id\]/g, "[^/]+") + "$");
       if (regex.test(pathname)) return routePermissions[route];
     } else {
       if (pathname === route) return routePermissions[route];
@@ -71,113 +69,128 @@ function matchRoute(pathname: string): RoutePermission | null {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  debugLog(`🚀 Request to: ${pathname}`);
-
-  // 🚨 NextAuth API routes allowed
-  if (pathname.startsWith("/api/auth/")) return NextResponse.next();
-
-  // static files allowed
+  
+  // Skip middleware for API routes and static files
   if (
-    pathname.startsWith("/_next/static") ||
-    pathname.startsWith("/_next/image") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.startsWith("/images/") ||
-    pathname.startsWith("/icons/")
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".") ||
+    pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
+  debugLog(`🚀 Processing: ${pathname}`);
+
   // 🏠 Public pages
   const publicPages = [
     "/",
-    "/about",
+    "/about", 
     "/contact",
     "/pricing",
     "/features",
     "/auth/login",
-    "/auth/register",
+    "/auth/register", 
     "/auth/forgot-password",
-    "/dashboard/unauthorized", // unauthorized page
+    "/dashboard/unauthorized"
   ];
 
-  if (publicPages.some((page) => pathname === page || pathname.startsWith(page + "/"))) {
+  const isPublicPage = publicPages.some(page => 
+    pathname === page || pathname.startsWith(page + "/")
+  );
+
+  if (isPublicPage) {
     debugLog("✅ Public page - allowing access");
     return NextResponse.next();
   }
 
-  // 📱 Protected pages
-  const protectedPages = ["/dashboard", "/profile", "/settings", "/admin"];
-  const isProtectedPage = protectedPages.some((page) => pathname.startsWith(page));
-
-  if (!isProtectedPage) {
-    debugLog("ℹ️ Not a protected page - allowing access");
+  // Check if it's a protected dashboard route
+  if (!pathname.startsWith("/dashboard")) {
+    debugLog("ℹ️ Not a dashboard route - allowing access");
     return NextResponse.next();
   }
 
-  debugLog("🔒 Protected page detected");
+  debugLog("🔒 Dashboard route detected - checking auth");
 
-  // 🧑‍💻 extract user
-  let user: any = null;
-  let isAuth = false;
-
-  // 1. try next-auth token
+  // Get NextAuth token with better error handling
+  let token = null;
   try {
-    const nextAuthToken = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (nextAuthToken) {
-      isAuth = true;
-      user = {
-        id: nextAuthToken.sub || nextAuthToken.id,
-        email: nextAuthToken.email,
-        accountType: nextAuthToken.accountType,
-        role: nextAuthToken.role,
-        permissions: nextAuthToken.permissions,
-        isActive: nextAuthToken.isActive,
-        ownerId: nextAuthToken.ownerId,
-        // Fix: Only spread if user exists and is an object
-        ...(nextAuthToken.user && typeof nextAuthToken.user === 'object' ? nextAuthToken.user : {}),
-      };
-    }
+    token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: process.env.NODE_ENV === "production" 
+        ? "__Secure-next-auth.session-token" 
+        : "next-auth.session-token"
+    });
+    
+    debugLog("Token found:", token ? "✅" : "❌");
+    
   } catch (error) {
-    debugLog("❌ NextAuth token error", error);
+    debugLog("❌ Token error:", error);
+    return NextResponse.redirect(
+      new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
+    );
   }
 
-  // 2. try JWT header
-  if (!isAuth) {
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader?.split(" ")[1];
-    if (token) {
-      try {
-        const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-        isAuth = true;
-        user = decoded;
-      } catch (error) {
-        debugLog("❌ JWT token error", error);
-      }
-    }
+  // If no token, redirect to login
+  if (!token) {
+    debugLog("🚫 No token - redirecting to login");
+    return NextResponse.redirect(
+      new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
+    );
   }
 
-  // 🚫 Not authenticated
-  if (!isAuth || !user) {
-    return NextResponse.redirect(new URL("/auth/login?callbackUrl=" + encodeURIComponent(pathname), req.url));
-  }
+  // Create user object from token
+  const user = {
+    id: token.sub || token.id,
+    email: token.email,
+    accountType: token.accountType,
+    role: token.role,
+    permissions: token.permissions,
+    isActive: token.isActive,
+    ownerId: token.ownerId,
+    ...(token.user && typeof token.user === 'object' ? token.user : {}),
+  };
 
-  // 🛡️ Check active status
+  debugLog("User data:", { 
+    id: user.id, 
+    email: user.email, 
+    accountType: user.accountType,
+    isActive: user.isActive 
+  });
+
+  // Check if account is active
   if (user.isActive === false) {
-    return NextResponse.redirect(new URL("/auth/login?error=account_disabled", req.url));
+    debugLog("🚫 Account disabled");
+    return NextResponse.redirect(
+      new URL("/auth/login?error=account_disabled", req.url)
+    );
   }
 
-  // 🔒 Route permission check (مع دعم dynamic routes)
+  // Check route permissions
   const requiredPermission = matchRoute(pathname);
   if (requiredPermission) {
+    debugLog("🔐 Checking permissions for:", requiredPermission);
+    
     const permissionResult = checkUserPermission(user, requiredPermission);
+    
     if (!permissionResult.hasPermission) {
+      debugLog("🚫 Permission denied:", permissionResult.reason);
       return NextResponse.redirect(
         new URL(`/dashboard/unauthorized?reason=${encodeURIComponent(permissionResult.reason)}`, req.url)
       );
     }
+    
+    debugLog("✅ Permission granted");
   }
 
-  return NextResponse.next();
+  // Add user info to headers for pages to use
+  const response = NextResponse.next();
+  response.headers.set('x-user-id', user.id || '');
+  response.headers.set('x-user-email', user.email || '');
+  
+  debugLog("✅ Access granted - proceeding");
+  return response;
 }
 
 // 🔧 check permissions
@@ -192,8 +205,8 @@ function checkUserPermission(
     return { hasPermission: false, reason: "هذه العملية متاحة لصاحب المكتب فقط" };
   }
 
-  // owner full access
-  if (user.accountType === "owner" && !requireOwnership) {
+  // owner full access (except ownership-required routes)
+  if (user.accountType === "owner") {
     return { hasPermission: true, reason: "Owner has full access" };
   }
 
@@ -227,5 +240,15 @@ function checkUserPermission(
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)",
+  ],
 };
