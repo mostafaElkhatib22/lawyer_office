@@ -25,13 +25,16 @@ import {
   ClipboardPlus,
 } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
-import { Button } from "./ui/button"; // تأكد من استيراد Button من shadcn/ui
+import { Button } from "./ui/button";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export function AppSidebar() {
-  const { status } = useSession(); // استخدام useSession للتحقق من حالة الجلسة
+  const { status } = useSession();
   const pathname = usePathname();
-  const { open } = useSidebar(); // لمعرفة إذا كان الـ sidebar مفتوح أم مغلق (لإخفاء النصوص)
+  const router = useRouter();
+  const { open, setOpen } = useSidebar(); // إضافة setOpen للتحكم في الـ sidebar
+  
   const navItems = [
     { href: "/dashboard", icon: Home, label: "لوحة التحكم" },
     { href: "/dashboard/all-cases", icon: ClipboardList, label: "كل الدعاوى" },
@@ -45,16 +48,31 @@ export function AppSidebar() {
     { href: "/dashboard/sessions", icon: CalendarDays, label: "الجلسات" },
     { href: "/dashboard/reports", icon: ClipboardPlus, label: "تقارير" },
   ];
+
+  // دالة للتنقل وإغلاق الـ sidebar
+  const handleNavigation = (href: string) => {
+    router.push(href);
+    // إغلاق الـ sidebar بعد التنقل (خاصة مفيد على الشاشات الصغيرة)
+    if (window.innerWidth < 768) { // md breakpoint
+      setOpen(false);
+    }
+  };
+
+  // دالة للتعامل مع إغلاق الـ sidebar عند النقر على الإعدادات
+  const handleSettingsNavigation = () => {
+    router.push("/dashboard/settings/user-management");
+    if (window.innerWidth < 768) {
+      setOpen(false);
+    }
+  };
+
   return (
-    // 'collapsible="icon"' لجعله يتصغر إلى أيقونات فقط في وضع عدم التوسيع
     <Sidebar collapsible="icon" className="hidden md:flex">
-      {" "}
-      {/* يظهر فقط على الشاشات المتوسطة وما فوق */}
       <SidebarHeader className="flex items-center justify-between p-4">
         {open ? (
           <h2 className="text-2xl font-bold text-primary">المحامي الذكي</h2>
         ) : (
-          <h2 className="text-2xl font-bold text-primary">💼</h2> // أيقونة صغيرة عند التصغير
+          <h2 className="text-2xl font-bold text-primary">💼</h2>
         )}
       </SidebarHeader>
       <SidebarContent>
@@ -63,14 +81,13 @@ export function AppSidebar() {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuButton
-                asChild
                 key={item.href}
                 isActive={pathname === item.href}
+                onClick={() => handleNavigation(item.href)}
+                className="cursor-pointer"
               >
-                <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </Link>
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
               </SidebarMenuButton>
             ))}
           </SidebarMenu>
@@ -80,22 +97,18 @@ export function AppSidebar() {
           <SidebarGroupLabel>الإعدادات</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuButton
-              asChild
               isActive={pathname === "/dashboard/settings/user-management"}
+              onClick={handleSettingsNavigation}
+              className="cursor-pointer"
             >
-              <Link href="/dashboard/settings/user-management">
-                <Settings className="h-5 w-5" />
-                <span>الإعدادات</span>
-              </Link>
+              <Settings className="h-5 w-5" />
+              <span>الإعدادات</span>
             </SidebarMenuButton>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="flex items-center justify-between p-4">
-        {/* زر تبديل الثيم */}
         <ModeToggle />
-        {/* زر تسجيل الخروج يظهر فقط عندما يكون الشريط الجانبي مفتوحاً */}
-
         {open && (
           <div>
             {status === "authenticated" && (
