@@ -12,6 +12,7 @@ declare module "next-auth" {
       department: string;
       permissions: any;
       ownerId: string;
+    authProvider?:any;
       firmInfo?: any;
       ownerName?: string;
       firmName?: string;
@@ -27,6 +28,7 @@ declare module "next-auth" {
     permissions: any;
     ownerId: string;
     firmInfo?: any;
+    authProvider?:any;
     ownerName?: string;
     firmName?: string;
     isActive: boolean;

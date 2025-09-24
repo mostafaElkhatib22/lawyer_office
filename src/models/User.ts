@@ -10,6 +10,8 @@ interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  authProvider: 'credentials' | 'google';
+  googleId?: string;
   accountType: 'owner' | 'employee';
   ownerId?: mongoose.Schema.Types.ObjectId;
   firmInfo: any;
@@ -21,11 +23,11 @@ interface IUser extends Document {
   lastLogin?: Date;
   createdAt: Date;
   createdBy?: mongoose.Schema.Types.ObjectId;
-  
+
   // Reset Password fields
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
-  
+
   // Methods
   matchPassword(enteredPassword: string): Promise<boolean>;
   hasPermission(category: string, action: string): boolean;
@@ -52,6 +54,15 @@ const UserSchema = new mongoose.Schema<IUser>({
     required: [true, 'Please provide a name for this user.'],
     trim: true,
   },
+  authProvider: {
+    type: String,
+    enum: ['credentials', 'google'],
+    default: 'credentials',
+  },
+  googleId: {
+    type: String,
+    sparse: true, // يسمح بقيم null متعددة
+  },
   email: {
     type: String,
     required: [true, 'Please provide an email for this user.'],
@@ -65,24 +76,24 @@ const UserSchema = new mongoose.Schema<IUser>({
     minlength: 6,
     select: false,
   },
-  
+
   // نوع الحساب
   accountType: {
     type: String,
     enum: ['owner', 'employee'], // owner = صاحب المكتب، employee = موظف
     default: 'owner',
   },
-  
+
   // معرف صاحب المكتب - كل الموظفين مرتبطين بصاحب المكتب
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: function(this: IUser): boolean {
+    required: function (this: IUser): boolean {
       return this.accountType === 'employee';
     },
     index: true, // فهرس لتسريع البحث
   },
-  
+
   // معلومات المكتب (للمالك فقط)
   firmInfo: {
     firmName: { type: String, trim: true },
@@ -98,7 +109,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     },
     maxEmployees: { type: Number, default: 10 }, // حد أقصى للموظفين حسب الخطة
   },
-  
+
   role: {
     type: String,
     enum: [
@@ -112,11 +123,11 @@ const UserSchema = new mongoose.Schema<IUser>({
       'accountant',      // محاسب
       'intern'          // متدرب
     ],
-    default: function() {
+    default: function () {
       return this.accountType === 'owner' ? 'owner' : 'lawyer';
     },
   },
-  
+
   department: {
     type: String,
     enum: [
@@ -134,7 +145,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     ],
     default: 'general',
   },
-  
+
   permissions: {
     // إدارة القضايا
     cases: {
@@ -199,7 +210,7 @@ const UserSchema = new mongoose.Schema<IUser>({
       manageBackup: { type: Boolean, default: false },
     },
   },
-  
+
   // معلومات إضافية للموظف
   employeeInfo: {
     employeeId: { type: String, sparse: true },
@@ -215,7 +226,7 @@ const UserSchema = new mongoose.Schema<IUser>({
       default: 'full_time'
     },
   },
-  
+
   // حالة الحساب
   isActive: {
     type: Boolean,
@@ -232,7 +243,7 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
-  
+
   // Reset Password fields
   resetPasswordToken: {
     type: String,
@@ -245,9 +256,9 @@ const UserSchema = new mongoose.Schema<IUser>({
 });
 
 // فهرس مركب لضمان عدم تكرار رقم الموظف في نفس المكتب
-UserSchema.index({ ownerId: 1, 'employeeInfo.employeeId': 1 }, { 
-  unique: true, 
-  sparse: true 
+UserSchema.index({ ownerId: 1, 'employeeInfo.employeeId': 1 }, {
+  unique: true,
+  sparse: true
 });
 
 // فهارس لتحسين الأداء
@@ -257,20 +268,20 @@ UserSchema.index({ ownerId: 1, department: 1 });
 UserSchema.index({ accountType: 1 });
 
 // التحقق من حد الموظفين قبل الحفظ
-UserSchema.pre<IUser>('save', async function(next) {
+UserSchema.pre<IUser>('save', async function (next) {
   if (this.isNew && this.accountType === 'employee') {
     const UserModel = this.constructor as Model<IUser>;
     const owner = await UserModel.findById(this.ownerId);
     if (!owner) {
       return next(new Error('صاحب المكتب غير موجود'));
     }
-    
+
     const employeeCount = await UserModel.countDocuments({
       ownerId: this.ownerId,
       accountType: 'employee',
       isActive: true
     });
-    
+
     if (employeeCount >= owner.firmInfo.maxEmployees) {
       return next(new Error(`تم الوصول للحد الأقصى من الموظفين (${owner.firmInfo.maxEmployees})`));
     }
@@ -279,7 +290,7 @@ UserSchema.pre<IUser>('save', async function(next) {
 });
 
 // تطبيق الصلاحيات حسب الدور تلقائياً
-UserSchema.pre<IUser>('save', function(next) {
+UserSchema.pre<IUser>('save', function (next) {
   if (this.isNew || this.isModified('role')) {
     this.permissions = getDefaultPermissions(this.role, this.accountType);
   }
@@ -302,17 +313,17 @@ UserSchema.methods.matchPassword = async function (enteredPassword: string): Pro
 };
 
 // Method to check if user has specific permission
-UserSchema.methods.hasPermission = function(category: string, action: string): boolean {
+UserSchema.methods.hasPermission = function (category: string, action: string): boolean {
   return this.permissions[category] && this.permissions[category][action];
 };
 
 // Method to check if user can access department cases
-UserSchema.methods.canAccessDepartment = function(department: string): boolean {
+UserSchema.methods.canAccessDepartment = function (department: string): boolean {
   return this.department === department || this.hasPermission('cases', 'viewAll');
 };
 
 // Method to get all employees for this owner
-UserSchema.methods.getEmployees = function() {
+UserSchema.methods.getEmployees = function () {
   if (this.accountType !== 'owner') {
     throw new Error('فقط صاحب المكتب يمكنه الحصول على قائمة الموظفين');
   }
@@ -324,7 +335,7 @@ UserSchema.methods.getEmployees = function() {
 };
 
 // Method to check if user belongs to specific firm
-UserSchema.methods.belongsToFirm = function(firmOwnerId: mongoose.Schema.Types.ObjectId): boolean {
+UserSchema.methods.belongsToFirm = function (firmOwnerId: mongoose.Schema.Types.ObjectId): boolean {
   if (this.accountType === 'owner') {
     return this._id.toString() === firmOwnerId.toString();
   }
@@ -332,24 +343,24 @@ UserSchema.methods.belongsToFirm = function(firmOwnerId: mongoose.Schema.Types.O
 };
 
 // Method to generate reset password token
-UserSchema.methods.getResetPasswordToken = function(): string {
+UserSchema.methods.getResetPasswordToken = function (): string {
   // Generate token
   const resetToken = crypto.randomBytes(20).toString('hex');
-  
+
   // Hash token and set to resetPasswordToken field
   this.resetPasswordToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-    
+
   // Set expire - 10 minutes
   this.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000);
-  
+
   return resetToken;
 };
 
 // Static method to get firm statistics
-UserSchema.statics.getFirmStats = async function(ownerId: string): Promise<IFirmStats> {
+UserSchema.statics.getFirmStats = async function (ownerId: string): Promise<IFirmStats> {
   const stats = await this.aggregate([
     { $match: { ownerId: new mongoose.Types.ObjectId(ownerId), accountType: 'employee' } },
     {
@@ -362,12 +373,12 @@ UserSchema.statics.getFirmStats = async function(ownerId: string): Promise<IFirm
       }
     }
   ]);
-  
-  return stats[0] || { 
-    totalEmployees: 0, 
-    activeEmployees: 0, 
-    byRole: [], 
-    byDepartment: [] 
+
+  return stats[0] || {
+    totalEmployees: 0,
+    activeEmployees: 0,
+    byRole: [],
+    byDepartment: []
   };
 };
 

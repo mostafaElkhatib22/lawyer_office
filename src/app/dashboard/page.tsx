@@ -139,26 +139,7 @@ function HomePage() {
     >
       <div className="flex flex-col items-center justify-center w-full max-w-5xl my-8">
         {/* قسم اللوجو والعنوان */}
-        <div className="flex flex-col md:flex-row items-center justify-center w-full p-4 md:p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-10 md:mb-16">
-          <div className="flex justify-center items-center w-full md:w-1/2 mb-6 md:mb-0">
-            <img
-              src="https://res.cloudinary.com/dbtbxt0fj/image/upload/v1739993853/lawyer_office/ftxt9a8zudsp3dfz09hr.png"
-              alt="Logo Home"
-              className="w-4/5 md:w-full max-w-xs md:max-w-md h-auto rounded-xl object-contain"
-              loading="lazy"
-            />
-          </div>
-          <div className="flex flex-col justify-center items-center w-full md:w-1/2 text-center md:text-right md:pr-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-blue-800 dark:text-blue-400 leading-tight mb-2">
-              الأستاذ/ مصطفى الخطيب
-              <br />
-              والأستاذ/ السيد الشيشيني
-            </h1>
-            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-700 dark:text-gray-300 mt-2">
-              للاستشارات القانونية والمحاماة
-            </p>
-          </div>
-        </div>
+      
 
         {/* قسم الإحصائيات - تم استخدام مكونات Card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
