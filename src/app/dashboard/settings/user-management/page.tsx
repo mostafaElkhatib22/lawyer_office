@@ -264,10 +264,10 @@ const UserManagementPage = () => {
   // التحقق من الصلاحيات
   if (!session?.user || session.user.accountType !== 'owner') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center dark:bg-gray-800 dark:text-white" dir="rtl">
         <div className="text-center">
           <Building2 size={64} className="mx-auto text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">غير مصرح</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2 dark:text-white">غير مصرح</h2>
           <p className="text-gray-600">هذه الصفحة متاحة لأصحاب المكاتب فقط.</p>
         </div>
       </div>
@@ -276,29 +276,29 @@ const UserManagementPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center dark:bg-gray-800 dark:text-white" dir="rtl">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">جاري تحميل البيانات...</p>
+          <p className="mt-4 text-gray-600 dark:text-white">جاري تحميل البيانات...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
+    <div className="min-h-screen bg-gray-50 p-6 dark:bg-gray-800 dark:text-white" dir="rtl">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-gray-800 dark:text-white">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">إدارة الموظفين</h1>
-              <p className="text-gray-600">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 dark:text-white">إدارة الموظفين</h1>
+              <p className="text-gray-600 dark:text-white">
                 {session.user.firmInfo?.firmName || 'مكتب المحاماة'} - إدارة حسابات الموظفين وصلاحياتهم
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-500 text-center">
+              <div className="text-sm text-gray-500 text-center ">
                 <div className="font-medium">{stats.active} / {stats.maxAllowed}</div>
                 <div>موظف نشط</div>
               </div>
@@ -307,8 +307,8 @@ const UserManagementPage = () => {
                 disabled={stats.remainingSlots === 0}
                 className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                   stats.remainingSlots === 0 
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:text-white ' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
                 }`}
               >
                 <UserPlus size={20} />
@@ -319,50 +319,50 @@ const UserManagementPage = () => {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-blue-50 rounded-lg p-4 dark:bg-gray-600 dark:text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-600 text-sm font-medium">إجمالي الموظفين</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+                  <p className="text-blue-600 text-sm font-medium dark:text-blue-500">إجمالي الموظفين</p>
+                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-500">{stats.total}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
             </div>
             
-            <div className="bg-green-50 rounded-lg p-4">
+            <div className="bg-green-50 rounded-lg p-4 dark:bg-gray-600 dark:text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-600 text-sm font-medium">الموظفين النشطين</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+                  <p className="text-green-600 text-sm font-medium dark:text-green-400">الموظفين النشطين</p>
+                  <p className="text-2xl font-bold text-green-900 dark:text-green-400">{stats.active}</p>
                 </div>
                 <Eye className="h-8 w-8 text-green-600" />
               </div>
             </div>
             
-            <div className="bg-orange-50 rounded-lg p-4">
+            <div className="bg-orange-50 rounded-lg p-4 dark:bg-gray-600 dark:text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-600 text-sm font-medium">غير النشطين</p>
-                  <p className="text-2xl font-bold text-orange-900">{stats.inactive}</p>
+                  <p className="text-orange-600 text-sm font-medium dark:text-orange-500">غير النشطين</p>
+                  <p className="text-2xl font-bold text-orange-900 dark:text-orange-500">{stats.inactive}</p>
                 </div>
-                <EyeOff className="h-8 w-8 text-orange-600" />
+                <EyeOff className="h-8 w-8 text-orange-600 dark:text-orange-500" />
               </div>
             </div>
             
-            <div className="bg-purple-50 rounded-lg p-4">
+            <div className="bg-purple-50 rounded-lg p-4 dark:bg-gray-600 dark:text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-600 text-sm font-medium">المتاح</p>
-                  <p className="text-2xl font-bold text-purple-900">{stats.remainingSlots}</p>
+                  <p className="text-purple-600 text-sm font-medium dark:text-purple-500">المتاح</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-500">{stats.remainingSlots}</p>
                 </div>
-                <Plus className="h-8 w-8 text-purple-600" />
+                <Plus className="h-8 w-8 text-purple-600 dark:text-purple-500" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-gray-600 dark:text-white">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* البحث */}
             <div className="relative">
@@ -401,53 +401,53 @@ const UserManagementPage = () => {
             </select>
 
             {/* عدد النتائج */}
-            <div className="flex items-center justify-center text-gray-600">
+            <div className="flex items-center justify-center text-gray-600 dark:text-white">
               <span>النتائج: {filteredEmployees.length} من {employees.length}</span>
             </div>
           </div>
         </div>
 
         {/* Employees Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden dark:bg-gray-800 dark:text-white">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     معلومات الموظف
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     الدور والقسم
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     نوع التعاقد
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     الحالة
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     تاريخ التوظيف
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-white">
                     الإجراءات
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-500">
                 {filteredEmployees.map((employee,index) => (
-                  <tr key={index} className="hover:bg-gray-50">
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-blue-600 font-medium text-sm">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-600">
+                            <span className="text-blue-600 font-medium text-sm dark:text-white">
                               {employee.name.charAt(0)}
                             </span>
                           </div>
                         </div>
                         <div className="mr-4">
-                          <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                          <div className="text-sm text-gray-500">{employee.email}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{employee.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-200">{employee.email}</div>
                           <div className="text-xs text-gray-400">
                             ID: {employee.employeeInfo?.employeeId || 'غير محدد'}
                           </div>
@@ -455,25 +455,25 @@ const UserManagementPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{roles[employee.role]}</div>
-                      <div className="text-sm text-gray-500">{departments[employee.department]}</div>
+                      <div className="text-sm text-gray-900 dark:text-gray-300">{roles[employee.role]}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-300">{departments[employee.department]}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-600 dark:text-white">
                         {contractTypes[employee.employeeInfo?.contractType] || 'غير محدد'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         employee.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
                       }`}>
                         {employee.isActive ? 'نشط' : 'غير نشط'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-300">
                         {employee.employeeInfo?.hireDate 
                           ? new Date(employee.employeeInfo.hireDate).toLocaleDateString('ar-EG')
                           : 'غير محدد'
@@ -487,21 +487,21 @@ const UserManagementPage = () => {
                             setSelectedEmployee(employee);
                             setShowPermissionModal(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded dark:text-blue-400 dark:hover:text-blue-200"
                           title="إدارة الصلاحيات"
                         >
                           <Shield size={16} />
                         </button>
                         <button
                           onClick={() => toggleEmployeeStatus(employee._id)}
-                          className={`p-1 rounded ${employee.isActive ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                          className={`p-1 rounded ${employee.isActive ? 'text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300' : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'}`}
                           title={employee.isActive ? 'إلغاء تفعيل' : 'تفعيل'}
                         >
                           {employee.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                         <button
                           onClick={() => handleDeleteEmployee(employee._id)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded"
+                          className="text-red-600 hover:text-red-900 p-1 rounded dark:text-red-400 dark:hover:text-red-200"
                           title="حذف"
                         >
                           <Trash2 size={16} />
@@ -512,7 +512,7 @@ const UserManagementPage = () => {
                 ))}
                 {filteredEmployees.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-300">
                       {employees.length === 0 ? 'لم يتم إضافة أي موظفين بعد' : 'لا توجد نتائج مطابقة للبحث'}
                     </td>
                   </tr>
@@ -524,14 +524,14 @@ const UserManagementPage = () => {
 
         {/* Add Employee Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-200 dark:bg-opacity-50">
             <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
               <div className="mt-3">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">إضافة موظف جديد</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4 dark:text-gray-300">إضافة موظف جديد</h3>
                 <form onSubmit={handleAddEmployee} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">الاسم *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">الاسم *</label>
                       <input
                         type="text"
                         required
@@ -542,18 +542,18 @@ const UserManagementPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">البريد الإلكتروني *</label>
                       <input
                         type="email"
                         required
                         value={newEmployee.email}
                         onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">كلمة المرور *</label>
                       <input
                         type="password"
                         required
@@ -581,16 +581,16 @@ const UserManagementPage = () => {
                         type="tel"
                         value={newEmployee.phone}
                         onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">الدور *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">الدور *</label>
                       <select
                         value={newEmployee.role}
                         onChange={(e) => setNewEmployee({...newEmployee, role: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         {Object.entries(roles).map(([key, value]) => (
                           <option key={key} value={key}>{value}</option>
@@ -599,11 +599,11 @@ const UserManagementPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">القسم *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">القسم *</label>
                       <select
                         value={newEmployee.department}
                         onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                       >
                         {Object.entries(departments).map(([key, value]) => (
                           <option key={key} value={key}>{value}</option>
@@ -612,11 +612,11 @@ const UserManagementPage = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">نوع التعاقد</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-200">نوع التعاقد</label>
                       <select
                         value={newEmployee.contractType}
                         onChange={(e) => setNewEmployee({...newEmployee, contractType: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white  "
                       >
                         {Object.entries(contractTypes).map(([key, value]) => (
                           <option key={key} value={key}>{value}</option>
@@ -629,13 +629,13 @@ const UserManagementPage = () => {
                     <button
                       type="button"
                       onClick={() => setShowAddModal(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       إلغاء
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600  "
                     >
                       إضافة الموظف
                     </button>
@@ -777,14 +777,14 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 dark:bg-gray-800">
+      <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-6xl shadow-lg rounded-md bg-white dark:bg-gray-800 dark:text-white">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-300">
               إدارة صلاحيات: {employee.name}
             </h3>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
               الدور: {employee.role} | القسم: {employee.department}
             </div>
           </div>
@@ -792,7 +792,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto">
             {Object.entries(permissionLabels).map(([category, categoryData]) => (
               <div key={category} className="border rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3">{categoryData.title}</h4>
+                <h4 className="font-medium text-gray-900 mb-3 dark:text-gray-300">{categoryData.title}</h4>
                 <div className="space-y-2">
                   {Object.entries(categoryData.permissions).map(([permission, label]) => (
                     <label key={permission} className="flex items-center">
@@ -800,9 +800,9 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
                         type="checkbox"
                         checked={(permissions as any)[category]?.[permission] || false}
                         onChange={() => handlePermissionChange(category, permission)}
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:text-blue-300 dark:foucs:ring-blue-300 dark:border-gray-600"
                       />
-                      <span className="text-sm text-gray-700">{label}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">{label}</span>
                     </label>
                   ))}
                 </div>
@@ -813,13 +813,13 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600"
             >
               إلغاء
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               حفظ الصلاحيات
             </button>

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -18,7 +20,6 @@ import {
   Legend,
 } from "recharts";
 import { motion } from "framer-motion";
-import { Search, Moon, Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivityIndicator } from "@/components/ui/activity-indicator";
 

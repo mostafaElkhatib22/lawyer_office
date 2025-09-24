@@ -1,890 +1,471 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import {
+  PieChart, Pie, Cell, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend
+} from "recharts";
 import * as XLSX from "xlsx";
+import {
+  Search, Printer, FileText, XCircle, Filter, Calendar
+} from "lucide-react";
 
-const SpinnerIcon = () => (
-  <svg
-    className="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-  >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    ></circle>
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-    ></path>
-  </svg>
-);
+type CaseType = {
+  _id: string;
+  client: { name: string } | string;
+  caseTypeOF?: string;
+  type?: string;
+  court?: string;
+  caseNumber?: string;
+  year?: string | number;
+  status?: string;
+  sessiondate?: string;
+  caseDate?: string;
+};
 
-// Define data types
-interface Client {
+type ClientType = {
   _id: string;
   name: string;
   phone?: string;
   address?: string;
-  createdAt: any;
-}
+  createdAt?: string;
+};
 
-interface Case {
-  _id: string;
-  client: { name: string };
-  caseTypeOF: string;
-  type: string;
-  court: string;
-  caseNumber: string;
-  year: string;
-  status: string;
-  sessiondate: string;
-  caseDate: string;
-}
+type Tab = "cases" | "sessions" | "clients";
 
-type ReportType = "cases" | "clients" | "sessions";
+/** Helper small styles */
+const badge = "inline-block px-2 py-0.5 rounded-full text-xs font-semibold";
 
-const ReportsPage = () => {
+export default function ReportsDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [reportType, setReportType] = useState<ReportType>("cases");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const [allCases, setAllCases] = useState<Case[]>([]);
-  const [allClients, setAllClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [tab, setTab] = useState<Tab>("cases");
+  const [cases, setCases] = useState<CaseType[]>([]);
+  const [clients, setClients] = useState<ClientType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
 
-  const componentRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // filters
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Function to handle printing
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Function to export to Excel
-  const exportToExcel = () => {
-    let data: any[] = [];
-    let headers: string[] = [];
-    let filename = "";
-
-    if (reportType === "cases") {
-      headers = [
-        "اسم الموكل",
-        "نوع الدعوى",
-        "طبيعة الدعوى",
-        "المحكمة",
-        "رقم الدعوى",
-        "السنة",
-        "الحالة",
-        "تاريخ الدعوى",
-      ];
-      data = filteredCases.map((c) => [
-        c.client.name,
-        c.caseTypeOF,
-        c.type,
-        c.court,
-        c.caseNumber,
-        c.year,
-        c.status,
-        new Date(c.caseDate).toLocaleDateString("ar-EG"),
-      ]);
-      filename = "تقرير_الدعاوى";
-    } else if (reportType === "clients") {
-      headers = ["اسم الموكل", "رقم التليفون", "العنوان", "تاريخ الإضافة"];
-      data = filteredClients.map((c) => [
-        c.name,
-        c.phone || "غير محدد",
-        c.address || "غير محدد",
-        new Date(c.createdAt).toLocaleDateString("ar-EG"),
-      ]);
-      filename = "تقرير_الموكلين";
-    } else if (reportType === "sessions") {
-      headers = ["اسم الموكل", "رقم الدعوى", "الحالة", "تاريخ الجلسة"];
-      data = filteredCases.map((s) => [
-        s.client.name,
-        s.caseNumber,
-        s.status,
-        new Date(s.sessiondate).toLocaleDateString("ar-EG"),
-      ]);
-      filename = "تقرير_الجلسات";
-    }
-
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-
-    // Set column widths for better Arabic text display
-    const colWidths = headers.map(() => ({ wch: 20 }));
-    ws["!cols"] = colWidths;
-
-    // Add the worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, "التقرير");
-
-    // Generate Excel file and download
-    const currentDate = new Date()
-      .toLocaleDateString("ar-EG")
-      .replace(/\//g, "-");
-    XLSX.writeFile(wb, `${filename}_${currentDate}.xlsx`);
-  };
-
-  // Function to download template
-  const downloadTemplate = () => {
-    let headers: string[] = [];
-    let sampleData: any[] = [];
-    let filename = "";
-
-    if (reportType === "clients") {
-      headers = ["اسم الموكل", "رقم التليفون", "العنوان"];
-      sampleData = [
-        ["أحمد محمد", "01234567890", "القاهرة"],
-        ["فاطمة علي", "01987654321", "الجيزة"],
-      ];
-      filename = "قالب_استيراد_الموكلين";
-    } else if (reportType === "cases") {
-      headers = [
-        "اسم الموكل",
-        "نوع الدعوى",
-        "طبيعة الدعوى",
-        "المحكمة",
-        "رقم الدعوى",
-        "السنة",
-        "الحالة",
-      ];
-      sampleData = [
-        ["أحمد محمد", "مدني", "دين", "محكمة القاهرة", "123", "2024", "مفتوحة"],
-        ["فاطمة علي", "جنائي", "سرقة", "محكمة الجيزة", "124", "2024", "مؤجلة"],
-      ];
-      filename = "قالب_استيراد_الدعاوى";
-    }
-
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
-
-    // Set column widths
-    const colWidths = headers.map(() => ({ wch: 20 }));
-    ws["!cols"] = colWidths;
-
-    // Add the worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, "القالب");
-
-    // Generate Excel file and download
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-  };
-
-  // Function to handle file import
-  // const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   if (e.target.files && e.target.files[0]) {
-  //     setImportFile(e.target.files[0]);
-  //   }
-  // };
-
-  // Function to process imported Excel file
-  // const processImportedFile = async () => {
-  //   if (!importFile) return;
-
-  //   try {
-  //     const data = await importFile.arrayBuffer();
-  //     const workbook = XLSX.read(data);
-  //     const sheetName = workbook.SheetNames[0];
-  //     const worksheet = workbook.Sheets[sheetName];
-  //     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-  //     // Skip header row
-  //     const rows = jsonData.slice(1) as any[][];
-
-  //     if (reportType === "clients") {
-  //       // Process client data
-  //       const clientsToImport = rows
-  //         .filter((row) => row[0]) // Filter out empty rows
-  //         .map((row, index) => ({
-  //           name: row[0] || `موكل ${index + 1}`,
-  //           phone: row[1] || "",
-  //           address: row[2] || "",
-  //           owner: "PLACEHOLDER_LAWYER_ID", // Replace with actual lawyer ID from session/auth
-
-  //           createdAt: new Date().toISOString(),
-  //         }));
-
-  //       // Here you would typically send this data to your API
-  //       for (const client of clientsToImport) {
-  //         await fetch("/api/clients", {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify(client),
-  //         });
-  //         console.log("Clients to import:", clientsToImport);
-  //       }
-  //       alert(
-  //         `تم تحضير ${clientsToImport.length} موكل للاستيراد. يرجى ربط هذه الوظيفة بـ API الخاص بك.`
-  //       );
-  //     } else if (reportType === "cases") {
-  //       // Process case data
-  //       const casesToImport = rows
-  //         .filter((row) => row[0]) // Filter out empty rows
-  //         .map((row, index) => ({
-  //           client: { name: row[0] || `موكل ${index + 1}` },
-  //           caseTypeOF: row[1] || "",
-  //           type: row[2] || "",
-  //           court: row[3] || "",
-  //           caseNumber: row[4] || `${Date.now()}-${index + 1}`,
-  //           year: row[5] || new Date().getFullYear().toString(),
-  //           status: row[6] || "مفتوحة",
-  //           caseDate: new Date().toISOString(),
-  //           sessiondate: new Date().toISOString(),
-  //         }));
-
-  //       console.log("Cases to import:", casesToImport);
-  //       alert(
-  //         `تم تحضير ${casesToImport.length} دعوى للاستيراد. يرجى ربط هذه الوظيفة بـ API الخاص بك.`
-  //       );
-  //     }
-
-  //     // Reset file input
-  //     setImportFile(null);
-  //     if (fileInputRef.current) {
-  //       fileInputRef.current.value = "";
-  //     }
-  //   } catch (error) {
-  //     console.error("Error importing file:", error);
-  //     alert("حدث خطأ أثناء استيراد الملف. يرجى التأكد من صحة تنسيق الملف.");
-  //   }
-  // };
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const casesRes = await fetch("/api/cases");
-      const casesData = await casesRes.json();
-      if (casesData.success) {
-        const casesWithCaseDate = casesData.data.map((c: any) => ({
-          ...c,
-          caseDate: c.caseDate || c.sessiondate, // Use caseDate if available, otherwise sessiondate
-        }));
-        setAllCases(casesWithCaseDate);
-      } else {
-        setError(casesData.message || "فشل في جلب بيانات القضايا.");
-      }
-
-      const clientsRes = await fetch("/api/clients");
-      const clientsData = await clientsRes.json();
-      if (clientsData.success) {
-        setAllClients(clientsData.data);
-      } else {
-        setError(clientsData.message || "فشل في جلب بيانات الموكلين.");
-      }
-      setIsDataLoaded(true);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // load data
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/auth/login");
+  }, [status, router]);
 
   useEffect(() => {
-    fetchData();
-    if (status === "unauthenticated") {
-      router.replace("/auth/login");
-    }
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [casesRes, clientsRes] = await Promise.all([
+          axios.get("/api/cases"),
+          axios.get("/api/clients"),
+        ]);
+        setCases((casesRes.data?.data || []).map((c: any) => ({
+          ...c,
+          client: c.client || (typeof c.client === "string" ? { name: c.client } : { name: "غير معروف" }),
+          caseDate: c.caseDate || c.sessiondate || null,
+        })));
+        setClients(clientsRes.data?.data || []);
+      } catch (err: any) {
+        console.error(err);
+        setError(err?.message || "فشل في جلب البيانات");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const filteredCases = allCases.filter((c) => {
+  // derived counts & collections
+  const totalCases = cases.length;
+  const totalClients = clients.length;
+
+  const tomorrowSessionsCount = useMemo(() => {
+    const t = new Date(); t.setHours(0,0,0,0); t.setDate(t.getDate()+1);
+    return cases.filter(c => {
+      if (!c.sessiondate) return false;
+      const d = new Date(c.sessiondate);
+      return d.getFullYear() === t.getFullYear() &&
+             d.getMonth() === t.getMonth() &&
+             d.getDate() === t.getDate();
+    }).length;
+  }, [cases]);
+
+  // distribution for pie (ابتدائي, استئناف, نقض)
+  const distribution = useMemo(() => {
+    const map: Record<string, number> = { "ابتدائي": 0, "استئناف": 0, "نقض": 0 };
+    cases.forEach(c => {
+      const t = (c.type || c.caseTypeOF || "غير محدد").trim();
+      if (map[t] !== undefined) map[t] += 1;
+    });
+    return Object.keys(map).map(k => ({ name: k, value: map[k] }));
+  }, [cases]);
+
+  // monthly bar data
+  const monthly = useMemo(() => {
+    const arr = Array.from({ length: 12 }, (_, i) => ({ monthNum: i, month: ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"][i], count: 0 }));
+    cases.forEach(c => {
+      const d = c.caseDate ? new Date(c.caseDate) : (c.sessiondate ? new Date(c.sessiondate) : null);
+      if (!d || isNaN(d.getTime())) return;
+      arr[d.getMonth()].count++;
+    });
+    return arr.map(a => ({ month: a.month, count: a.count }));
+  }, [cases]);
+
+  // filtering logic
+  const filteredCases = useMemo(() => {
     const from = fromDate ? new Date(fromDate) : null;
     const to = toDate ? new Date(toDate) : null;
+    return cases.filter(c => {
+      // date filter depends on tab
+      const dateField = tab === "sessions" ? c.sessiondate : c.caseDate;
+      if (from && dateField && new Date(dateField) < from) return false;
+      if (to && dateField && new Date(dateField) > (to ? new Date(to) : new Date(8640000000000000))) return false;
+      if (statusFilter && c.status && c.status.trim() !== statusFilter.trim()) return false;
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        const clientName = typeof c.client === "string" ? c.client : (c.client?.name || "");
+        if (!( (c.caseNumber || "").toString().toLowerCase().includes(q) || clientName.toLowerCase().includes(q) )) return false;
+      }
+      return true;
+    });
+  }, [cases, fromDate, toDate, statusFilter, searchTerm, tab]);
 
-    // Filter based on report type
-    if (reportType === "sessions") {
-      const sessionDate = new Date(c.sessiondate);
-      if (from && sessionDate < from) return false;
-      if (to && sessionDate > to) return false;
-    } else if (reportType === "cases") {
-      const caseDate = new Date(c.caseDate);
-      if (from && caseDate < from) return false;
-      if (to && caseDate > to) return false;
-    }
-
-    // Filter by status
-    if (statusFilter && c.status.trim() !== statusFilter.trim()) return false;
-
-    // Filter by search term
-    if (
-      searchTerm &&
-      !c.caseNumber.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !c.client.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-      return false;
-
-    return true;
-  });
-
-  const filteredClients = allClients.filter((c) => {
-    // Date filtering for clients
+  const filteredClients = useMemo(() => {
     const from = fromDate ? new Date(fromDate) : null;
     const to = toDate ? new Date(toDate) : null;
-    const clientDate = new Date(c.createdAt);
+    return clients.filter(c => {
+      const d = c.createdAt ? new Date(c.createdAt) : null;
+      if (from && d && d < from) return false;
+      if (to && d && d > (to ? new Date(to) : new Date(8640000000000000))) return false;
+      if (searchTerm && !c.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      return true;
+    });
+  }, [clients, fromDate, toDate, searchTerm]);
 
-    if (from && clientDate < from) return false;
-    if (to && clientDate > to) return false;
+  // UI helpers
+  const resetFilters = () => { setFromDate(""); setToDate(""); setStatusFilter(""); setSearchTerm(""); };
 
-    // Search term filtering
-    if (searchTerm && !c.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      return false;
-
-    return true;
-  });
-
-  const getRowColor = (status: string) => {
-    switch (status.trim()) {
-      case "مفتوحة":
-        return "bg-green-100 dark:bg-green-800 dark:text-green-50";
-      case "مغلقة":
-        return "bg-red-100 dark:bg-red-800 dark:text-red-50";
-      case "مؤجلة":
-        return "bg-yellow-100 dark:bg-yellow-800 dark:text-yellow-50";
-      case "مشطوبة":
-        return "bg-red-200 dark:bg-red-900 dark:text-red-100";
-      case "مسئنفة":
-        return "bg-blue-200 dark:bg-blue-900 dark:text-blue-100";
-      default:
-        return "bg-white dark:bg-gray-700";
+  // export functions
+  const exportToExcel = (target: Tab) => {
+    let headers: string[] = [];
+    let rows: any[][] = [];
+    const dateStamp = new Date().toLocaleDateString("ar-EG").replace(/\//g, "-");
+    if (target === "cases") {
+      headers = ["اسم الموكل","نوع الدعوى","طبيعة","المحكمة","رقم الدعوى","السنة","الحالة","تاريخ الدعوى"];
+      rows = filteredCases.map(c => [
+        typeof c.client === "string" ? c.client : (c.client?.name || "غير معروف"),
+        c.caseTypeOF || "-",
+        c.type || "-",
+        c.court || "-",
+        c.caseNumber || "-",
+        c.year || "-",
+        c.status || "-",
+        c.caseDate ? new Date(c.caseDate).toLocaleDateString("ar-EG") : "-"
+      ]);
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws["!cols"] = headers.map(() => ({ wch: 20 }));
+      XLSX.utils.book_append_sheet(wb, ws, "الدعاوى");
+      XLSX.writeFile(wb, `report_cases_${dateStamp}.xlsx`);
+    } else if (target === "clients") {
+      headers = ["اسم الموكل","رقم التليفون","العنوان","تاريخ الإضافة"];
+      rows = filteredClients.map(c => [c.name, c.phone || "-", c.address || "-", c.createdAt ? new Date(c.createdAt).toLocaleDateString("ar-EG") : "-"]);
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws["!cols"] = headers.map(() => ({ wch: 20 }));
+      XLSX.utils.book_append_sheet(wb, ws, "الموكلين");
+      XLSX.writeFile(wb, `report_clients_${dateStamp}.xlsx`);
+    } else { // sessions
+      headers = ["اسم الموكل","رقم الدعوى","الحالة","تاريخ الجلسة"];
+      rows = filteredCases.map(c => [
+        typeof c.client === "string" ? c.client : (c.client?.name || "غير معروف"),
+        c.caseNumber || "-",
+        c.status || "-",
+        c.sessiondate ? new Date(c.sessiondate).toLocaleDateString("ar-EG") : "-"
+      ]);
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      ws["!cols"] = headers.map(() => ({ wch: 20 }));
+      XLSX.utils.book_append_sheet(wb, ws, "الجلسات");
+      XLSX.writeFile(wb, `report_sessions_${dateStamp}.xlsx`);
     }
   };
 
-  const sessions = filteredCases;
+  const handlePrint = () => window.print();
 
-  const clearFilters = () => {
-    setFromDate("");
-    setToDate("");
-    setStatusFilter("");
-    setSearchTerm("");
+  // tiny style helpers
+  const statusClass = (s?: string) => {
+    if (!s) return "bg-gray-100 text-gray-800";
+    const t = s.trim();
+    if (t === "مفتوحة") return "bg-green-100 text-green-800";
+    if (t === "مغلقة") return "bg-red-100 text-red-800";
+    if (t === "مؤجلة") return "bg-yellow-100 text-yellow-800";
+    if (t === "مشطوبة") return "bg-red-200 text-red-900";
+    return "bg-gray-100 text-gray-800";
   };
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <SpinnerIcon />
-        <span className="mr-2 text-gray-500 dark:text-gray-400">
-          جاري التحقق...
-        </span>
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-6 min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      {/* header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold">لوحة التقارير</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">عرض وفلترة وتصدير تقارير الدعاوى، الجلسات، والموكلين.</p>
+        </div>
+
+        {/* toolbar */}
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center bg-white dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm">
+            <Search className="w-4 h-4 text-gray-400" />
+            <input
+              placeholder={tab === "clients" ? "بحث باسم الموكل..." : "بحث برقم الدعوى أو اسم الموكل..."}
+              className="bg-transparent outline-none px-3 text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <button onClick={() => exportToExcel(tab)} className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow">
+            <FileText className="w-4 h-4" /> تصدير
+          </button>
+
+          <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+            <Printer className="w-4 h-4" /> طباعة
+          </button>
+
+          <button onClick={resetFilters} className="flex items-center gap-2 px-3 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg shadow">
+            <XCircle className="w-4 h-4" /> مسح الفلاتر
+          </button>
+        </div>
       </div>
-    );
-  }
-  if (status === "authenticated") {
-    return (
-      <div
-        className="bg-gray-50 min-h-screen flex items-center justify-center p-6 transition-colors duration-300 dark:bg-gray-900 text-gray-800 dark:text-gray-200"
-        dir="rtl"
-      >
-        <style jsx>{`
-          @media print {
-            body {
-              margin: 0;
-              padding: 0;
-              font-family: "Cairo", Arial, sans-serif;
-              background: #fff;
-              color: #000;
-              line-height: 1.6;
-            }
 
-            .no-print {
-              display: none !important;
-            }
-
-            .print-container {
-              width: 100%;
-              margin: 0 auto;
-              padding: 20px;
-              background: #fff;
-            }
-
-            /* العناوين */
-            .print-container h1 {
-              text-align: center;
-              font-size: 22px;
-              margin-bottom: 10px;
-              color: #222;
-            }
-
-            .print-container h2 {
-              text-align: center;
-              font-size: 18px;
-              margin-bottom: 20px;
-              color: #444;
-            }
-
-            /* الجداول */
-            .print-container table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-              font-size: 13px;
-            }
-
-            .print-container th,
-            .print-container td {
-              border: 1px solid #aaa;
-              padding: 10px;
-              text-align: right;
-            }
-
-            .print-container thead th {
-              background: #f4f4f4;
-              color: #111;
-              font-weight: bold;
-              text-align: center;
-            }
-
-            .print-container tbody tr:nth-child(even) {
-              background: #fafafa;
-            }
-
-            .print-container tbody tr:nth-child(odd) {
-              background: #fff;
-            }
-
-            /* إزالة تأثيرات Tailwind أثناء الطباعة */
-            .print-container tr[class*="bg-"] {
-              background: #fff !important;
-              color: #000 !important;
-            }
-          }
-        `}</style>
-
-        <div
-          className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 w-full max-w-6xl relative print-container"
-          ref={componentRef}
-        >
-          <h1 className="text-4xl font-extrabold text-gray-800 dark:text-gray-100 text-center mb-8 no-print">
-            لوحة تقارير القضايا والموكلين
-          </h1>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center mb-4">
-            تقرير{" "}
-            {reportType === "cases"
-              ? "الدعاوى"
-              : reportType === "sessions"
-              ? "الجلسات"
-              : "الموكلين"}
-          </h2>
-
-          <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-2xl mb-8 border border-gray-200 dark:border-gray-600 no-print">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-              <div className="col-span-1">
-                <label
-                  htmlFor="reportType"
-                  className="block text-gray-700 dark:text-gray-300 font-semibold mb-1"
-                >
-                  نوع التقرير
-                </label>
-                <select
-                  id="reportType"
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value as ReportType)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                >
-                  <option value="cases">تقارير الدعاوى</option>
-                  <option value="sessions">تقارير الجلسات</option>
-                  <option value="clients">تقارير الموكلين</option>
-                </select>
-              </div>
-
-              <div className="col-span-1">
-                <label
-                  htmlFor="fromDate"
-                  className="block text-gray-700 dark:text-gray-300 font-semibold mb-1"
-                >
-                  {reportType === "cases"
-                    ? "من تاريخ الدعوى"
-                    : reportType === "sessions"
-                    ? "من تاريخ الجلسة"
-                    : "من تاريخ الإضافة"}
-                </label>
-                <input
-                  type="date"
-                  id="fromDate"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                />
-              </div>
-
-              <div className="col-span-1">
-                <label
-                  htmlFor="toDate"
-                  className="block text-gray-700 dark:text-gray-300 font-semibold mb-1"
-                >
-                  {reportType === "cases"
-                    ? "إلى تاريخ الدعوى"
-                    : reportType === "sessions"
-                    ? "إلى تاريخ الجلسة"
-                    : "إلى تاريخ الإضافة"}
-                </label>
-                <input
-                  type="date"
-                  id="toDate"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                />
-              </div>
-
-              {reportType !== "clients" && (
-                <div className="col-span-1">
-                  <label
-                    htmlFor="statusFilter"
-                    className="block text-gray-700 dark:text-gray-300 font-semibold mb-1"
-                  >
-                    حالة الدعوى
-                  </label>
-                  <select
-                    id="statusFilter"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                  >
-                    <option value="">كل الحالات</option>
-                    <option value="مفتوحة">مفتوحة</option>
-                    <option value="مغلقة">مغلقة</option>
-                    <option value="مؤجلة">مؤجلة</option>
-                    <option value="مشطوبة">مشطوبة</option>
-                    <option value="مسئنفة">مسئنفة</option>
-                  </select>
-                </div>
-              )}
-
-              <div className="col-span-1">
-                <label
-                  htmlFor="searchTerm"
-                  className="block text-gray-700 dark:text-gray-300 font-semibold mb-1"
-                >
-                  بحث
-                </label>
-                <input
-                  type="text"
-                  id="searchTerm"
-                  placeholder={
-                    reportType === "clients"
-                      ? "بحث باسم الموكل"
-                      : "بحث برقم الدعوى أو اسم الموكل"
-                  }
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 text-center">
-              <button
-                onClick={clearFilters}
-                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-800"
-              >
-                مسح الفلاتر
-              </button>
-            </div>
-          </div>
-
-          <div className="no-print mb-6">
-            <div className="flex gap-4 justify-center flex-wrap items-center">
-              <button
-                onClick={handlePrint}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg"
-              >
-                طباعة التقرير
-              </button>
-
-              <button
-                onClick={exportToExcel}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800 shadow-lg"
-              >
-                تصدير إلى Excel
-              </button>
-
-              {/* {(reportType === "clients" || reportType === "cases") && (
-                <>
-                  <button
-                    onClick={downloadTemplate}
-                    className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg"
-                  >
-                    تحميل القالب
-                  </button> 
-     
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={handleFileImport}
-                      className="hidden"
-                      id="fileImport"
-                    />
-                    <label
-                      htmlFor="fileImport"
-                      className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:focus:ring-orange-800 shadow-lg cursor-pointer"
-                    >
-                      اختيار ملف Excel
-                    </label>
-                    
-                    {importFile && (
-                      <button
-                        onClick={processImportedFile}
-                        className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800 shadow-lg"
-                      >
-                        استيراد البيانات
-                      </button>
-                    )}
-                  </div> 
-                </>
-              )} */}
-
-              <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                {reportType === "cases" && (
-                  <span>عدد النتائج: {filteredCases.length}</span>
-                )}
-                {reportType === "clients" && (
-                  <span>عدد النتائج: {filteredClients.length}</span>
-                )}
-                {reportType === "sessions" && (
-                  <span>عدد النتائج: {sessions.length}</span>
-                )}
-              </div>
-            </div>
-
-            {importFile && (
-              <div className="mt-4 p-4 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded-lg text-center">
-                <p className="text-yellow-800 dark:text-yellow-200">
-                  تم اختيار الملف: <strong>{importFile.name}</strong>
-                </p>
-                <p className="text-sm text-yellow-600 dark:text-yellow-300 mt-1">
-                  انقر على "استيراد البيانات" لبدء عملية الاستيراد
-                </p>
-              </div>
-            )}
-          </div>
-
-          {isLoading && (
-            <div className="text-center p-8">
-              <SpinnerIcon />
-              <p className="text-gray-500 dark:text-gray-400 mt-2">
-                جاري تحميل البيانات...
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div
-              className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg relative text-center mb-6"
-              role="alert"
+      {/* Tabs */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-6">
+        <div className="flex gap-2 flex-wrap">
+          {(["cases","sessions","clients"] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-xl transition font-semibold ${tab === t ? "bg-gradient-to-r from-indigo-500 to-pink-500 text-white shadow-lg" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
             >
-              {error}
+              {t === "cases" ? "الدعاوى" : t === "sessions" ? "الجلسات" : "الموكلين"}
+            </button>
+          ))}
+        </div>
+
+        {/* filters row */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+          <div>
+            <label className="text-xs text-gray-500">من</label>
+            <input type="date" value={fromDate} onChange={(e)=>setFromDate(e.target.value)} className="w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-900 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">إلى</label>
+            <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} className="w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-900 text-sm" />
+          </div>
+
+          {(tab === "cases" || tab === "sessions") && (
+            <div>
+              <label className="text-xs text-gray-500">الحالة</label>
+              <select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} className="w-full px-3 py-2 rounded-md border bg-white dark:bg-gray-900 text-sm">
+                <option value="">كل الحالات</option>
+                <option value="مفتوحة">مفتوحة</option>
+                <option value="مغلقة">مغلقة</option>
+                <option value="مؤجلة">مؤجلة</option>
+                <option value="مشطوبة">مشطوبة</option>
+                <option value="مسئنفة">مسئنفة</option>
+              </select>
             </div>
           )}
 
-          {!isDataLoaded && !isLoading && !error && (
-            <div className="text-center text-gray-500 dark:text-gray-400 p-8 border-dashed border-2 rounded-lg border-gray-300 dark:border-gray-600">
-              <p>يرجى الانتظار، يتم جلب البيانات...</p>
-            </div>
-          )}
-
-          {/* No results message */}
-          {isDataLoaded && !isLoading && (
-            <>
-              {reportType === "cases" && filteredCases.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 p-8 border-dashed border-2 rounded-lg border-gray-300 dark:border-gray-600">
-                  <p>لا توجد دعاوى تطابق معايير البحث المحددة</p>
-                </div>
-              )}
-              {reportType === "clients" && filteredClients.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 p-8 border-dashed border-2 rounded-lg border-gray-300 dark:border-gray-600">
-                  <p>لا يوجد موكلين يطابقون معايير البحث المحددة</p>
-                </div>
-              )}
-              {reportType === "sessions" && sessions.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 p-8 border-dashed border-2 rounded-lg border-gray-300 dark:border-gray-600">
-                  <p>لا توجد جلسات تطابق معايير البحث المحددة</p>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="overflow-x-auto rounded-xl shadow-lg">
-            {reportType === "cases" && filteredCases.length > 0 && (
-              <table className="min-w-full table-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
-                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-right text-sm">
-                  <tr>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      اسم الموكل
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      نوع الدعوى
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      طبيعة الدعوى
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      المحكمة
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      رقم الدعوى
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      السنة
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      الحالة
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      تاريخ الدعوى
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCases.map((c) => (
-                    <tr
-                      key={c._id}
-                      className={`${getRowColor(
-                        c.status
-                      )} hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors`}
-                    >
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.client.name}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.caseTypeOF}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.type}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.court}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.caseNumber}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.year}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.status}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {new Date(c.caseDate).toLocaleDateString("ar-EG")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            {reportType === "clients" && filteredClients.length > 0 && (
-              <table className="min-w-full table-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
-                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-right text-sm">
-                  <tr>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      اسم الموكل
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      رقم التليفون
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      العنوان
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      تاريخ الإضافة
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClients.map((c) => (
-                    <tr
-                      key={c._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {c.name}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm">
-                        {c.phone || "غير محدد"}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm">
-                        {c.address || "غير محدد"}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-sm">
-                        {new Date(c.createdAt).toLocaleDateString("ar-EG")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-            {reportType === "sessions" && sessions.length > 0 && (
-              <table className="min-w-full table-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
-                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-right text-sm">
-                  <tr>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      اسم الموكل
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      رقم الدعوى
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      الحالة
-                    </th>
-                    <th className="px-4 py-3 border-b-2 border-gray-200 dark:border-gray-600">
-                      تاريخ الجلسة
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessions.map((s) => (
-                    <tr
-                      key={s._id}
-                      className={`${getRowColor(
-                        s.status
-                      )} hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
-                    >
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {s.client.name}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {s.caseNumber}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {s.status}
-                      </td>
-                      <td className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        {new Date(s.sessiondate).toLocaleDateString("ar-EG")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <div className="md:col-span-2">
+            <div className="text-sm text-gray-500">النتائج: <span className="font-semibold">{ tab === "clients" ? filteredClients.length : filteredCases.length }</span></div>
+            <div className="text-xs text-gray-400">إجمالي: { tab === "clients" ? totalClients : totalCases } — جلسات الغد: {tomorrowSessionsCount}</div>
           </div>
         </div>
       </div>
-    );
-  }
-};
 
-export default ReportsPage;
+      {/* content area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left big column: charts & table */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold">توزيع الدعاوى</div>
+                <div className="text-xs text-gray-400">النوع (ابتدائي / استئناف / نقض)</div>
+              </div>
+              <div style={{ height: 260 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={distribution} dataKey="value" nameKey="name" outerRadius={80} label>
+                      {distribution.map((entry, idx) => <Cell key={idx} fill={["#FF7A59","#6C5CE7","#24C1FF"][idx % 3]} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold">القضايا بالشهور</div>
+                <div className="text-xs text-gray-400">نشاط آخر 12 شهر</div>
+              </div>
+              <div style={{ height: 260 }}>
+                <ResponsiveContainer>
+                  <BarChart data={monthly}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#FF7A59" radius={[6,6,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* table */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-lg font-semibold">
+                {tab === "cases" ? "قائمة الدعاوى" : tab === "sessions" ? "قائمة الجلسات" : "قائمة الموكلين"}
+              </div>
+              <div className="text-sm text-gray-500">نتائج: <span className="font-semibold">{tab === "clients" ? filteredClients.length : filteredCases.length}</span></div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {/* Cases table */}
+              {tab === "cases" && (
+                <table className="min-w-full text-sm table-auto">
+                  <thead className="text-right bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
+                    <tr>
+                      <th className="px-3 py-2">الموكل</th>
+                      <th className="px-3 py-2">نوع</th>
+                      <th className="px-3 py-2">طبيعة</th>
+                      <th className="px-3 py-2">رقم</th>
+                      <th className="px-3 py-2">السنة</th>
+                      <th className="px-3 py-2">تاريخ</th>
+                      <th className="px-3 py-2">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCases.map(c => (
+                      <tr key={c._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 py-2">{ typeof c.client === "string" ? c.client : (c.client?.name || "-") }</td>
+                        <td className="px-3 py-2">{c.caseTypeOF || "-"}</td>
+                        <td className="px-3 py-2">{c.type || "-"}</td>
+                        <td className="px-3 py-2">{c.caseNumber || "-"}</td>
+                        <td className="px-3 py-2">{c.year || "-"}</td>
+                        <td className="px-3 py-2">{c.caseDate ? new Date(c.caseDate).toLocaleDateString("ar-EG") : "-"}</td>
+                        <td className="px-3 py-2"><span className={`${statusClass(c.status)} px-2 py-1 rounded text-xs`}>{c.status || "-"}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Sessions table */}
+              {tab === "sessions" && (
+                <table className="min-w-full text-sm table-auto">
+                  <thead className="text-right bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
+                    <tr>
+                      <th className="px-3 py-2">الموكل</th>
+                      <th className="px-3 py-2">رقم الدعوى</th>
+                      <th className="px-3 py-2">الحالة</th>
+                      <th className="px-3 py-2">تاريخ الجلسة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCases.map(s => (
+                      <tr key={s._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 py-2">{ typeof s.client === "string" ? s.client : (s.client?.name || "-") }</td>
+                        <td className="px-3 py-2">{s.caseNumber || "-"}</td>
+                        <td className="px-3 py-2"><span className={`${statusClass(s.status)} px-2 py-1 rounded text-xs`}>{s.status || "-"}</span></td>
+                        <td className="px-3 py-2">{s.sessiondate ? new Date(s.sessiondate).toLocaleDateString("ar-EG") : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Clients table */}
+              {tab === "clients" && (
+                <table className="min-w-full text-sm table-auto">
+                  <thead className="text-right bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
+                    <tr>
+                      <th className="px-3 py-2">الاسم</th>
+                      <th className="px-3 py-2">الهاتف</th>
+                      <th className="px-3 py-2">العنوان</th>
+                      <th className="px-3 py-2">تاريخ الإضافة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredClients.map(c => (
+                      <tr key={c._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 py-2">{c.name}</td>
+                        <td className="px-3 py-2">{c.phone || "-"}</td>
+                        <td className="px-3 py-2">{c.address || "-"}</td>
+                        <td className="px-3 py-2">{c.createdAt ? new Date(c.createdAt).toLocaleDateString("ar-EG") : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right column: small stats / quick actions */}
+        <aside className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+            <div className="text-sm text-gray-500">إجمالي الدعاوى</div>
+            <div className="text-2xl font-bold">{totalCases}</div>
+            <div className="text-xs text-gray-400 mt-1">قضايا النظام كاملة</div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+            <div className="text-sm text-gray-500">إجمالي الموكلين</div>
+            <div className="text-2xl font-bold">{totalClients}</div>
+            <div className="text-xs text-gray-400 mt-1">عدد الموكلين المسجلين</div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-500">جلسات الغد</div>
+                <div className="text-2xl font-bold">{tomorrowSessionsCount}</div>
+              </div>
+              <div className="p-3 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-xs text-gray-400 mt-1">مواعيد الغد المقررة</div>
+          </div>
+        </aside>
+      </div>
+
+      {/* error */}
+      {error && (
+        <div className="fixed bottom-6 left-6 bg-red-600 text-white px-4 py-2 rounded shadow">
+          {error}
+        </div>
+      )}
+    </motion.div>
+  );
+}
