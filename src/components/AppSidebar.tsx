@@ -148,7 +148,7 @@ export function AppSidebar() {
           <div>
             {status === "authenticated" && (
               <Button
-                onClick={() => signOut({ callbackUrl: "/auth/login" })}
+                onClick={() => signOut({ callbackUrl: "/" })}
                 variant="ghost"
                 className="flex items-center text-red-500 hover:bg-red-500/10 hover:text-red-600 px-4 py-2 rounded-md transition-colors duration-200"
               >

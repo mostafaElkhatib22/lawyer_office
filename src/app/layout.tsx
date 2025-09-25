@@ -1,15 +1,20 @@
 import { Providers } from "@/components/theme-provider";
 import "./globals.css";
-import { Inter } from 'next/font/google';
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/Sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { Inter, Changa } from "next/font/google";
+import { ConditionalLayout } from "@/components/ConditionalLayout";
 
 const inter = Inter({ subsets: ["latin"] });
+const changa = Changa({
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+  display: "swap",
+});
 
 export const metadata = {
   title: "Lawyer App",
   description: "Multi-tenant lawyer management system",
 };
+
 export default function RootLayout({
   children,
 }: {
@@ -17,15 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} >
-        <Providers >
-          <SidebarProvider  >
-            <AppSidebar />
-            <main className="flex-1 p-4 md:p-6" >
-              <SidebarTrigger />
-              {children}
-            </main>
-          </SidebarProvider>
+      <body className={`${inter.className} ${changa.className}`}>
+        <Providers>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </Providers>
       </body>
     </html>

@@ -83,6 +83,32 @@ export async function middleware(req: NextRequest) {
 
   debugLog(`🚀 Processing: ${pathname}`);
 
+  // Get token to check if user is authenticated
+  let token = null;
+  try {
+    const cookieName = req.nextUrl.hostname.includes('vercel.app') 
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token';
+    
+    token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: cookieName,
+      secureCookie: req.nextUrl.hostname.includes('vercel.app')
+    });
+    
+    debugLog("Token found:", token ? "✅" : "❌");
+    
+  } catch (error) {
+    debugLog("❌ Token error:", error);
+  }
+
+  // 🏠 If user is authenticated and on home page, redirect to dashboard
+  if (token && pathname === "/") {
+    debugLog("✅ Authenticated user on home page - redirecting to dashboard");
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   // 🏠 Public pages
   const publicPages = [
     "/",
@@ -112,30 +138,6 @@ export async function middleware(req: NextRequest) {
   }
 
   debugLog("🔒 Dashboard route detected - checking auth");
-
-  // Get NextAuth token with better error handling
-  let token = null;
-  try {
-    // Try different cookie names for production vs development
-    const cookieName = req.nextUrl.hostname.includes('vercel.app') 
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token';
-    
-    token = await getToken({ 
-      req, 
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: cookieName,
-      secureCookie: req.nextUrl.hostname.includes('vercel.app')
-    });
-    
-    debugLog("Token found:", token ? "✅" : "❌");
-    
-  } catch (error) {
-    debugLog("❌ Token error:", error);
-    return NextResponse.redirect(
-      new URL(`/auth/login?callbackUrl=${encodeURIComponent(pathname)}`, req.url)
-    );
-  }
 
   // If no token, redirect to login
   if (!token) {
