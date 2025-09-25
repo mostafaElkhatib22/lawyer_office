@@ -69,8 +69,8 @@ export function AppSidebar() {
       setOpen?.(false);
       
       // محاولة إغلاق عبر DOM manipulation كحل أخير
-      const sidebarElement = document.querySelector('[data-sidebar="sidebar"]');
-      const overlay = document.querySelector('[data-sidebar="overlay"]');
+      const sidebarElement = document.querySelector('[data-sidebar="sidebar"]') as HTMLElement;
+      const overlay = document.querySelector('[data-sidebar="overlay"]') as HTMLElement;
       
       if (sidebarElement) {
         sidebarElement.setAttribute('data-state', 'closed');
