@@ -32,8 +32,8 @@ const routePermissions: Record<string, RoutePermission> = {
 // sessions
   "/dashboard/sessions": { category: "sessions", action: "view" },
   // Documents
-  "/dashboard/documents/upload": { category: "documents", action: "upload" },
-  "/dashboard/documents/[id]": { category: "documents", action: "view" },
+  // "/dashboard/documents/upload": { category: "documents", action: "upload" },
+  // "/dashboard/documents/[id]": { category: "documents", action: "view" },
 
   // Financial
   "/dashboard/reports": { category: "reports", action: "viewFinancial" },
@@ -47,7 +47,7 @@ const routePermissions: Record<string, RoutePermission> = {
 
   // Settings
   "/dashboard/settings": { category: "firmSettings", action: "viewSettings" },
-  "/dashboard/settings/firm": { category: "firmSettings", action: "editSettings", requireOwnership: true },
+  "/dashboard/settings/user-management": { category: "firmSettings", action: "editSettings", requireOwnership: true },
 };
 
 // 🔍 Debug helper

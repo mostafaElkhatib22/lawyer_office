@@ -53,7 +53,7 @@ interface Permissions {
   sessions: { view: boolean };
   clients: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewContactInfo: boolean };
   appointments: { view: boolean; create: boolean; edit: boolean; delete: boolean; viewAll: boolean };
-  documents: { view: boolean; upload: boolean; download: boolean; delete: boolean; editSensitive: boolean };
+  // documents: { view: boolean; upload: boolean; download: boolean; delete: boolean; editSensitive: boolean };
   financial: { viewReports: boolean; createInvoices: boolean; viewPayments: boolean; editPrices: boolean };
   employees?: { view: boolean; create: boolean; edit: boolean; delete: boolean; managePermissions: boolean };
   reports: { viewBasic: boolean; viewDetailed: boolean; export: boolean; viewFinancial: boolean };
@@ -674,7 +674,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
     sessions: { view: true },
     clients: { view: true, create: false, edit: false, delete: false, viewContactInfo: true },
     appointments: { view: true, create: false, edit: false, delete: false, viewAll: false },
-    documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
+    // documents: { view: true, upload: false, download: true, delete: false, editSensitive: false },
     financial: { viewReports: false, createInvoices: false, viewPayments: false, editPrices: false },
     employees: { view: false, create: false, edit: false, delete: false, managePermissions: false },
     reports: { viewBasic: true, viewDetailed: false, export: false, viewFinancial: false },
@@ -719,16 +719,16 @@ const PermissionModal: React.FC<PermissionModalProps> = ({ employee, onClose, on
         viewAll: 'عرض جميع المواعيد'
       }
     },
-    documents: {
-      title: 'إدارة المستندات',
-      permissions: {
-        view: 'عرض المستندات',
-        upload: 'رفع مستندات جديدة',
-        download: 'تحميل المستندات',
-        delete: 'حذف المستندات',
-        editSensitive: 'تعديل المستندات الحساسة'
-      }
-    },
+    // documents: {
+    //   title: 'إدارة المستندات',
+    //   permissions: {
+    //     view: 'عرض المستندات',
+    //     upload: 'رفع مستندات جديدة',
+    //     download: 'تحميل المستندات',
+    //     delete: 'حذف المستندات',
+    //     editSensitive: 'تعديل المستندات الحساسة'
+    //   }
+    // },
     financial: {
       title: 'الإدارة المالية',
       permissions: {
