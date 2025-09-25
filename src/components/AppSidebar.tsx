@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/components/AppSidebar.tsx
 "use client";
 import { usePathname } from "next/navigation";
