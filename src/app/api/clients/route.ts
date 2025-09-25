@@ -15,96 +15,88 @@ function getErrorMessage(error: unknown): string {
   return 'An unknown error occurred';
 }
 
-// Helper function to extract ObjectId from various formats
-function extractObjectId(value: any): string {
-  if (!value) return '';
+// Helper function to safely extract ObjectId
+function safeExtractObjectId(value: any): string | null {
+  if (!value) return null;
   
-  // If it's already a string and looks like an ObjectId, return it
-  if (typeof value === 'string') {
-    // Check if it's a valid ObjectId format (24 hex characters)
-    if (/^[0-9a-fA-F]{24}$/.test(value)) {
+  try {
+    // If it's already a valid ObjectId string
+    if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
       return value;
     }
-    // If it's a stringified object, try to parse it
-    if (value.includes('ObjectId')) {
-      const match = value.match(/ObjectId\('([0-9a-fA-F]{24})'\)/);
-      if (match) return match[1];
+    
+    // If it's a mongoose ObjectId object
+    if (value._id && typeof value._id === 'string') {
+      return /^[0-9a-fA-F]{24}$/.test(value._id) ? value._id : null;
     }
-    return '';
+    
+    // If it has toString method that returns valid ObjectId
+    if (value.toString && typeof value.toString === 'function') {
+      const stringValue = value.toString();
+      return /^[0-9a-fA-F]{24}$/.test(stringValue) ? stringValue : null;
+    }
+    
+    // If it's a stringified object containing ObjectId
+    if (typeof value === 'string' && value.includes('ObjectId')) {
+      const match = value.match(/[0-9a-fA-F]{24}/);
+      return match ? match[0] : null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting ObjectId:', error);
+    return null;
   }
-  
-  // If it's an object with _id property
-  if (typeof value === 'object' && value._id) {
-    return extractObjectId(value._id);
-  }
-  
-  // If it's a mongoose ObjectId
-  if (value.toString && /^[0-9a-fA-F]{24}$/.test(value.toString())) {
-    return value.toString();
-  }
-  
-  return '';
 }
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
     const session = await getServerSession(authOptions);
+    
     if (!session?.user?.id) {
+      console.log('No session or user ID found');
       return NextResponse.json({ success: false, message: 'غير مصرح لك بالوصول' }, { status: 401 });
     }
 
     const sessionUser: any = session.user;
-    
-    // Add debug logging
-    console.log('Session User:', JSON.stringify(sessionUser, null, 2));
-    
-    const sessionUserId = extractObjectId(sessionUser.id);
+    console.log('Session User raw:', sessionUser);
+
+    // Safe extraction of user ID
+    const sessionUserId = safeExtractObjectId(sessionUser.id);
+    if (!sessionUserId) {
+      console.error('Could not extract valid session user ID from:', sessionUser.id);
+      return NextResponse.json({ success: false, message: 'معرف المستخدم غير صحيح' }, { status: 400 });
+    }
+
     const accountType = sessionUser.accountType || 'owner';
+    console.log('Session User ID:', sessionUserId);
+    console.log('Account Type:', accountType);
 
-    console.log('Extracted sessionUserId:', sessionUserId);
-    console.log('Account type:', accountType);
-
-    // Get the actual owner ID, ensuring it's a valid ObjectId
+    // Determine firm owner ID
     let firmOwnerIdString: string;
     if (accountType === 'employee' && sessionUser.ownerId) {
-      firmOwnerIdString = extractObjectId(sessionUser.ownerId);
-      console.log('Employee - extracted ownerId:', firmOwnerIdString);
+      const extractedOwnerId = safeExtractObjectId(sessionUser.ownerId);
+      if (!extractedOwnerId) {
+        console.error('Could not extract valid owner ID from:', sessionUser.ownerId);
+        return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+      }
+      firmOwnerIdString = extractedOwnerId;
     } else {
       firmOwnerIdString = sessionUserId;
-      console.log('Owner - using sessionUserId as firmOwnerId:', firmOwnerIdString);
     }
 
-    // More flexible ObjectId validation
-    if (!firmOwnerIdString) {
-      console.error('firmOwnerIdString is empty');
-      return NextResponse.json({ success: false, message: 'معرف المالك مفقود' }, { status: 400 });
-    }
+    console.log('Using firm owner ID:', firmOwnerIdString);
 
-    // Try to handle the ObjectId more gracefully
-    let firmOwnerId: mongoose.Types.ObjectId;
-    try {
-      if (mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
-        firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
-      } else {
-        // If extraction failed, try using the original value
-        console.log('Trying original sessionUser.id:', sessionUser.id);
-        if (mongoose.Types.ObjectId.isValid(sessionUser.id)) {
-          firmOwnerId = new mongoose.Types.ObjectId(sessionUser.id);
-        } else {
-          throw new Error('Invalid ObjectId format');
-        }
-      }
-    } catch (err) {
-      console.error('ObjectId creation failed:', err);
-      console.error('firmOwnerIdString:', firmOwnerIdString);
-      console.error('sessionUser.id:', sessionUser.id);
+    // Validate and create ObjectId
+    if (!mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
+      console.error('Invalid ObjectId format:', firmOwnerIdString);
       return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
     }
 
-    console.log('Final firmOwnerId:', firmOwnerId);
+    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
 
-    // Get all employees for this firm owner
+    // Get employees for this firm
     const employees = await User.find({ 
       ownerId: firmOwnerId, 
       accountType: 'employee' 
@@ -117,6 +109,7 @@ export async function GET(req: Request) {
 
     console.log('Searching for clients with owner IDs:', ownerIds.map(id => id.toString()));
 
+    // Get clients
     const clients = await Client.aggregate([
       { $match: { owner: { $in: ownerIds } } },
       {
@@ -128,18 +121,30 @@ export async function GET(req: Request) {
         }
       },
       { $addFields: { caseCount: { $size: '$cases' } } },
-      { $project: { cases: 0 } } // Don't return cases array to reduce payload size
+      { $project: { cases: 0 } }
     ]);
 
     console.log('Found clients:', clients.length);
 
     return NextResponse.json({ success: true, data: clients }, { status: 200 });
+    
   } catch (error) {
     console.error('Error Getting Clients:', error);
-    return NextResponse.json({ success: false, message: getErrorMessage(error) }, { status: 500 });
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: 'حدث خطأ في الخادم',
+      error: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
+    }, { status: 500 });
   }
 }
-
 
 export async function POST(req: Request) {
   try {
@@ -150,17 +155,26 @@ export async function POST(req: Request) {
     }
 
     const sessionUser: any = session.user;
-    const sessionUserId = extractObjectId(sessionUser.id);
+    const sessionUserId = safeExtractObjectId(sessionUser.id);
+    
+    if (!sessionUserId) {
+      return NextResponse.json({ success: false, message: 'معرف المستخدم غير صحيح' }, { status: 400 });
+    }
+
     const accountType = sessionUser.accountType || 'owner';
     
     let firmOwnerIdString: string;
     if (accountType === 'employee' && sessionUser.ownerId) {
-      firmOwnerIdString = extractObjectId(sessionUser.ownerId);
+      const extractedOwnerId = safeExtractObjectId(sessionUser.ownerId);
+      if (!extractedOwnerId) {
+        return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+      }
+      firmOwnerIdString = extractedOwnerId;
     } else {
       firmOwnerIdString = sessionUserId;
     }
 
-    if (!firmOwnerIdString || !mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
+    if (!mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
       return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
     }
 
