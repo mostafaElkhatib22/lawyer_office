@@ -144,7 +144,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="flex items-center justify-between p-4">
         <ModeToggle />
-        {open && (
+        
           <div>
             {status === "authenticated" && (
               <Button
@@ -157,7 +157,7 @@ export function AppSidebar() {
               </Button>
             )}
           </div>
-        )}
+
       </SidebarFooter>
     </Sidebar>
   );
