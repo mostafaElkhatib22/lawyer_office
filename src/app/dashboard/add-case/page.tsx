@@ -4,7 +4,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import axios from "axios";
 // import { useRouter } from "next/navigation"; // Commented out due to environment compilation issues
 // import { useSession } from "next-auth/react"; // Commented out due to environment compatibility issues
@@ -51,11 +51,10 @@ import {
   Book,
   StickyNote,
   ArrowRight,
-  ChartColumnBig, // Added ArrowRight for Next button
+  ChartColumnBig,
 } from "lucide-react";
 
 // --- START MOCK for next-auth/react (for environment compatibility) ---
-// In a real Next.js application, you would use the actual `useSession` hook.
 const mockUseSession = () => {
   const [status, setStatus] = useState<
     "loading" | "authenticated" | "unauthenticated"
@@ -84,13 +83,11 @@ const useSession = mockUseSession;
 // --- END MOCK ---
 
 // --- START MOCK for useRouter (for environment compatibility) ---
-// In a real Next.js application, you would use the actual `useRouter` hook from 'next/navigation'.
 const mockUseRouter = () => {
   const router = React.useMemo(
     () => ({
       push: (path: string) => {
         console.log(`Mock Router.push: Navigating to ${path}`);
-        // window.location.href = path; // For actual navigation in a browser context
       },
       back: () => {
         console.log("Mock Router.back: Simulating browser back action.");
@@ -105,15 +102,12 @@ const mockUseRouter = () => {
 const useRouter = mockUseRouter;
 // --- END MOCK ---
 
-// --- START INLINE ActivityIndicator (if external component not resolved) ---
-// If "@/components/ui/activity-indicator" cannot be resolved, this inline version will be used.
-type SizeType = "small" | "medium" | "large";
-
-const ActivityIndicator = ({
-  size = "medium" as SizeType,
+// --- Optimized ActivityIndicator ---
+const ActivityIndicator = memo(({
+  size = "medium" as "small" | "medium" | "large",
   className = "text-blue-500",
 }: {
-  size?: SizeType;
+  size?: "small" | "medium" | "large";
   className?: string;
 }) => {
   const sizeClasses = {
@@ -124,11 +118,12 @@ const ActivityIndicator = ({
   return (
     <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
   );
-};
-// --- END INLINE ActivityIndicator ---
+});
 
-// Custom FileStack SVG icon (since Lucide doesn't have a direct equivalent)
-const FileStack = (props: React.SVGProps<SVGSVGElement>) => (
+ActivityIndicator.displayName = "ActivityIndicator";
+
+// Custom FileStack SVG icon
+const FileStack = memo((props: React.SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
     xmlns="http://www.w3.org/2000/svg"
@@ -144,7 +139,9 @@ const FileStack = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M8 12h8" />
     <path d="M8 16h8" />
   </svg>
-);
+));
+
+FileStack.displayName = "FileStack";
 
 // Fix: Dynamically set API_BASE_URL to ensure a valid URL is constructed
 const API_BASE_URL =
@@ -169,45 +166,287 @@ interface FormData {
   caseDate: string;
   sessiondate: string;
   opponents: string[];
-  files: string[]; // This will now store URLs of uploaded files
+  files: string[];
 }
+
+// Constants moved outside component for better performance
+const CASE_TYPE_OPTIONS = ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"];
+const TYPE_OPTIONS = ["ابتدائي", "استئناف", "نقض", "تنفيذ"];
+const CASE_STATUS_OPTIONS = ["مفتوحة", "مغلقة", "مؤجلة", "استئناف", "مشطوبة"];
+
+const INITIAL_FORM_DATA: FormData = {
+  client: "",
+  caseTypeOF: "",
+  type: "",
+  court: "",
+  caseNumber: "",
+  caseDate: new Date().toISOString().split("T")[0],
+  year: new Date().getFullYear().toString(),
+  attorneyNumber: "",
+  decision: "",
+  status: "مفتوحة",
+  nots: "",
+  sessiondate: new Date().toISOString().split("T")[0],
+  opponents: [],
+  files: [],
+};
+
+// Memoized components for better performance
+const InputField = memo(({
+  id,
+  type,
+  label,
+  placeholder,
+  required,
+  Icon,
+  value,
+  onChange,
+  validationError,
+  min,
+  max,
+}: {
+  id: keyof FormData;
+  type: string;
+  label: string;
+  placeholder: string;
+  required: boolean;
+  Icon: React.ElementType;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  validationError?: string;
+  min?: string;
+  max?: string;
+}) => (
+  <div className="space-y-2 relative">
+    <Label
+      htmlFor={id}
+      className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
+    >
+      <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+      {label} {required && <span className="text-red-500">*</span>}
+    </Label>
+    <Input
+      id={id}
+      name={id}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      required={required}
+      min={min}
+      max={max}
+      className={`h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 ${
+        validationError
+          ? "border-red-500 ring-red-500"
+          : "focus:ring-blue-400 focus:border-blue-400"
+      } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
+      dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+    />
+    {validationError && (
+      <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
+        {validationError}
+      </p>
+    )}
+  </div>
+));
+
+InputField.displayName = "InputField";
+
+const SelectField = memo(({
+  id,
+  label,
+  placeholder,
+  required,
+  Icon,
+  options,
+  value,
+  onChange,
+  validationError,
+}: {
+  id: keyof FormData;
+  label: string;
+  placeholder: string;
+  required: boolean;
+  Icon: React.ElementType;
+  options: string[];
+  value: string;
+  onChange: (value: string) => void;
+  validationError?: string;
+}) => (
+  <div className="space-y-2 relative">
+    <Label
+      htmlFor={id}
+      className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
+    >
+      <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+      {label} {required && <span className="text-red-500">*</span>}
+    </Label>
+    <Select onValueChange={onChange} value={value}>
+      <SelectTrigger
+        id={id}
+        className={`w-full h-12 rounded-lg px-4 bg-white border border-gray-300 ${
+          validationError
+            ? "border-red-500 ring-red-500"
+            : "focus:ring-blue-400 focus:border-blue-400"
+        } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
+        dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent className="dark:bg-gray-800 dark:text-gray-200 border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
+        {options.map((option) => (
+          <SelectItem
+            key={option}
+            value={option}
+            className="hover:bg-blue-50 focus:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700"
+          >
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    {validationError && (
+      <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
+        {validationError}
+      </p>
+    )}
+  </div>
+));
+
+SelectField.displayName = "SelectField";
+
+const OpponentList = memo(({
+  opponents,
+  onRemove,
+}: {
+  opponents: string[];
+  onRemove: (index: number) => void;
+}) => {
+  if (opponents.length === 0) return null;
+
+  return (
+    <div className="mt-5 border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-inner dark:bg-gray-900 dark:border-gray-700">
+      <h4 className="text-base font-semibold mb-3 text-gray-600 dark:text-gray-400">
+        الخصوم المضافين:
+      </h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {opponents.map((opponent, index) => (
+          <div
+            key={`${opponent}-${index}`}
+            className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
+          >
+            <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+              {opponent}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemove(index)}
+              className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 dark:hover:bg-red-900"
+            >
+              <XCircle className="h-5 w-5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+OpponentList.displayName = "OpponentList";
+
+const FileList = memo(({
+  files,
+  onRemove,
+  title,
+  type,
+}: {
+  files: File[] | string[];
+  onRemove: (index: number) => void;
+  title: string;
+  type: "selected" | "uploaded";
+}) => {
+  if (files.length === 0) return null;
+
+  return (
+    <div className={`mt-4 p-4 rounded-lg border shadow-sm ${
+      type === "selected" 
+        ? "bg-blue-50 border-blue-200 dark:bg-indigo-950 dark:border-indigo-800"
+        : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700"
+    }`}>
+      <h3 className={`text-base font-semibold mb-3 ${
+        type === "selected"
+          ? "text-blue-600 dark:text-blue-300"
+          : "text-gray-600 dark:text-gray-400"
+      }`}>
+        {title}
+      </h3>
+      <ul className="space-y-2">
+        {files.map((file, index) => (
+          <li
+            key={type === "selected" ? `${(file as File).name}-${index}` : `file-${index}`}
+            className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className={`h-5 w-5 ${
+                type === "selected" ? "text-blue-400 dark:text-blue-500" : "text-indigo-500 dark:text-indigo-400"
+              }`} />
+              {type === "selected" ? (
+                <span className="text-base font-medium truncate max-w-[calc(100%-60px)] text-gray-800 dark:text-gray-200">
+                  {(file as File).name}
+                </span>
+              ) : (
+                <a
+                  href={file as string}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:underline truncate max-w-[calc(100%-60px)] dark:text-indigo-300 dark:hover:text-indigo-200"
+                >
+                  ملف {index + 1}
+                </a>
+              )}
+            </div>
+            {type === "selected" ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onRemove(index)}
+                className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 dark:hover:bg-red-900"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            ) : (
+              <span className="text-xs text-gray-500 dark:text-gray-400">مرفق</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+});
+
+FileList.displayName = "FileList";
 
 export default function AddCasePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Memoized case types and types of cases for dropdowns
-  const caseTypeOptions = useMemo(() => ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"], []);
-  const typeOptions = useMemo(() => ["ابتدائي", "استئناف", "نقض", "تنفيذ"], []);
-const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجلة", "استئناف","مشطوبة"], []);
-  const [formData, setFormData] = useState<FormData>({
-    client: "",
-    caseTypeOF: "",
-    type: "",
-    court: "",
-    caseNumber: "",
-    caseDate: new Date().toISOString().split("T")[0],
-    year: new Date().getFullYear().toString(),
-    attorneyNumber: "",
-    decision: "",
-    status: "مفتوحة",
-    nots: "",
-    sessiondate: new Date().toISOString().split("T")[0],
-    opponents: [],
-    files: [], // This will store URLs of uploaded files *after* submission
-  });
-
+  // State management
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isClientsLoading, setIsClientsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Handles multiple file selection
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingDuringSubmit, setUploadingDuringSubmit] = useState(false);
   const [newOpponent, setNewOpponent] = useState("");
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({}); // State for validation errors
-  const [activeTab, setActiveTab] = useState("basic"); // State for active tab
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState("basic");
+
+  // Debounced validation to reduce unnecessary re-renders
+  const debouncedValidationErrors = useMemo(() => validationErrors, [validationErrors]);
 
   const fetchClients = useCallback(async () => {
     if (status === "loading") return;
@@ -233,11 +472,9 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
       } else {
         throw new Error(response.data?.message || "فشل في جلب قائمة الموكلين");
       }
-      router.push("/auth/login");
     } catch (err: any) {
       console.error("Error fetching clients:", err);
-      const errorMessage =
-        err.response?.data?.message || err.message || "خطأ غير معروف";
+      const errorMessage = err.response?.data?.message || err.message || "خطأ غير معروف";
       setError(`فشل في جلب قائمة الموكلين: ${errorMessage}`);
       toast.error(`فشل في جلب قائمة الموكلين: ${errorMessage}`);
     } finally {
@@ -251,102 +488,92 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
     }
   }, [fetchClients, status]);
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      setFormData((prev) => ({ ...prev, [name]: value }));
-      // Clear validation error for this field when it changes
+  // Optimized change handlers
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear validation error for this field
+    if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
-    },
-    []
-  );
+    }
+  }, [validationErrors]);
 
-  const handleSelectChange = useCallback((name: string, value: string) => {
+  const handleSelectChange = useCallback((name: string) => (value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear validation error for this field when it changes
-    setValidationErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[name];
-      return newErrors;
+    
+    // Clear validation error for this field
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  }, [validationErrors]);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024);
+    const invalidFiles = files.filter((file) => file.size > 10 * 1024 * 1024);
+
+    if (invalidFiles.length > 0) {
+      invalidFiles.forEach((file) => {
+        toast.error(`الملف "${file.name}" يتجاوز الحد الأقصى للحجم (10MB) وسيتم تجاهله.`);
+      });
+    }
+
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    e.target.value = ""; // Clear input
+  }, []);
+
+  const handleRemoveSelectedFile = useCallback((indexToRemove: number) => {
+    setSelectedFiles((prev) => {
+      const removedFileName = prev[indexToRemove].name;
+      const newFiles = prev.filter((_, index) => index !== indexToRemove);
+      toast.info(`تم إزالة الملف "${removedFileName}" من قائمة الرفع.`);
+      return newFiles;
     });
   }, []);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
-      const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024);
-      const invalidFiles = files.filter((file) => file.size > 10 * 1024 * 1024);
-
-      if (invalidFiles.length > 0) {
-        invalidFiles.forEach((file) => {
-          toast.error(
-            `الملف "${file.name}" يتجاوز الحد الأقصى للحجم (10MB) وسيتم تجاهله.`
-          );
-        });
-      }
-
-      setSelectedFiles((prev) => [...prev, ...validFiles]);
-      e.target.value = ""; // Clear input for re-selection
-    },
-    []
-  );
-
-  const handleRemoveSelectedFile = useCallback(
-    (indexToRemove: number) => {
-      const removedFileName = selectedFiles[indexToRemove].name;
-      setSelectedFiles((prev) =>
-        prev.filter((_, index) => index !== indexToRemove)
-      );
-      toast.info(`تم إزالة الملف "${removedFileName}" من قائمة الرفع.`);
-    },
-    [selectedFiles]
-  );
-
   const handleAddOpponent = useCallback(() => {
-    if (newOpponent.trim() === "") {
+    const trimmedOpponent = newOpponent.trim();
+    if (!trimmedOpponent) {
       toast.error("لا يمكن إضافة خصم فارغ.");
       return;
     }
-    if (formData.opponents.includes(newOpponent.trim())) {
+    if (formData.opponents.includes(trimmedOpponent)) {
       toast.warning("هذا الخصم موجود بالفعل.");
       return;
     }
+    
     setFormData((prev) => ({
       ...prev,
-      opponents: [...prev.opponents, newOpponent.trim()],
+      opponents: [...prev.opponents, trimmedOpponent],
     }));
     setNewOpponent("");
-    toast.success(`تم إضافة الخصم "${newOpponent.trim()}"`);
+    toast.success(`تم إضافة الخصم "${trimmedOpponent}"`);
   }, [newOpponent, formData.opponents]);
 
-  const handleRemoveOpponent = useCallback(
-    (indexToRemove: number) => {
-      const removedOpponentName = formData.opponents[indexToRemove];
-      setFormData((prev) => ({
-        ...prev,
-        opponents: prev.opponents.filter((_, index) => index !== indexToRemove),
-      }));
+  const handleRemoveOpponent = useCallback((indexToRemove: number) => {
+    setFormData((prev) => {
+      const removedOpponentName = prev.opponents[indexToRemove];
+      const newOpponents = prev.opponents.filter((_, index) => index !== indexToRemove);
       toast.info(`تم إزالة الخصم "${removedOpponentName}"`);
-    },
-    [formData.opponents]
-  );
+      return { ...prev, opponents: newOpponents };
+    });
+  }, []);
 
-  const uploadFileToCloudinary = async (file: File): Promise<string | null> => {
-    const CLOUDINARY_UPLOAD_PRESET =
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  const uploadFileToCloudinary = useCallback(async (file: File): Promise<string | null> => {
+    const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
     const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
     if (!CLOUDINARY_UPLOAD_PRESET || !CLOUDINARY_CLOUD_NAME) {
-      toast.error(
-        "إعدادات Cloudinary غير موجودة أو غير صحيحة. يرجى التحقق من ملف .env.local والبادئة NEXT_PUBLIC_."
-      );
-      console.error(
-        "Cloudinary environment variables are not set or are incorrectly prefixed with NEXT_PUBLIC_."
-      );
+      toast.error("إعدادات Cloudinary غير موجودة أو غير صحيحة. يرجى التحقق من ملف .env.local والبادئة NEXT_PUBLIC_.");
       return null;
     }
 
@@ -358,131 +585,88 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
         cloudinaryFormData,
-        {
-          timeout: 30000, // 30 seconds timeout per file
-        }
+        { timeout: 30000 }
       );
-
       return response.data?.secure_url || null;
     } catch (err: any) {
-      const errorDetail =
-        err.response?.data || err.message || JSON.stringify(err);
-      console.error(
-        `Error uploading file ${file.name} to Cloudinary:`,
-        errorDetail
-      );
-      if (!err.response?.data && !err.message) {
-        console.error(
-          "Potential Cloudinary configuration issue: err.response.data and err.message are empty. Please ensure CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET are correctly set and prefixed with NEXT_PUBLIC_."
-        );
-      }
+      console.error(`Error uploading file ${file.name} to Cloudinary:`, err.response?.data || err.message);
       toast.error(`فشل في رفع الملف ${file.name}. يرجى المحاولة مرة أخرى.`);
       return null;
     }
-  };
+  }, []);
 
-  // Centralized validation function
-  const validateForm = useCallback(
-    (fieldsToValidate?: (keyof FormData)[]): boolean => {
-      let currentErrors: Record<string, string> = {};
-      const allRequiredFields: (keyof FormData)[] = [
-        "client",
-        "caseTypeOF",
-        "type",
-        "court",
-        "caseNumber",
-        "year",
-        "attorneyNumber",
-      ];
+  const validateForm = useCallback((fieldsToValidate?: (keyof FormData)[]): boolean => {
+    const allRequiredFields: (keyof FormData)[] = [
+      "client", "caseTypeOF", "type", "court", "caseNumber", "year", "attorneyNumber",
+    ];
 
-      // Determine which fields to check
-      const fieldsToCheck = fieldsToValidate || allRequiredFields;
+    const fieldsToCheck = fieldsToValidate || allRequiredFields;
+    const currentErrors: Record<string, string> = {};
 
-      // Validate required fields among those to check
-      for (const field of fieldsToCheck) {
-        if (allRequiredFields.includes(field)) {
-          // Only validate if it's a globally required field
-          const value = formData[field];
-          if (!value || (typeof value === "string" && !value.trim())) {
-            currentErrors[field] = "هذا الحقل مطلوب.";
-          }
+    // Validate required fields
+    for (const field of fieldsToCheck) {
+      if (allRequiredFields.includes(field)) {
+        const value = formData[field];
+        if (!value || (typeof value === "string" && !value.trim())) {
+          currentErrors[field] = "هذا الحقل مطلوب.";
         }
       }
+    }
 
-      // Validate dates if they are among fieldsToCheck
+    // Validate dates
+    if (fieldsToCheck.includes("caseDate") && formData.caseDate) {
       const caseDateObj = new Date(formData.caseDate);
-      const sessionDateObj = new Date(formData.sessiondate);
-
-      if (
-        fieldsToCheck.includes("caseDate") &&
-        formData.caseDate &&
-        isNaN(caseDateObj.getTime())
-      ) {
+      if (isNaN(caseDateObj.getTime())) {
         currentErrors.caseDate = "تاريخ الدعوى غير صالح.";
       }
-      if (
-        fieldsToCheck.includes("sessiondate") &&
-        formData.sessiondate &&
-        isNaN(sessionDateObj.getTime())
-      ) {
+    }
+
+    if (fieldsToCheck.includes("sessiondate") && formData.sessiondate) {
+      const sessionDateObj = new Date(formData.sessiondate);
+      if (isNaN(sessionDateObj.getTime())) {
         currentErrors.sessiondate = "تاريخ الجلسة غير صالح.";
       }
+    }
 
-      // Date comparison only if both are valid and being checked
-      if (
-        fieldsToCheck.includes("caseDate") &&
-        fieldsToCheck.includes("sessiondate") &&
-        formData.caseDate &&
-        !isNaN(caseDateObj.getTime()) &&
-        formData.sessiondate &&
-        !isNaN(sessionDateObj.getTime())
-      ) {
-        if (sessionDateObj < caseDateObj) {
-          currentErrors.sessiondate =
-            "يجب أن يكون تاريخ الجلسة بعد تاريخ الدعوى.";
-        }
+    // Date comparison
+    if (fieldsToCheck.includes("caseDate") && fieldsToCheck.includes("sessiondate") && 
+        formData.caseDate && formData.sessiondate) {
+      const caseDateObj = new Date(formData.caseDate);
+      const sessionDateObj = new Date(formData.sessiondate);
+      
+      if (!isNaN(caseDateObj.getTime()) && !isNaN(sessionDateObj.getTime()) && 
+          sessionDateObj < caseDateObj) {
+        currentErrors.sessiondate = "يجب أن يكون تاريخ الجلسة بعد تاريخ الدعوى.";
       }
+    }
 
-      // Update validation state by merging new errors
-      setValidationErrors((prevErrors) => {
-        const newErrors = { ...prevErrors };
-        // Clear errors for fields that were checked and are now valid
-        fieldsToCheck.forEach((field) => {
-          if (!currentErrors[field]) {
-            delete newErrors[field];
-          }
-        });
-        // Add new errors found
-        Object.assign(newErrors, currentErrors);
-        return newErrors;
+    // Update validation errors
+    setValidationErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+      fieldsToCheck.forEach((field) => {
+        if (!currentErrors[field]) {
+          delete newErrors[field];
+        }
       });
+      Object.assign(newErrors, currentErrors);
+      return newErrors;
+    });
 
-      return Object.keys(currentErrors).length === 0; // Return true if no errors
-    },
-    [formData]
-  );
+    return Object.keys(currentErrors).length === 0;
+  }, [formData]);
 
   const handleNextTab = useCallback(() => {
-    let currentTabFields: (keyof FormData)[] = [];
-    let nextTab: string = "";
+    const tabFieldsMap = {
+      basic: ["client", "caseTypeOF", "type", "court", "caseNumber", "year"] as (keyof FormData)[],
+      details: ["attorneyNumber", "caseDate", "sessiondate"] as (keyof FormData)[],
+    };
 
-    if (activeTab === "basic") {
-      currentTabFields = [
-        "client",
-        "caseTypeOF",
-        "type",
-        "court",
-        "caseNumber",
-        "year",
-      ];
-      nextTab = "details";
-    } else if (activeTab === "details") {
-      currentTabFields = ["attorneyNumber", "caseDate", "sessiondate"]; // decision and nots are optional
-      nextTab = "attachments";
-    } else {
-      // This case should ideally not be reached if button is hidden
-      return;
-    }
+    const tabNextMap = { basic: "details", details: "attachments" };
+
+    const currentTabFields = tabFieldsMap[activeTab as keyof typeof tabFieldsMap];
+    const nextTab = tabNextMap[activeTab as keyof typeof tabNextMap];
+
+    if (!currentTabFields || !nextTab) return;
 
     const isValid = validateForm(currentTabFields);
 
@@ -494,33 +678,22 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
   }, [activeTab, validateForm]);
 
   const handleSubmit = useCallback(async () => {
-    // Changed to be called directly from button
     if (!session?.user?.id) {
       toast.error("لا توجد صلاحية لإضافة دعوى. يرجى تسجيل الدخول");
       return;
     }
 
-    // Validate all fields before final submission
     const isValid = validateForm();
     if (!isValid) {
       toast.error("يرجى تصحيح الأخطاء في النموذج قبل الحفظ.");
-      // Optional: Navigate to the first tab with an error for better UX
-      if (
-        validationErrors.client ||
-        validationErrors.caseTypeOF ||
-        validationErrors.type ||
-        validationErrors.court ||
-        validationErrors.caseNumber ||
-        validationErrors.year
-      ) {
+      
+      // Navigate to first tab with errors
+      if (debouncedValidationErrors.client || debouncedValidationErrors.caseTypeOF || 
+          debouncedValidationErrors.type || debouncedValidationErrors.court || 
+          debouncedValidationErrors.caseNumber || debouncedValidationErrors.year) {
         setActiveTab("basic");
-      } else if (
-        validationErrors.attorneyNumber ||
-        validationErrors.caseDate ||
-        validationErrors.sessiondate ||
-        validationErrors.decision ||
-        validationErrors.nots
-      ) {
+      } else if (debouncedValidationErrors.attorneyNumber || debouncedValidationErrors.caseDate || 
+                 debouncedValidationErrors.sessiondate) {
         setActiveTab("details");
       }
       return;
@@ -533,25 +706,16 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
     try {
       const uploadedFileUrls: string[] = [];
 
+      // Upload files concurrently for better performance
       if (selectedFiles.length > 0) {
-        for (const file of selectedFiles) {
-          const uploadedUrl = await uploadFileToCloudinary(file);
-          if (uploadedUrl) {
-            uploadedFileUrls.push(uploadedUrl);
-          } else {
-            console.warn(
-              `Failed to upload ${file.name}. Continuing with other files.`
-            );
-          }
-        }
+        const uploadPromises = selectedFiles.map(file => uploadFileToCloudinary(file));
+        const results = await Promise.all(uploadPromises);
+        uploadedFileUrls.push(...results.filter((url): url is string => url !== null));
       }
-
-      const finalFilesArray = [...formData.files, ...uploadedFileUrls];
 
       const payload = {
         ...formData,
-        opponents: formData.opponents,
-        files: finalFilesArray,
+        files: [...formData.files, ...uploadedFileUrls],
       };
 
       const response = await axios.post(`${API_BASE_URL}/cases`, payload, {
@@ -564,51 +728,30 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
 
       if (response.data?.success) {
         toast.success("تم إضافة الدعوى بنجاح!");
+        
+        // Reset form
         setSelectedFiles([]);
-        setFormData({
-          // Reset form to initial empty state
-          client: "",
-          caseTypeOF: "",
-          type: "",
-          court: "",
-          status: "مفتوحة",
-          caseNumber: "",
-          caseDate: new Date().toISOString().split("T")[0],
-          year: new Date().getFullYear().toString(),
-          attorneyNumber: "",
-          decision: "",
-          nots: "",
-          sessiondate: new Date().toISOString().split("T")[0],
-          opponents: [],
-          files: [],
-        });
+        setFormData(INITIAL_FORM_DATA);
         setNewOpponent("");
         setValidationErrors({});
-        setActiveTab("basic"); // Reset to first tab
+        setActiveTab("basic");
+        
         router.push("/dashboard/all-cases");
       } else {
         throw new Error(response.data?.message || "فشل في إضافة الدعوى");
       }
     } catch (err: any) {
       console.error("Error adding case:", err.response?.data || err.message);
-      const errorMessage =
-        err.response?.data?.message || err.message || "خطأ غير معروف";
+      const errorMessage = err.response?.data?.message || err.message || "خطأ غير معروف";
       toast.error(`فشل في إضافة الدعوى: ${errorMessage}`);
       setError(`فشل في إضافة الدعوى: ${errorMessage}`);
     } finally {
       setIsLoading(false);
       setUploadingDuringSubmit(false);
     }
-  }, [
-    session?.user?.id,
-    validateForm,
-    selectedFiles,
-    formData,
-    uploadFileToCloudinary,
-    router,
-    validationErrors, // Included for error tab navigation logic
-  ]);
+  }, [session?.user?.id, validateForm, selectedFiles, formData, router, debouncedValidationErrors, uploadFileToCloudinary]);
 
+  // Loading states
   if (status === "loading" || isClientsLoading) {
     return (
       <div className="flex flex-1 items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-950 dark:to-gray-800">
@@ -642,7 +785,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
         <p className="text-lg text-center mb-4">{error}</p>
         <div className="flex space-x-4 rtl:space-x-reverse">
           <Button
-            onClick={() => fetchClients()}
+            onClick={fetchClients}
             variant="destructive"
             className="bg-red-600 hover:bg-red-700 text-white rounded-lg dark:bg-red-700 dark:hover:bg-red-800"
           >
@@ -660,110 +803,10 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
     );
   }
 
-  // Helper function to render input fields
-  const renderInputField = (
-    id: keyof FormData,
-    type: string,
-    label: string,
-    placeholder: string,
-    required: boolean,
-    Icon: React.ElementType // Lucide React Icon component
-  ) => (
-    <div className="space-y-2 relative">
-      <Label
-        htmlFor={id}
-        className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
-      >
-        <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-        {label} {required && <span className="text-red-500">*</span>}
-      </Label>
-      <Input
-        id={id}
-        name={id}
-        type={type}
-        value={formData[id] as string}
-        onChange={handleChange}
-        placeholder={placeholder}
-        required={required}
-        className={`h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 ${
-          validationErrors[id]
-            ? "border-red-500 ring-red-500"
-            : "focus:ring-blue-400 focus:border-blue-400"
-        } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-        dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-        {...(id === "year" && { min: "2000", max: "2030" })} // Specific attributes for 'year'
-      />
-      {validationErrors[id] && (
-        <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
-          {validationErrors[id]}
-        </p>
-      )}
-    </div>
-  );
-
-  // Helper function to render select fields
-  const renderSelectField = (
-    id: keyof FormData,
-    label: string,
-    placeholder: string,
-    required: boolean,
-    Icon: React.ElementType,
-    options: string[]
-  ) => (
-    <div className="space-y-2 relative">
-      <Label
-        htmlFor={id}
-        className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
-      >
-        <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-        {label} {required && <span className="text-red-500">*</span>}
-      </Label>
-      <Select
-        onValueChange={(value) => handleSelectChange(id, value)}
-        value={formData[id] as string}
-      >
-        <SelectTrigger
-          id={id}
-          className={`w-full h-12 rounded-lg px-4 bg-white border border-gray-300 ${
-            validationErrors[id]
-              ? "border-red-500 ring-red-500"
-              : "focus:ring-blue-400 focus:border-blue-400"
-          } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-          dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-        >
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent className="dark:bg-gray-800 dark:text-gray-200 border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
-          {options.map((option) => (
-            <SelectItem
-              key={option}
-              value={option}
-              className="hover:bg-blue-50 focus:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700"
-            >
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {validationErrors[id] && (
-        <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
-          {validationErrors[id]}
-        </p>
-      )}
-    </div>
-  );
-
   return (
-    <div
-      className="flex flex-col p-4 md:p-8 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen text-gray-800 font-sans relative overflow-hidden
-    dark:from-gray-950 dark:to-gray-800 dark:text-gray-200"
-    >
-      {/* Subtle background gradient and light, airy feel */}
-      <div
-        className="absolute inset-0 z-0 opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-200 via-transparent to-transparent animate-pulse-light
-      dark:from-indigo-900 dark:to-transparent"
-      ></div>
-      {/* Removed bg-noise-light for simplicity and consistent dark mode without a specific dark noise texture */}
+    <div className="flex flex-col p-4 md:p-8 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen text-gray-800 font-sans relative overflow-hidden dark:from-gray-950 dark:to-gray-800 dark:text-gray-200">
+      {/* Background Effects */}
+      <div className="absolute inset-0 z-0 opacity-30 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-200 via-transparent to-transparent animate-pulse-light dark:from-indigo-900 dark:to-transparent"></div>
 
       {/* Header */}
       <div className="relative z-10 flex items-center mb-10 max-w-5xl mx-auto">
@@ -771,15 +814,11 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          className="ml-4 rtl:mr-4 rtl:ml-0 rounded-full text-gray-500 hover:bg-gray-200 transition-colors duration-300
-          dark:text-gray-400 dark:hover:bg-gray-700"
+          className="ml-4 rtl:mr-4 rtl:ml-0 rounded-full text-gray-500 hover:bg-gray-200 transition-colors duration-300 dark:text-gray-400 dark:hover:bg-gray-700"
         >
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h1
-          className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700 flex items-center gap-4 drop-shadow-md
-        dark:from-blue-400 dark:to-indigo-500"
-        >
+        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700 flex items-center gap-4 drop-shadow-md dark:from-blue-400 dark:to-indigo-500">
           <Database className="h-10 w-10 text-blue-500 dark:text-blue-400" />
           نظام إدارة الدعاوى
         </h1>
@@ -798,54 +837,33 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList
-            className="grid grid-cols-1 sm:grid-cols-3 w-full h-auto bg-blue-100/70 backdrop-blur-sm border border-blue-200 rounded-xl shadow-md p-1
-          dark:bg-gray-900/70 dark:border-gray-700"
-          >
+          <TabsList className="grid grid-cols-1 sm:grid-cols-3 w-full h-auto bg-blue-100/70 backdrop-blur-sm border border-blue-200 rounded-xl shadow-md p-1 dark:bg-gray-900/70 dark:border-gray-700">
             <TabsTrigger
               value="basic"
-              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300
-              data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500
-              hover:bg-blue-50 hover:text-blue-700
-              dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400
-              dark:hover:bg-gray-700 dark:hover:text-blue-300"
+              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400 dark:hover:bg-gray-700 dark:hover:text-blue-300"
             >
               <FileText className="w-5 h-5" /> البيانات الأساسية
             </TabsTrigger>
             <TabsTrigger
               value="details"
-              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300
-              data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500
-              hover:bg-blue-50 hover:text-blue-700
-              dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400
-              dark:hover:bg-gray-700 dark:hover:text-blue-300"
+              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400 dark:hover:bg-gray-700 dark:hover:text-blue-300"
             >
               <Book className="w-5 h-5" /> التفاصيل
             </TabsTrigger>
             <TabsTrigger
               value="attachments"
-              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300
-              data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500
-              hover:bg-blue-50 hover:text-blue-700
-              dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400
-              dark:hover:bg-gray-700 dark:hover:text-blue-300"
+              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400 dark:hover:bg-gray-700 dark:hover:text-blue-300"
             >
               <Users className="w-5 h-5" /> مرفقات وخصوم
             </TabsTrigger>
           </TabsList>
 
-          {/* تبويب 1: البيانات الأساسية */}
+          {/* Tab 1: Basic Data */}
           <TabsContent value="basic">
-            <Card
-              className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl
-            dark:bg-gray-800/90 dark:border-gray-700"
-            >
-              <CardHeader
-                className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl
-              dark:bg-gray-800/70 dark:border-gray-700"
-              >
+            <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl dark:bg-gray-800/90 dark:border-gray-700">
+              <CardHeader className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl dark:bg-gray-800/70 dark:border-gray-700">
                 <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2 dark:text-blue-300">
-                  <FileText className="w-6 h-6 text-blue-500 dark:text-blue-400" />{" "}
+                  <FileText className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                   البيانات الأساسية للدعوى
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
@@ -863,19 +881,16 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     الموكل <span className="text-red-500">*</span>
                   </Label>
                   <Select
-                    onValueChange={(value) =>
-                      handleSelectChange("client", value)
-                    }
+                    onValueChange={handleSelectChange("client")}
                     value={formData.client}
                   >
                     <SelectTrigger
                       id="client"
                       className={`w-full h-12 rounded-lg px-4 bg-white border border-gray-300 ${
-                        validationErrors.client
+                        debouncedValidationErrors.client
                           ? "border-red-500 ring-red-500"
                           : "focus:ring-blue-400 focus:border-blue-400"
-                      } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-                    dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                      } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                     >
                       <SelectValue placeholder="اختر الموكل من القائمة" />
                     </SelectTrigger>
@@ -897,81 +912,96 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                       )}
                     </SelectContent>
                   </Select>
-                  {validationErrors.client && (
+                  {debouncedValidationErrors.client && (
                     <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
-                      {validationErrors.client}
+                      {debouncedValidationErrors.client}
                     </p>
                   )}
                 </div>
 
-                {/* Case Type Selection */}
-                {renderSelectField(
-                  "caseTypeOF",
-                  "نوع الدعوى",
-                  "اختر نوع الدعوى",
-                  true,
-                  Gavel,
-                  caseTypeOptions
-                )}
-                {renderSelectField(
-                  "status",
-                  "حالة الدعوى",
-                  "اختر حالة الدعوى",
-                  true,
-                  ChartColumnBig ,
-                  caseStatusOptions
-                )}
+                <SelectField
+                  id="caseTypeOF"
+                  label="نوع الدعوى"
+                  placeholder="اختر نوع الدعوى"
+                  required={true}
+                  Icon={Gavel}
+                  options={CASE_TYPE_OPTIONS}
+                  value={formData.caseTypeOF}
+                  onChange={handleSelectChange("caseTypeOF")}
+                  validationError={debouncedValidationErrors.caseTypeOF}
+                />
 
-                {/* Type Selection */}
-                {renderSelectField(
-                  "type",
-                  "طبيعة الدعوى",
-                  "اختر طبيعة الدعوى",
-                  true,
-                  Scale,
-                  typeOptions
-                )}
+                <SelectField
+                  id="status"
+                  label="حالة الدعوى"
+                  placeholder="اختر حالة الدعوى"
+                  required={true}
+                  Icon={ChartColumnBig}
+                  options={CASE_STATUS_OPTIONS}
+                  value={formData.status}
+                  onChange={handleSelectChange("status")}
+                  validationError={debouncedValidationErrors.status}
+                />
 
-                {renderInputField(
-                  "court",
-                  "text",
-                  "المحكمة",
-                  "مثال: محكمة القاهرة الابتدائية",
-                  true,
-                  Shield
-                )}
-                {renderInputField(
-                  "caseNumber",
-                  "text",
-                  "رقم الدعوى",
-                  "مثال: 1234",
-                  true,
-                  Hash
-                )}
-                {renderInputField(
-                  "year",
-                  "number",
-                  "السنة",
-                  "مثال: 2024",
-                  true,
-                  Clock
-                )}
+                <SelectField
+                  id="type"
+                  label="طبيعة الدعوى"
+                  placeholder="اختر طبيعة الدعوى"
+                  required={true}
+                  Icon={Scale}
+                  options={TYPE_OPTIONS}
+                  value={formData.type}
+                  onChange={handleSelectChange("type")}
+                  validationError={debouncedValidationErrors.type}
+                />
+
+                <InputField
+                  id="court"
+                  type="text"
+                  label="المحكمة"
+                  placeholder="مثال: محكمة القاهرة الابتدائية"
+                  required={true}
+                  Icon={Shield}
+                  value={formData.court}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.court}
+                />
+
+                <InputField
+                  id="caseNumber"
+                  type="text"
+                  label="رقم الدعوى"
+                  placeholder="مثال: 1234"
+                  required={true}
+                  Icon={Hash}
+                  value={formData.caseNumber}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.caseNumber}
+                />
+
+                <InputField
+                  id="year"
+                  type="number"
+                  label="السنة"
+                  placeholder="مثال: 2024"
+                  required={true}
+                  Icon={Clock}
+                  value={formData.year}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.year}
+                  min="2000"
+                  max="2030"
+                />
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* تبويب 2: التفاصيل */}
+          {/* Tab 2: Details */}
           <TabsContent value="details">
-            <Card
-              className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl
-            dark:bg-gray-800/90 dark:border-gray-700"
-            >
-              <CardHeader
-                className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl
-              dark:bg-gray-800/70 dark:border-gray-700"
-              >
+            <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl dark:bg-gray-800/90 dark:border-gray-700">
+              <CardHeader className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl dark:bg-gray-800/70 dark:border-gray-700">
                 <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2 dark:text-blue-300">
-                  <Book className="w-6 h-6 text-blue-500 dark:text-blue-400" />{" "}
+                  <Book className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                   تفاصيل ومواعيد الدعوى
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
@@ -979,30 +1009,41 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6">
-                {renderInputField(
-                  "attorneyNumber",
-                  "text",
-                  "رقم التوكيل",
-                  "مثال: 5678",
-                  true,
-                  Briefcase
-                )}
-                {renderInputField(
-                  "caseDate",
-                  "date",
-                  "تاريخ الدعوى",
-                  "",
-                  false,
-                  CalendarDays
-                )}
-                {renderInputField(
-                  "sessiondate",
-                  "date",
-                  "تاريخ الجلسة القادمة",
-                  "",
-                  false,
-                  CalendarClock
-                )}
+                <InputField
+                  id="attorneyNumber"
+                  type="text"
+                  label="رقم التوكيل"
+                  placeholder="مثال: 5678"
+                  required={true}
+                  Icon={Briefcase}
+                  value={formData.attorneyNumber}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.attorneyNumber}
+                />
+
+                <InputField
+                  id="caseDate"
+                  type="date"
+                  label="تاريخ الدعوى"
+                  placeholder=""
+                  required={false}
+                  Icon={CalendarDays}
+                  value={formData.caseDate}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.caseDate}
+                />
+
+                <InputField
+                  id="sessiondate"
+                  type="date"
+                  label="تاريخ الجلسة القادمة"
+                  placeholder=""
+                  required={false}
+                  Icon={CalendarClock}
+                  value={formData.sessiondate}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.sessiondate}
+                />
 
                 <div className="md:col-span-2 space-y-2">
                   <Label
@@ -1019,12 +1060,11 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     onChange={handleChange}
                     placeholder="أدخل نص القرار هنا..."
                     rows={6}
-                    className="resize-y rounded-lg px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-                    dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    className="resize-y rounded-lg px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   />
-                  {validationErrors.decision && (
+                  {debouncedValidationErrors.decision && (
                     <p className="text-red-500 text-sm mt-1">
-                      {validationErrors.decision}
+                      {debouncedValidationErrors.decision}
                     </p>
                   )}
                 </div>
@@ -1044,12 +1084,11 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     onChange={handleChange}
                     placeholder="أدخل أي ملاحظات إضافية هنا..."
                     rows={6}
-                    className="resize-y rounded-lg px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-                    dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    className="resize-y rounded-lg px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   />
-                  {validationErrors.nots && (
+                  {debouncedValidationErrors.nots && (
                     <p className="text-red-500 text-sm mt-1">
-                      {validationErrors.nots}
+                      {debouncedValidationErrors.nots}
                     </p>
                   )}
                 </div>
@@ -1057,18 +1096,12 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
             </Card>
           </TabsContent>
 
-          {/* تبويب 3: المرفقات والخصوم */}
+          {/* Tab 3: Attachments and Opponents */}
           <TabsContent value="attachments">
-            <Card
-              className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl
-            dark:bg-gray-800/90 dark:border-gray-700"
-            >
-              <CardHeader
-                className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl
-              dark:bg-gray-800/70 dark:border-gray-700"
-              >
+            <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl dark:bg-gray-800/90 dark:border-gray-700">
+              <CardHeader className="bg-blue-50/70 border-b border-blue-200 p-6 rounded-t-2xl dark:bg-gray-800/70 dark:border-gray-700">
                 <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2 dark:text-blue-300">
-                  <Users className="w-6 h-6 text-blue-500 dark:text-blue-400" />{" "}
+                  <Users className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                   الخصوم والمرفقات
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
@@ -1091,8 +1124,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                       value={newOpponent}
                       onChange={(e) => setNewOpponent(e.target.value)}
                       placeholder="أدخل اسم الخصم ثم اضغط إضافة"
-                      className="h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 flex-1 transition-all duration-300 shadow-sm
-                      dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      className="h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 placeholder:text-gray-500 flex-1 transition-all duration-300 shadow-sm dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -1103,8 +1135,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     <Button
                       type="button"
                       onClick={handleAddOpponent}
-                      className="h-12 px-6 rounded-lg gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105
-                      dark:bg-blue-600 dark:hover:bg-blue-700 dark:shadow-blue-500/30"
+                      className="h-12 px-6 rounded-lg gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105 dark:bg-blue-600 dark:hover:bg-blue-700 dark:shadow-blue-500/30"
                       disabled={!newOpponent.trim()}
                     >
                       <PlusCircle className="h-5 w-5" />
@@ -1112,39 +1143,10 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     </Button>
                   </div>
 
-                  {formData.opponents.length > 0 && (
-                    <div
-                      className="mt-5 border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-inner
-                    dark:bg-gray-900 dark:border-gray-700"
-                    >
-                      <h4 className="text-base font-semibold mb-3 text-gray-600 dark:text-gray-400">
-                        الخصوم المضافين:
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {formData.opponents.map((opponent, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01]
-                          dark:bg-gray-700 dark:border-gray-600"
-                          >
-                            <span className="text-base font-medium text-gray-800 dark:text-gray-200">
-                              {opponent}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveOpponent(index)}
-                              className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200
-                              dark:hover:bg-red-900"
-                            >
-                              <XCircle className="h-5 w-5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <OpponentList
+                    opponents={formData.opponents}
+                    onRemove={handleRemoveOpponent}
+                  />
                 </div>
 
                 {/* File Upload Section */}
@@ -1159,8 +1161,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                   <div className="flex items-center gap-4">
                     <Label
                       htmlFor="file-upload"
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors duration-300 text-gray-500 hover:text-blue-600
-                      dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400 dark:hover:text-blue-300"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors duration-300 text-gray-500 hover:text-blue-600 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400 dark:hover:text-blue-300"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <FileStack className="w-12 h-12 mb-3 text-blue-400 dark:text-blue-500" />
@@ -1185,94 +1186,32 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
                     </Label>
                   </div>
 
-                  {selectedFiles.length > 0 && (
-                    <div
-                      className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm
-                    dark:bg-indigo-950 dark:border-indigo-800"
-                    >
-                      <h3 className="text-base font-semibold text-blue-600 mb-3 dark:text-blue-300">
-                        الملفات المختارة للرفع:
-                      </h3>
-                      <ul className="space-y-2">
-                        {selectedFiles.map((file, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01]
-                          dark:bg-gray-700 dark:border-gray-600"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="h-5 w-5 text-blue-400 dark:text-blue-500" />
-                              <span className="text-base font-medium truncate max-w-[calc(100%-60px)] text-gray-800 dark:text-gray-200">
-                                {file.name}
-                              </span>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveSelectedFile(index)}
-                              className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200
-                              dark:hover:bg-red-900"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <FileList
+                    files={selectedFiles}
+                    onRemove={handleRemoveSelectedFile}
+                    title="الملفات المختارة للرفع:"
+                    type="selected"
+                  />
 
-                  {formData.files.length > 0 && (
-                    <div
-                      className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm
-                    dark:bg-gray-900 dark:border-gray-700"
-                    >
-                      <h3 className="text-base font-semibold text-gray-600 mb-3 dark:text-gray-400">
-                        الملفات المرفقة بالفعل:
-                      </h3>
-                      <ul className="space-y-2">
-                        {formData.files.map((fileUrl, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01]
-                          dark:bg-gray-700 dark:border-gray-600"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />
-                              <a
-                                href={fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-indigo-600 hover:underline truncate max-w-[calc(100%-60px)] dark:text-indigo-300 dark:hover:text-indigo-200"
-                              >
-                                ملف {index + 1}
-                              </a>
-                            </div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              مرفق
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <FileList
+                    files={formData.files}
+                    onRemove={() => {}} // No removal for already uploaded files
+                    title="الملفات المرفقة بالفعل:"
+                    type="uploaded"
+                  />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
-        {/* أزرار الحفظ أو التالي أسفل الشاشة */}
-        <div
-          className="sticky bottom-0 mt-8 bg-blue-50/80 backdrop-blur-sm p-4 border-t border-blue-200 rounded-b-2xl -mx-4 md:-mx-8 lg:-mx-10 flex justify-end gap-5 shadow-inner
-        dark:bg-gray-900/80 dark:border-gray-700"
-        >
+        {/* Bottom Action Buttons */}
+        <div className="sticky bottom-0 mt-8 bg-blue-50/80 backdrop-blur-sm p-4 border-t border-blue-200 rounded-b-2xl -mx-4 md:-mx-8 lg:-mx-10 flex justify-end gap-5 shadow-inner dark:bg-gray-900/80 dark:border-gray-700">
           <Button
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="h-12 px-8 rounded-lg text-gray-700 border border-gray-300 bg-gray-100 hover:bg-gray-200 hover:border-gray-400 transition-colors duration-300 shadow-md
-            dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:hover:border-gray-500"
+            className="h-12 px-8 rounded-lg text-gray-700 border border-gray-300 bg-gray-100 hover:bg-gray-200 hover:border-gray-400 transition-colors duration-300 shadow-md dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:hover:border-gray-500"
           >
             إلغاء
           </Button>
@@ -1282,8 +1221,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
               type="button"
               onClick={handleSubmit}
               disabled={isLoading || uploadingDuringSubmit}
-              className="h-12 px-10 rounded-lg gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105
-              dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:shadow-blue-500/30"
+              className="h-12 px-10 rounded-lg gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105 dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:shadow-blue-500/30"
             >
               {isLoading || uploadingDuringSubmit ? (
                 <>
@@ -1301,8 +1239,7 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
             <Button
               type="button"
               onClick={handleNextTab}
-              className="h-12 px-10 rounded-lg gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105
-              dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:shadow-blue-500/30"
+              className="h-12 px-10 rounded-lg gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-md shadow-blue-300/50 transition-all duration-300 transform hover:scale-105 dark:from-blue-600 dark:to-indigo-700 dark:hover:from-blue-700 dark:hover:to-indigo-800 dark:shadow-blue-500/30"
             >
               <span>التالي</span>
               <ArrowRight className="h-5 w-5" />
@@ -1311,5 +1248,5 @@ const caseStatusOptions = useMemo(() => ["مفتوحة", "مغلقة", "مؤجل
         </div>
       </div>
     </div>
-  );
-}
+    )
+  }
