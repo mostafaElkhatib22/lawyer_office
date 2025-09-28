@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
     let ownerId: string;
     if (user.accountType === "owner") {
-      ownerId = user._id.toString();
+      ownerId = (user._id as any).toString();
     } else {
       ownerId = user.ownerId?.toString() || "";
     }
