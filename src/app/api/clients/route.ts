@@ -134,7 +134,7 @@ export async function POST(req: Request) {
     // تحديد معرف المالك
     let ownerId: string;
     if (user.accountType === "owner") {
-      ownerId = user._id.toString();
+      ownerId = (user._id as any).toString();
     } else if (user.accountType === "employee" && user.ownerId) {
       ownerId = user.ownerId.toString();
     } else {
@@ -187,7 +187,7 @@ export async function POST(req: Request) {
       phone: phone?.trim() || "",
       address: address?.trim() || "",
       owner: new mongoose.Types.ObjectId(ownerId),
-      createdBy: new mongoose.Types.ObjectId(user._id.toString()),
+      createdBy: new mongoose.Types.ObjectId((user._id as any).toString()),
     });
 
     console.log("Client created successfully:", newClient._id);
