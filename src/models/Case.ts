@@ -15,6 +15,10 @@ const CaseSchema = new mongoose.Schema({
     type: String,
     required: [true, 'من فضلك أضف طبيعة الدعوى.'],
   },
+  nameOfCase: {
+    type: String,
+    required: [true, 'من فضلك أضف مسمى الدعوى.'],
+  },
   court: {
     type: String,
     required: [true, 'من فضلك أضف اسم المحكمة.'],

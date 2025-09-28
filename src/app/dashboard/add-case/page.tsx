@@ -159,6 +159,7 @@ interface FormData {
   court: string;
   caseNumber: string;
   year: string;
+  nameOfCase:string;
   attorneyNumber: string;
   decision: string;
   nots: string;
@@ -184,6 +185,7 @@ const INITIAL_FORM_DATA: FormData = {
   year: new Date().getFullYear().toString(),
   attorneyNumber: "",
   decision: "",
+  nameOfCase:"",
   status: "مفتوحة",
   nots: "",
   sessiondate: new Date().toISOString().split("T")[0],
@@ -965,6 +967,17 @@ export default function AddCasePage() {
                   value={formData.court}
                   onChange={handleChange}
                   validationError={debouncedValidationErrors.court}
+                />
+                <InputField
+                  id="nameOfCase"
+                  type="text"
+                  label="مسمى الدعوى"
+                  placeholder="مثال:دعوى صحة توقيع"
+                  required={true}
+                  Icon={Shield}
+                  value={formData.nameOfCase}
+                  onChange={handleChange}
+                  validationError={debouncedValidationErrors.nameOfCase}
                 />
 
                 <InputField

@@ -70,6 +70,7 @@ interface CaseDetails {
   court: string;
   caseNumber: string;
   year: string;
+  nameOfCase:string;
   attorneyNumber: string;
   decision: string;
   status: string;
@@ -543,6 +544,7 @@ export default function EditCasePage({
           caseTypeOF: caseData.caseTypeOF,
           type: caseData.type,
           court: caseData.court,
+          nameOfCase:caseData.nameOfCase,
           caseNumber: caseData.caseNumber,
           year: caseData.year,
           status: caseData.status, // 👈 هنا الحالة
@@ -606,6 +608,7 @@ export default function EditCasePage({
       caseData.court,
       caseData.caseNumber,
       caseData.year,
+      caseData.nameOfCase,
       caseData.attorneyNumber,
       caseData.decision,
       caseData.status,
@@ -808,6 +811,24 @@ export default function EditCasePage({
               id="court"
               name="court"
               value={caseData.court || ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
+              required
+            />
+          </div>
+          {/* nameOfCase */}
+          <div>
+            <label
+              htmlFor="nameOfCase"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              المحكمة
+            </label>
+            <input
+              type="text"
+              id="nameOfCase"
+              name="nameOfCase"
+              value={caseData.nameOfCase || ""}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600"
               required

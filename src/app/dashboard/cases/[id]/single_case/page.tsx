@@ -55,6 +55,7 @@ interface CaseDetails {
   client: { _id: string; name: string } | null;
   caseTypeOF: string;
   type: string;
+  nameOfCase:string;
   court: string;
   caseNumber: string;
   year: string;
@@ -673,6 +674,11 @@ export default function CaseDetailsPage() {
                     <td>${details.court || "غير محدد"}</td>
                   </tr>
                   <tr>
+                  <th>مسمى الدعوى</th>
+                  <td>${details.nameOfCase || "غير محدد"}</td>
+                      <th>حالة الدعوى</th>
+                    <td>${details.status|| "غير محدد"}</td>
+                  <tr>
                     <th>رقم التوكيل</th>
                     <td>${details.attorneyNumber || "غير محدد"}</td>
                     <th>تاريخ الدعوى</th>
@@ -683,8 +689,7 @@ export default function CaseDetailsPage() {
                     <td colspan="3" style="font-weight: bold; color: #e74c3c;">${formatDate(details.sessiondate)}</td>
                   </tr>
                   <tr>
-                    <th>حالة الدعوى</th>
-                    <td>${details.status|| "غير محدد"}</td>
+                
                   </tr>
                 </tbody>
               </table>
@@ -933,6 +938,12 @@ export default function CaseDetailsPage() {
                     label="رقم التوكيل"
                     value={caseDetails.attorneyNumber}
                     gradient="from-amber-500 to-yellow-600"
+                  />
+                  <DetailItem
+                    icon={<Gavel className="h-6 w-6" />}
+                    label="مسمى الدعوى"
+                    value={caseDetails.nameOfCase}
+                    gradient="from-amber-500 to-black"
                   />
                 </div>
               </div>
