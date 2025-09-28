@@ -29,8 +29,10 @@ const routePermissions: Record<string, RoutePermission> = {
   "/dashboard/appointments/add": { category: "appointments", action: "create" },
   "/dashboard/appointments/[id]": { category: "appointments", action: "view" },
   "/dashboard/appointments/[id]/edit": { category: "appointments", action: "edit" },
-// sessions
+
+  // Sessions - إزالة requireOwnership
   "/dashboard/sessions": { category: "sessions", action: "view" },
+
   // Documents
   // "/dashboard/documents/upload": { category: "documents", action: "upload" },
   // "/dashboard/documents/[id]": { category: "documents", action: "view" },
@@ -40,14 +42,19 @@ const routePermissions: Record<string, RoutePermission> = {
   "/dashboard/financial": { category: "financial", action: "viewReports" },
   "/dashboard/invoices": { category: "financial", action: "createInvoices" },
 
+  // Settings - إضافة مسارات الإعدادات
+  "/dashboard/settings": { category: "firmSettings", action: "viewSettings" },
+  "/dashboard/settings/profile": { category: "firmSettings", action: "viewSettings" },
+  "/dashboard/settings/notifications": { category: "firmSettings", action: "viewSettings" },
+  "/dashboard/settings/security": { category: "firmSettings", action: "viewSettings" },
+
   // Employees (Owner only)
   "/dashboard/employees": { category: "employees", action: "view", requireOwnership: true },
   "/dashboard/employees/add": { category: "employees", action: "create", requireOwnership: true },
   "/dashboard/employees/[id]/edit": { category: "employees", action: "edit", requireOwnership: true },
 
-  // Settings
-  "/dashboard/settings": { category: "firmSettings", action: "viewSettings" },
-  "/dashboard/settings/user-management": { category: "firmSettings", action: "editSettings", requireOwnership: true },
+  // Advanced Settings (Owner only)
+  "/dashboard/settings/user-management": { category: "firmSettings", action: "viewSettings", },
 };
 
 // 🔍 Debug helper

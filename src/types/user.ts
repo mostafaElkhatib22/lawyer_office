@@ -55,6 +55,9 @@ export interface IUser extends mongoose.Document {
       viewPayments: boolean;
       editPrices: boolean;
     };
+    sessions:{
+      view:boolean
+    }
     employees: {
       view: boolean;
       create: boolean;

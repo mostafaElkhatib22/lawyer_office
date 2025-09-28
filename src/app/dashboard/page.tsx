@@ -102,7 +102,6 @@ export default function DashboardPage() {
           throw err;
         }),
       ]);
-
       let casesData: CaseType[] = [];
       let clientsData: ClientType[] = [];
 

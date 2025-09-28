@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -17,198 +18,196 @@ function getErrorMessage(error: unknown): string {
 
 // Helper function to safely extract ObjectId
 function safeExtractObjectId(value: any): string | null {
-  if (!value) return null;
-  
   try {
-    // If it's already a valid ObjectId string
-    if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+    if (!value) return null;
+    if (typeof value === "string" && mongoose.Types.ObjectId.isValid(value)) {
       return value;
     }
-    
-    // If it's a mongoose ObjectId object
-    if (value._id && typeof value._id === 'string') {
-      return /^[0-9a-fA-F]{24}$/.test(value._id) ? value._id : null;
+    if (typeof value === "object" && "_id" in value) {
+      const idStr = value._id.toString();
+      return mongoose.Types.ObjectId.isValid(idStr) ? idStr : null;
     }
-    
-    // If it has toString method that returns valid ObjectId
-    if (value.toString && typeof value.toString === 'function') {
-      const stringValue = value.toString();
-      return /^[0-9a-fA-F]{24}$/.test(stringValue) ? stringValue : null;
-    }
-    
-    // If it's a stringified object containing ObjectId
-    if (typeof value === 'string' && value.includes('ObjectId')) {
-      const match = value.match(/[0-9a-fA-F]{24}/);
-      return match ? match[0] : null;
-    }
-    
     return null;
-  } catch (error) {
-    console.error('Error extracting ObjectId:', error);
+  } catch {
     return null;
   }
 }
 
 export async function GET(req: Request) {
+  await dbConnect();
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { success: false, message: "Authentication required." },
+      { status: 401 }
+    );
+  }
+
   try {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      console.log('No session or user ID found');
-      return NextResponse.json({ success: false, message: 'غير مصرح لك بالوصول' }, { status: 401 });
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
     }
 
-    const sessionUser: any = session.user;
-    console.log('Session User raw:', sessionUser);
-
-    // Safe extraction of user ID
-    const sessionUserId = safeExtractObjectId(sessionUser.id);
-    if (!sessionUserId) {
-      console.error('Could not extract valid session user ID from:', sessionUser.id);
-      return NextResponse.json({ success: false, message: 'معرف المستخدم غير صحيح' }, { status: 400 });
+    // التحقق من الصلاحيات
+    if (user.accountType !== "owner" && !user.permissions?.clients?.view) {
+      return NextResponse.json(
+        { success: false, message: "ليس لديك صلاحية لعرض العملاء." },
+        { status: 403 }
+      );
     }
 
-    const accountType = sessionUser.accountType || 'owner';
-    console.log('Session User ID:', sessionUserId);
-    console.log('Account Type:', accountType);
-
-    // Determine firm owner ID
-    let firmOwnerIdString: string;
-    if (accountType === 'employee' && sessionUser.ownerId) {
-      const extractedOwnerId = safeExtractObjectId(sessionUser.ownerId);
-      if (!extractedOwnerId) {
-        console.error('Could not extract valid owner ID from:', sessionUser.ownerId);
-        return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
-      }
-      firmOwnerIdString = extractedOwnerId;
+    let ownerId: string;
+    if (user.accountType === "owner") {
+      ownerId = user._id.toString();
     } else {
-      firmOwnerIdString = sessionUserId;
+      ownerId = user.ownerId?.toString() || "";
     }
 
-    console.log('Using firm owner ID:', firmOwnerIdString);
-
-    // Validate and create ObjectId
-    if (!mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
-      console.error('Invalid ObjectId format:', firmOwnerIdString);
-      return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+      return NextResponse.json(
+        { success: false, message: "معرف المالك غير صحيح." },
+        { status: 400 }
+      );
     }
 
-    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
+    const clients = await Client.find({ 
+      owner: new mongoose.Types.ObjectId(ownerId) 
+    }).sort({ createdAt: -1 });
 
-    // Get employees for this firm
-    const employees = await User.find({ 
-      ownerId: firmOwnerId, 
-      accountType: 'employee' 
-    }).select('_id').lean();
-    
-    console.log('Found employees:', employees.length);
-    
-    const employeeIds = employees.map((e: any) => new mongoose.Types.ObjectId(e._id));
-    const ownerIds = [firmOwnerId, ...employeeIds];
-
-    console.log('Searching for clients with owner IDs:', ownerIds.map(id => id.toString()));
-
-    // Get clients
-    const clients = await Client.aggregate([
-      { $match: { owner: { $in: ownerIds } } },
-      {
-        $lookup: {
-          from: 'cases',
-          localField: '_id',
-          foreignField: 'client',
-          as: 'cases'
-        }
-      },
-      { $addFields: { caseCount: { $size: '$cases' } } },
-      { $project: { cases: 0 } }
-    ]);
-
-    console.log('Found clients:', clients.length);
-
-    return NextResponse.json({ success: true, data: clients }, { status: 200 });
-    
-  } catch (error) {
-    console.error('Error Getting Clients:', error);
-    
-    // More detailed error logging
-    if (error instanceof Error) {
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    
     return NextResponse.json({ 
-      success: false, 
-      message: 'حدث خطأ في الخادم',
-      error: process.env.NODE_ENV === 'development' ? getErrorMessage(error) : undefined
-    }, { status: 500 });
+      success: true, 
+      data: clients 
+    }, { status: 200 });
+
+  } catch (error: any) {
+    console.error("Error fetching clients:", error);
+    return NextResponse.json(
+      { success: false, message: "Failed to fetch clients." },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: Request) {
   try {
     await dbConnect();
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, message: 'Authentication required.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Authentication required." },
+        { status: 401 }
+      );
     }
 
-    const sessionUser: any = session.user;
-    const sessionUserId = safeExtractObjectId(sessionUser.id);
-    
-    if (!sessionUserId) {
-      return NextResponse.json({ success: false, message: 'معرف المستخدم غير صحيح' }, { status: 400 });
+    console.log("Session user:", JSON.stringify(session.user, null, 2));
+
+    // الحصول على المستخدم من قاعدة البيانات
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
     }
 
-    const accountType = sessionUser.accountType || 'owner';
-    
-    let firmOwnerIdString: string;
-    if (accountType === 'employee' && sessionUser.ownerId) {
-      const extractedOwnerId = safeExtractObjectId(sessionUser.ownerId);
-      if (!extractedOwnerId) {
-        return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
-      }
-      firmOwnerIdString = extractedOwnerId;
+    console.log("User from DB:", {
+      id: user._id,
+      accountType: user.accountType,
+      ownerId: user.ownerId,
+      permissions: user.permissions?.clients
+    });
+
+    // التحقق من الصلاحيات
+    if (user.accountType !== "owner" && !user.permissions?.clients?.create) {
+      return NextResponse.json(
+        { success: false, message: "ليس لديك صلاحية لإنشاء عملاء جدد." },
+        { status: 403 }
+      );
+    }
+
+    // تحديد معرف المالك
+    let ownerId: string;
+    if (user.accountType === "owner") {
+      ownerId = user._id.toString();
+    } else if (user.accountType === "employee" && user.ownerId) {
+      ownerId = user.ownerId.toString();
     } else {
-      firmOwnerIdString = sessionUserId;
+      console.error("Cannot determine owner ID:", { 
+        accountType: user.accountType, 
+        ownerId: user.ownerId 
+      });
+      return NextResponse.json(
+        { success: false, message: "لا يمكن تحديد معرف المالك." },
+        { status: 400 }
+      );
     }
 
-    if (!mongoose.Types.ObjectId.isValid(firmOwnerIdString)) {
-      return NextResponse.json({ success: false, message: 'معرف المالك غير صحيح' }, { status: 400 });
+    if (!mongoose.Types.ObjectId.isValid(ownerId)) {
+      console.error("Invalid owner ID:", ownerId);
+      return NextResponse.json(
+        { success: false, message: "معرف المالك غير صحيح." },
+        { status: 400 }
+      );
     }
-
-    const firmOwnerId = new mongoose.Types.ObjectId(firmOwnerIdString);
 
     const body = await req.json();
+    console.log("Request body:", body);
+    
     const { name, email, phone, address } = body;
 
-    if (!name) {
-      return NextResponse.json({ success: false, message: 'اسم الموكل مطلوب.' }, { status: 400 });
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json(
+        { success: false, message: "اسم الموكل مطلوب." },
+        { status: 400 }
+      );
     }
 
-    // Check for duplicate client name within the same firm
-    const existingClient = await Client.findOne({ 
-      name: name.trim(), 
-      owner: firmOwnerId 
+    // التحقق من عدم وجود عميل بنفس الاسم
+    const existingClient = await Client.findOne({
+      name: name.trim(),
+      owner: new mongoose.Types.ObjectId(ownerId),
     });
-    
+
     if (existingClient) {
-      return NextResponse.json({ success: false, message: 'هذا الموكل موجود بالفعل.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "هذا الموكل موجود بالفعل." },
+        { status: 400 }
+      );
     }
 
     const newClient = await Client.create({
       name: name.trim(),
-      email: email || '',
-      phone: phone || '',
-      address: address || '',
-      owner: firmOwnerId,
-      createdBy: new mongoose.Types.ObjectId(sessionUserId)
+      email: email?.trim() || "",
+      phone: phone?.trim() || "",
+      address: address?.trim() || "",
+      owner: new mongoose.Types.ObjectId(ownerId),
+      createdBy: new mongoose.Types.ObjectId(user._id.toString()),
     });
 
-    return NextResponse.json({ success: true, data: newClient }, { status: 201 });
-  } catch (error) {
-    console.error('Error Creating Client:', error);
-    return NextResponse.json({ success: false, message: getErrorMessage(error) }, { status: 500 });
+    console.log("Client created successfully:", newClient._id);
+
+    return NextResponse.json({ 
+      success: true, 
+      data: newClient 
+    }, { status: 201 });
+
+  } catch (error: any) {
+    console.error("Error Creating Client:", error);
+    console.error("Error stack:", error.stack);
+    
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: error.message || "فشل في إنشاء الموكل",
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
+      { status: 500 }
+    );
   }
 }

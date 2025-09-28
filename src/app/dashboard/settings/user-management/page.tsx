@@ -158,10 +158,10 @@ const UserManagementPage = () => {
   // خيارات الأدوار والأقسام
   const roles: { [key: string]: string } = {
     partner: "شريك",
-    senior_lawyer: "محامي أول",
-    lawyer: "محامي",
-    junior_lawyer: "محامي مساعد",
-    legal_assistant: "مساعد قانوني",
+    senior_lawyer: "محامي نقض",
+    lawyer: " محامي اسئناف",
+    junior_lawyer: "محامي ابتدائي",
+    legal_assistant: "جدول عام ",
     secretary: "سكرتير",
     accountant: "محاسب",
     intern: "متدرب",
@@ -332,7 +332,6 @@ const UserManagementPage = () => {
           role: editingEmployee.role,
           department: editingEmployee.department,
           employeeInfo: editingEmployee.employeeInfo,
-          
         }),
       });
 
@@ -452,8 +451,8 @@ const UserManagementPage = () => {
                     إدارة الموظفين
                   </h1>
                   <p className="text-gray-600 dark:text-gray-300 text-lg">
-                    {session.user.firmInfo?.firmName || "مكتب المحاماة"} - إدارة
-                    حسابات الموظفين وصلاحياتهم
+                    {session?.user.firmInfo?.firmName || "مكتب المحاماة"} -
+                    إدارة حسابات الموظفين وصلاحياتهم
                   </p>
                 </div>
               </div>

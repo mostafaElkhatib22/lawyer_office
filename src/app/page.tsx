@@ -247,11 +247,11 @@ function HomePage() {
                 <div className="bg-white dark:bg-slate-800 rounded-xl p-6 h-80 flex items-center justify-center">
                   <div className="text-center">
                     <Image
-                      src="/gulfpicasso-edited-image (1).png"
+                      src="/WhatsApp Image 2025-09-27 at 13.08.46_2a9a58c2.jpg"
                       alt="نظام المحامي الذكي"
-                      width={200}
-                      height={200}
-                      className="mx-auto rounded-lg"
+                      width={800}
+                      height={800}
+                      className="object-cover rounded-xl mx-auto shadow-lg"
                     />
                     <p className="mt-4 text-gray-600 dark:text-gray-300">
                       واجهة نظام المحامي الذكي
