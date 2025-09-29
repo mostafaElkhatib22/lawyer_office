@@ -730,13 +730,13 @@ const router = useRouter()
                 icon={Clock}
                 title="الدعاوى الحديثة"
                 value={stats.recentCases}
-                color="bg-gradient-to-r from-green-500 to-green-600"
+                color="bg-gradient-to-r from-blue-500 to-blue-600"
               />
               <StatsCard
                 icon={Archive}
                 title="الدعاوى النشطة"
                 value={stats.activeCases}
-                color="bg-gradient-to-r from-purple-500 to-purple-600"
+                color="bg-gradient-to-r from-blue-500 to-blue-600"
               />
             </div>
           </div>

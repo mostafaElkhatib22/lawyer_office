@@ -443,7 +443,7 @@ const UserManagementPage = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -459,7 +459,7 @@ const UserManagementPage = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl p-4 text-center border border-blue-100 dark:border-blue-800/50">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-blue-900/30 dark:to-blue-900/30 rounded-xl p-4 text-center border border-blue-100 dark:border-blue-800/50">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.active}
                 </div>
@@ -474,7 +474,7 @@ const UserManagementPage = () => {
                 className={`group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
                   stats.remainingSlots === 0
                     ? "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl"
+                    : "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl"
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -508,49 +508,49 @@ const UserManagementPage = () => {
               </div>
             </div>
 
-            <div className="group relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-2xl p-6 border border-green-200/50 dark:border-green-700/50 hover:shadow-lg transition-all duration-300">
+            <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-green-700 dark:text-green-400 text-sm font-semibold">
+                  <p className="text-blue-700 dark:text-blue-400 text-sm font-semibold">
                     الموظفين النشطين
                   </p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-300">
+                  <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">
                     {stats.active}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-7 w-7 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-2xl p-6 border border-orange-200/50 dark:border-orange-700/50 hover:shadow-lg transition-all duration-300">
+            <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-orange-700 dark:text-orange-400 text-sm font-semibold">
+                  <p className="text-blue-700 dark:text-blue-400 text-sm font-semibold">
                     غير النشطين
                   </p>
-                  <p className="text-3xl font-bold text-orange-900 dark:text-orange-300">
+                  <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">
                     {stats.inactive}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <EyeOff className="h-7 w-7 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-700/50 hover:shadow-lg transition-all duration-300">
+            <div className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-2xl p-6 border border-blue-200/50 dark:border-blue-700/50 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-purple-700 dark:text-purple-400 text-sm font-semibold">
+                  <p className="text-blue-700 dark:text-blue-400 text-sm font-semibold">
                     المتاح
                   </p>
-                  <p className="text-3xl font-bold text-purple-900 dark:text-purple-300">
+                  <p className="text-3xl font-bold text-blue-900 dark:text-blue-300">
                     {stats.remainingSlots}
                   </p>
                 </div>
-                <div className="w-14 h-14 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Plus className="h-7 w-7 text-white" />
                 </div>
               </div>
@@ -660,7 +660,7 @@ const UserManagementPage = () => {
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
-                          <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-500 to-blue-500 flex items-center justify-center shadow-lg">
                             <span className="text-white font-bold text-lg">
                               {employee.name.charAt(0)}
                             </span>
@@ -700,7 +700,7 @@ const UserManagementPage = () => {
                       <span
                         className={`inline-flex px-3 py-1 text-xs font-bold rounded-full border-2 ${
                           employee.isActive
-                            ? "bg-gradient-to-r from-green-100 to-green-200 dark:from-green-800 dark:to-green-700 text-green-800 dark:text-green-200 border-green-300 dark:border-green-600"
+                            ? "bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-700 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-600"
                             : "bg-gradient-to-r from-red-100 to-red-200 dark:from-red-800 dark:to-red-700 text-red-800 dark:text-red-200 border-red-300 dark:border-red-600"
                         }`}
                       >
@@ -723,7 +723,7 @@ const UserManagementPage = () => {
                             setEditingEmployee(employee);
                             setShowEditModal(true);
                           }}
-                          className="group p-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-800/50 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 rounded-lg transition-all duration-300 hover:scale-110"
+                          className="group p-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 rounded-lg transition-all duration-300 hover:scale-110"
                           title="تعديل بيانات الموظف"
                         >
                           <Edit3
@@ -748,8 +748,8 @@ const UserManagementPage = () => {
                           onClick={() => toggleEmployeeStatus(employee._id)}
                           className={`group p-2 rounded-lg transition-all duration-300 hover:scale-110 ${
                             employee.isActive
-                              ? "bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-800/50 text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300"
-                              : "bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-800/50 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                              ? "bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                              : "bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                           }`}
                           title={employee.isActive ? "إلغاء تفعيل" : "تفعيل"}
                         >
@@ -813,14 +813,14 @@ const UserManagementPage = () => {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <div className="relative bg-white dark:bg-gray-800 border border-white/20 dark:border-gray-700/50 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
               {/* Header */}
-              <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
+              <div className="bg-gradient-to-r from-blue-600 to-emerald-600 p-6">
                 <h3 className="text-2xl font-bold text-white flex items-center gap-3">
                   <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                     <Edit3 size={20} />
                   </div>
                   تعديل بيانات الموظف
                 </h3>
-                <p className="text-green-100 mt-1">
+                <p className="text-blue-100 mt-1">
                   تعديل بيانات الموظف: {editingEmployee.name}
                 </p>
               </div>
@@ -831,7 +831,7 @@ const UserManagementPage = () => {
                   {/* معلومات أساسية */}
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6">
                     <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       المعلومات الأساسية
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -849,7 +849,7 @@ const UserManagementPage = () => {
                               name: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                           placeholder="أدخل الاسم الكامل"
                         />
                       </div>
@@ -868,7 +868,7 @@ const UserManagementPage = () => {
                               email: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                           placeholder="example@law-firm.com"
                         />
                       </div>
@@ -890,7 +890,7 @@ const UserManagementPage = () => {
                               },
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                           placeholder="مثال: EMP001"
                         />
                       </div>
@@ -911,7 +911,7 @@ const UserManagementPage = () => {
                               },
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                           placeholder="+20 10 1234 5678"
                         />
                       </div>
@@ -937,7 +937,7 @@ const UserManagementPage = () => {
                               role: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                         >
                           {Object.entries(roles).map(([key, value]) => (
                             <option key={key} value={key}>
@@ -959,7 +959,7 @@ const UserManagementPage = () => {
                               department: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                         >
                           {Object.entries(departments).map(([key, value]) => (
                             <option key={key} value={key}>
@@ -984,7 +984,7 @@ const UserManagementPage = () => {
                               },
                             })
                           }
-                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
+                          className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-white transition-all duration-300"
                         >
                           {Object.entries(contractTypes).map(([key, value]) => (
                             <option key={key} value={key}>
@@ -1010,7 +1010,7 @@ const UserManagementPage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                       حفظ التغييرات
                     </button>
@@ -1026,7 +1026,7 @@ const UserManagementPage = () => {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
             <div className="relative bg-white dark:bg-gray-800 border border-white/20 dark:border-gray-700/50 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
               {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6">
                 <h3 className="text-2xl font-bold text-white flex items-center gap-3">
                   <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                     <UserPlus size={20} />
@@ -1148,7 +1148,7 @@ const UserManagementPage = () => {
                   {/* معلومات العمل */}
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6">
                     <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       معلومات العمل
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1231,7 +1231,7 @@ const UserManagementPage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                       إضافة الموظف
                     </button>
@@ -1423,7 +1423,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
       <div className="relative bg-white dark:bg-gray-800 border border-white/20 dark:border-gray-700/50 shadow-2xl rounded-3xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-600 p-6">
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -1432,11 +1432,11 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
                 </div>
                 إدارة الصلاحيات
               </h3>
-              <p className="text-purple-100 mt-1">
+              <p className="text-blue-100 mt-1">
                 تحديد صلاحيات الموظف: {employee.name}
               </p>
             </div>
-            <div className="text-right text-purple-100">
+            <div className="text-right text-blue-100">
               <div className="text-sm">المنصب: {employee.role}</div>
               <div className="text-sm">القسم: {employee.department}</div>
             </div>
@@ -1453,7 +1453,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
                   className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600"
                 >
                   <h4 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-500 rounded-full"></div>
                     {categoryData.title}
                   </h4>
                   <div className="space-y-3">
@@ -1478,7 +1478,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
                             <div
                               className={`w-5 h-5 rounded-md border-2 transition-all duration-300 ${
                                 (permissions as any)[category]?.[permission]
-                                  ? "bg-gradient-to-r from-purple-500 to-blue-500 border-purple-500"
+                                  ? "bg-gradient-to-r from-blue-500 to-blue-500 border-blue-500"
                                   : "border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700"
                               }`}
                             >
@@ -1520,7 +1520,7 @@ const PermissionModal: React.FC<PermissionModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-700 hover:to-blue-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
             حفظ الصلاحيات
           </button>

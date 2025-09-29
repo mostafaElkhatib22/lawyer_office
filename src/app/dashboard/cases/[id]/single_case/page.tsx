@@ -837,7 +837,7 @@ export default function CaseDetailsPage() {
               <ChevronRight className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Scale className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -883,7 +883,7 @@ export default function CaseDetailsPage() {
           {/* Client Information Hero Card */}
           <AnimatedCard delay={100}>
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-8">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
                     <User className="h-8 w-8 text-white" />
@@ -954,7 +954,7 @@ export default function CaseDetailsPage() {
           {caseDetails.opponents && caseDetails.opponents.length > 0 && (
             <AnimatedCard delay={200}>
               <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-                <div className="bg-gradient-to-r from-red-500 via-pink-500 to-rose-500 p-6">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
                       <Megaphone className="h-6 w-6 text-white" />
@@ -972,7 +972,7 @@ export default function CaseDetailsPage() {
                       <div key={index} className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/10 dark:to-pink-900/10 p-4 border border-red-100 dark:border-red-800/30 hover:shadow-lg transition-all duration-300 transform hover:scale-102">
                         <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-all duration-300"></div>
                         <div className="relative flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                             {index + 1}
                           </div>
                           <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">{opponent}</span>

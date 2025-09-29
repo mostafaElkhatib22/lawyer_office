@@ -91,6 +91,7 @@ interface Case {
   court: string;
   caseNumber: string;
   type: string;
+  nameOfCase:string;
   sessiondate: string;
   caseDate: string;
   client: { _id: string; name: string } | null;
@@ -247,40 +248,48 @@ export default function SessionPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
                 <SessionDetail
-                  icon={<BriefcaseIcon className="w-6 h-6 text-indigo-500" />}
+                  icon={<BriefcaseIcon className="w-6 h-6 text-blue-500" />}
                   label="نوع القضية"
                   value={selectedSession.details.caseTypeOF}
                 />
                 <SessionDetail
-                  icon={<MapPinIcon className="w-6 h-6 text-purple-500" />}
+                  icon={<MapPinIcon className="w-6 h-6 text-blue-500" />}
                   label="المحكمة"
                   value={selectedSession.details.court}
                 />
                 <SessionDetail
-                  icon={<GavelIcon className="w-6 h-6 text-green-500" />}
+                  icon={<GavelIcon className="w-6 h-6 text-blue-500" />}
                   label="النوع"
                   value={selectedSession.details.type}
                 />
                 <SessionDetail
-                  icon={<UserIcon className="w-6 h-6 text-red-500" />}
+                  icon={<UserIcon className="w-6 h-6 text-blue-500" />}
                   label="الموكل"
                   value={selectedSession.details.client?.name || "غير محدد"}
                 />
                 <SessionDetail
-                  icon={<UsersIcon className="w-6 h-6 text-teal-500" />}
+                  icon={<UsersIcon className="w-6 h-6 text-blue-500" />}
                   label="الخصوم"
                   value={
                     selectedSession.details.opponents.join(", ") || "لا يوجد"
                   }
-                  full
+                  
                 />
                 <SessionDetail
-                  icon={<UserIcon className="w-6 h-6 text-red-500" />}
+                  icon={<UsersIcon className="w-6 h-6 text-blue-500" />}
+                  label="الخصوم"
+                  value={
+                    selectedSession.details.nameOfCase || "لا يوجد"
+                  }
+                  
+                />
+                <SessionDetail
+                  icon={<UserIcon className="w-6 h-6 text-blue-500" />}
                   label="رقم الدعوى"
                   value={selectedSession.details.caseNumber || "غير محدد"}
                 />
                 <SessionDetail
-                  icon={<CalendarDaysIcon className="w-6 h-6 text-orange-500" />}
+                  icon={<CalendarDaysIcon className="w-6 h-6 text-blue-500" />}
                   label="تاريخ الجلسة"
                   value={format(
                     new Date(selectedSession.details.sessiondate),

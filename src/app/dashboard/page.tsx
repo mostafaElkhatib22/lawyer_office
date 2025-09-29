@@ -358,7 +358,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
           {[
             {
-              title: "عدد الدعاوى",
+              title: "عدد الدعاوي",
               value: totalCases,
               color: "text-blue-600",
               desc: "إجمالي القضايا في النظام",
@@ -366,19 +366,19 @@ export default function DashboardPage() {
             {
               title: "عدد الموكلين",
               value: totalClients,
-              color: "text-green-600",
+              color: "text-blue-600",
               desc: "إجمالي الموكلين",
             },
             {
               title: "جلسات الغد",
               value: tomorrowSessions,
-              color: "text-orange-600",
+              color: "text-blue-600",
               desc: "عدد الجلسات المقررة غداً",
             },
             {
               title: "توزيع الدعاوى",
               value: distributionByType.length,
-              color: "text-purple-600",
+              color: "text-blue-600",
               desc: "عدد أنواع الدعاوى",
             },
           ].map((item, index) => (

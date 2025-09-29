@@ -259,7 +259,7 @@ export default function ReportsDashboardPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-xl transition font-semibold ${tab === t ? "bg-gradient-to-r from-indigo-500 to-pink-500 text-white shadow-lg" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
+              className={`px-4 py-2 rounded-xl transition font-semibold ${tab === t ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
             >
               {t === "cases" ? "الدعاوى" : t === "sessions" ? "الجلسات" : "الموكلين"}
             </button>
@@ -313,7 +313,7 @@ export default function ReportsDashboardPage() {
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie data={distribution} dataKey="value" nameKey="name" outerRadius={80} label>
-                      {distribution.map((entry, idx) => <Cell key={idx} fill={["#FF7A59","#6C5CE7","#24C1FF"][idx % 3]} />)}
+                      {distribution.map((entry, idx) => <Cell key={idx} fill={["#FF7A59","#6C5CE7","#24C1FF","red"][idx % 3]} />)}
                     </Pie>
                     <Tooltip />
                   </PieChart>
@@ -451,7 +451,7 @@ export default function ReportsDashboardPage() {
                 <div className="text-sm text-gray-500">جلسات الغد</div>
                 <div className="text-2xl font-bold">{tomorrowSessionsCount}</div>
               </div>
-              <div className="p-3 rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-white">
+              <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white">
                 <Calendar className="w-5 h-5" />
               </div>
             </div>
