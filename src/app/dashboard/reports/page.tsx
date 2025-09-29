@@ -242,9 +242,9 @@ export default function ReportsDashboardPage() {
             <FileText className="w-4 h-4" /> تصدير
           </button>
 
-          <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+          {/* <button onClick={handlePrint} className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
             <Printer className="w-4 h-4" /> طباعة
-          </button>
+          </button> */}
 
           <button onClick={resetFilters} className="flex items-center gap-2 px-3 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg shadow">
             <XCircle className="w-4 h-4" /> مسح الفلاتر
