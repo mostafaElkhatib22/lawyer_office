@@ -33,7 +33,7 @@ function safeExtractObjectId(value: any): string | null {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
@@ -75,19 +75,51 @@ export async function GET(req: Request) {
       );
     }
 
-    const clients = await Client.find({ 
-      owner: new mongoose.Types.ObjectId(ownerId) 
-    }).sort({ createdAt: -1 });
+    // الحصول على searchQuery من الـ URL
+    const searchQuery = req.nextUrl.searchParams.get("searchQuery");
 
-    return NextResponse.json({ 
-      success: true, 
-      data: clients 
+    // بناء الـ match condition
+    const matchCondition: any = {
+      owner: new mongoose.Types.ObjectId(ownerId)
+    };
+
+    // إضافة البحث بالاسم إذا كان موجود
+    if (searchQuery) {
+      matchCondition.name = { $regex: searchQuery, $options: "i" };
+    }
+
+    // استخدام aggregation للحصول على العملاء مع عدد القضايا
+    const clients = await Client.aggregate([
+      {
+        $match: matchCondition
+      },
+      {
+        $lookup: {
+          from: "cases",
+          localField: "_id",
+          foreignField: "client",
+          as: "cases",
+        },
+      },
+      {
+        $addFields: {
+          caseCount: { $size: "$cases" }
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: clients
     }, { status: 200 });
 
   } catch (error: any) {
     console.error("Error fetching clients:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to fetch clients." },
+      { success: false, message: "Failed to fetch clients.", error: error.message },
       { status: 500 }
     );
   }
@@ -138,9 +170,9 @@ export async function POST(req: Request) {
     } else if (user.accountType === "employee" && user.ownerId) {
       ownerId = user.ownerId.toString();
     } else {
-      console.error("Cannot determine owner ID:", { 
-        accountType: user.accountType, 
-        ownerId: user.ownerId 
+      console.error("Cannot determine owner ID:", {
+        accountType: user.accountType,
+        ownerId: user.ownerId
       });
       return NextResponse.json(
         { success: false, message: "لا يمكن تحديد معرف المالك." },
@@ -158,7 +190,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     console.log("Request body:", body);
-    
+
     const { name, email, phone, address } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -192,18 +224,18 @@ export async function POST(req: Request) {
 
     console.log("Client created successfully:", newClient._id);
 
-    return NextResponse.json({ 
-      success: true, 
-      data: newClient 
+    return NextResponse.json({
+      success: true,
+      data: newClient
     }, { status: 201 });
 
   } catch (error: any) {
     console.error("Error Creating Client:", error);
     console.error("Error stack:", error.stack);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         message: error.message || "فشل في إنشاء الموكل",
         error: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
