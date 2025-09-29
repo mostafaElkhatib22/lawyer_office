@@ -352,8 +352,8 @@ export default function ReportsDashboardPage() {
             <div className="overflow-x-auto">
               {/* Cases table */}
               {tab === "cases" && (
-                <table className="min-w-full text-sm table-auto">
-                  <thead className="text-right bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-200">
+                <table className="min-w-full text-sm table-auto text center">
+                  <thead className="bg-gray-50 dark:bg-gray-700 text-gray-600 text-center dark:text-gray-200">
                     <tr>
                       <th className="px-3 py-2">الموكل</th>
                       <th className="px-3 py-2">نوع</th>
@@ -366,7 +366,7 @@ export default function ReportsDashboardPage() {
                   </thead>
                   <tbody>
                     {filteredCases.map(c => (
-                      <tr key={c._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <tr key={c._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700 text-center">
                         <td className="px-3 py-2">{ typeof c.client === "string" ? c.client : (c.client?.name || "-") }</td>
                         <td className="px-3 py-2">{c.caseTypeOF || "-"}</td>
                         <td className="px-3 py-2">{c.type || "-"}</td>
