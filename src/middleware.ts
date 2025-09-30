@@ -55,6 +55,7 @@ const routePermissions: Record<string, RoutePermission> = {
 
   // Advanced Settings (Owner only)
   "/dashboard/settings/user-management": { category: "firmSettings", action: "viewSettings", },
+  "/dashboard/settings/subscription": { category: "subscription", action: "subscription",requireOwnership: true },
 };
 
 // 🔍 Debug helper

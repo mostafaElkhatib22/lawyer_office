@@ -62,10 +62,7 @@ export async function GET(req: Request) {
     );
   }
 }
-
-
-
-
+// في src/app/api/cases/route.ts - تعديل دالة POST
 
 export async function POST(req: Request) {
   await dbConnect();
@@ -87,7 +84,46 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🟢 تحقق من الصلاحية
+    // 🟢 تحديد صاحب المكتب
+    const ownerId =
+      currentUser.accountType === "owner"
+        ? currentUser._id
+        : currentUser.ownerId;
+
+    // 🟢 جلب بيانات صاحب المكتب للتحقق من الحدود
+    const owner = await User.findById(ownerId);
+    if (!owner) {
+      return NextResponse.json(
+        { success: false, message: "لم يتم العثور على بيانات المكتب." },
+        { status: 404 }
+      );
+    }
+
+    // ⚠️ التحقق من عدد الدعاوى الحالية
+    const currentCasesCount = await Case.countDocuments({
+      owner: ownerId,
+    });
+
+    // ⚠️ التحقق من الحد الأقصى (فقط إذا كانت النسخة المجانية)
+    if (owner.firmInfo.subscriptionPlan === 'free') {
+      const maxCases = owner.firmInfo.maxCases || 50;
+
+      if (currentCasesCount >= maxCases) {
+        return NextResponse.json(
+          {
+            success: false,
+            limitReached: true,
+            message: `لقد وصلت للحد الأقصى من الدعاوى (${maxCases}) في النسخة التجريبية. يرجى الترقية إلى خطة مدفوعة للاستمرار.`,
+            currentCount: currentCasesCount,
+            maxAllowed: maxCases,
+            upgradeRequired: true
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 🟢 التحقق من الصلاحية
     if (
       currentUser.accountType === "employee" &&
       !currentUser.permissions?.cases?.create
@@ -137,12 +173,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🟢 لو المستخدم Employee نخلي الـ owner هو صاحب المكتب
-    const ownerId =
-      currentUser.accountType === "owner"
-        ? currentUser._id
-        : currentUser.ownerId;
-
     const newCase = await Case.create({
       client,
       caseTypeOF,
@@ -159,12 +189,23 @@ export async function POST(req: Request) {
       sessiondate: sessiondate ? new Date(sessiondate) : new Date(),
       opponents: opponents || [],
       files: files || [],
-      owner: ownerId, // ✅ دايمًا الـ Owner هو صاحب المكتب
-      createdBy: currentUser._id, // ✅ المستخدم اللي أنشأ القضية
+      owner: ownerId,
+      createdBy: currentUser._id,
       assignedTo: assignedTo || null,
     });
 
-    return NextResponse.json({ success: true, data: newCase }, { status: 201 });
+    // ✅ تحديث عداد الدعاوى لدى صاحب المكتب
+    await User.findByIdAndUpdate(ownerId, {
+      $set: { 'firmInfo.currentCasesCount': currentCasesCount + 1 }
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newCase,
+      remainingCases: owner.firmInfo.subscriptionPlan === 'free'
+        ? (owner.firmInfo.maxCases || 50) - currentCasesCount - 1
+        : null
+    }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating case:", error);
     return NextResponse.json(

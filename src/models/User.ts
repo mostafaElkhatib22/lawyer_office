@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // src/models/User.ts (rename from .js to .ts)
 import mongoose, { Model, Document } from 'mongoose';
+import { SUBSCRIPTION_PLANS, SubscriptionPlanKey } from '@/constants/subscriptionPlans';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -10,6 +11,8 @@ interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  subscriptionPlan: SubscriptionPlanKey;
+  subscriptionExpiresAt?: Date;
   authProvider: 'credentials' | 'google';
   googleId?: string;
   accountType: 'owner' | 'employee';
@@ -70,6 +73,12 @@ const UserSchema = new mongoose.Schema<IUser>({
     lowercase: true,
     trim: true,
   },
+  subscriptionPlan: {
+    type: String,
+    enum: Object.keys(SUBSCRIPTION_PLANS),
+    default: 'free',
+  },
+  subscriptionExpiresAt: { type: Date },
   password: {
     type: String,
     required: [true, 'Please provide a password for this user.'],
@@ -104,8 +113,8 @@ const UserSchema = new mongoose.Schema<IUser>({
     // خطة الاشتراك
     subscriptionPlan: {
       type: String,
-      enum: ['basic', 'professional', 'enterprise'],
-      default: 'basic',
+      enum: ['free','basic', 'professional', 'enterprise'],
+      default: 'free',
     },
     maxEmployees: { type: Number, default: 10 }, // حد أقصى للموظفين حسب الخطة
   },
@@ -180,8 +189,8 @@ const UserSchema = new mongoose.Schema<IUser>({
       delete: { type: Boolean, default: false },
       editSensitive: { type: Boolean, default: false },
     },
-    sessions:{
-      view:{type:Boolean,default:true}
+    sessions: {
+      view: { type: Boolean, default: true }
     },
     // الإدارة المالية
     financial: {

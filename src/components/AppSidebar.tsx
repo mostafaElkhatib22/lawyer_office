@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Settings,
   ClipboardPlus,
+  Podcast,
 } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
@@ -59,6 +60,7 @@ export function AppSidebar() {
     },
     { href: "/dashboard/sessions", icon: CalendarDays, label: "الجلسات" },
     { href: "/dashboard/reports", icon: ClipboardPlus, label: "تقارير" },
+    { href: "/dashboard/subscription", icon: Podcast , label: "الاشتراكات" },
   ];
 
   // دالة قوية لإغلاق الـ sidebar
