@@ -38,7 +38,7 @@ const SubscriptionRequestContent = () => {
     qrCodeUrl: '/WhatsApp Image 2025-10-01 at 11.28.56_36d536c2.jpg'
   };
 
-  const WHATSAPP_NUMBER = '201012345678';
+  const WHATSAPP_NUMBER = '01011442906';
 
   useEffect(() => {
     fetchData();
