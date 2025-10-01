@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
-import { Check, AlertCircle, Loader2, CreditCard, Smartphone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, AlertCircle, Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface SubscriptionPlan {
   name: string;
@@ -25,29 +27,22 @@ interface SubscriptionData {
   availablePlans: Record<string, SubscriptionPlan>;
 }
 
-type PaymentGateway = 'paymob' | 'fawry' | 'paypal' | 'stripe';
-
 const SubscriptionPage = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState(false);
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [error, setError] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState("");
-  const [showGatewayModal, setShowGatewayModal] = useState(false);
-  const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('paymob');
-  const [planToSubscribe, setPlanToSubscribe] = useState("");
 
   useEffect(() => {
     fetchSubscriptionData();
-    
-    // Check for payment result in URL
+
     const params = new URLSearchParams(window.location.search);
-    const paymentStatus = params.get('payment_status');
-    const paymentId = params.get('payment_id');
-    const message = params.get('message');
-    
-    if (paymentStatus) {
-      handlePaymentRedirect(paymentStatus, paymentId, message);
+    const success = params.get("success");
+
+    if (success === "true") {
+      alert("✅ تم تفعيل اشتراكك بنجاح!");
+      window.history.replaceState({}, "", "/dashboard/subscription");
+      fetchSubscriptionData();
     }
   }, []);
 
@@ -68,166 +63,31 @@ const SubscriptionPage = () => {
     }
   };
 
-  const checkPaymentStatus = async (paymentId: string, status: string) => {
-    try {
-      const response = await fetch(`/api/payment/processed-callback/${paymentId}`);
-      const result = await response.json();
-      
-      if (result.success && result.data.status === 'completed') {
-        alert("✅ تم الاشتراك بنجاح! تم تفعيل باقتك الجديدة");
-        fetchSubscriptionData();
-      } else if (status === 'failed') {
-        alert("❌ فشلت عملية الدفع. يرجى المحاولة مرة أخرى");
-      }
-      
-      // Clean URL
-      window.history.replaceState({}, '', '/dashboard/subscription');
-    } catch (err) {
-      console.error('Error checking payment status:', err);
-    }
-  };
-
   const handleSubscribe = (planKey: string) => {
-    if (planKey === 'free') {
-      alert('الباقة المجانية نشطة بالفعل');
+    if (planKey === "free") {
+      alert("الباقة المجانية نشطة بالفعل");
       return;
     }
-    
-    setPlanToSubscribe(planKey);
-    setShowGatewayModal(true);
-  };
 
-  const processPayment = async () => {
-    if (!planToSubscribe || !selectedGateway) return;
-
-    setSubscribing(true);
-    setSelectedPlan(planToSubscribe);
-
-    try {
-      const response = await fetch("/api/payment/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planKey: planToSubscribe,
-          gateway: selectedGateway
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.paymentUrl) {
-        // Redirect to payment gateway
-        window.location.href = result.paymentUrl;
-      } else {
-        alert(result.message || "فشل في إنشاء عملية الدفع");
-        setSubscribing(false);
-        setSelectedPlan("");
-      }
-    } catch (err) {
-      alert("حدث خطأ في عملية الدفع");
-      setSubscribing(false);
-      setSelectedPlan("");
-    }
-  };
-
-  const PaymentGatewayModal = () => {
-    if (!showGatewayModal) return null;
-
-    const gateways = [
-      { id: 'paymob' as PaymentGateway, name: 'Paymob - بطاقات مصرية', icon: CreditCard, enabled: true },
-      { id: 'fawry' as PaymentGateway, name: 'فوري - محافظ إلكترونية', icon: Smartphone, enabled: false },
-      { id: 'paypal' as PaymentGateway, name: 'PayPal', icon: CreditCard, enabled: false },
-      { id: 'stripe' as PaymentGateway, name: 'Stripe', icon: CreditCard, enabled: false }
-    ];
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl max-w-md w-full p-6">
-          <h3 className="text-xl font-bold mb-4">اختر وسيلة الدفع</h3>
-          
-          <div className="space-y-3 mb-6">
-            {gateways.map((gateway) => (
-              <button
-                key={gateway.id}
-                onClick={() => setSelectedGateway(gateway.id)}
-                disabled={!gateway.enabled}
-                className={`w-full p-4 rounded-lg border-2 transition-all flex items-center gap-3 ${
-                  selectedGateway === gateway.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                } ${!gateway.enabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              >
-                <gateway.icon className="w-6 h-6 text-gray-600" />
-                <div className="flex-1 text-right">
-                  <div className="font-semibold">{gateway.name}</div>
-                  {!gateway.enabled && (
-                    <div className="text-sm text-gray-500">قريباً</div>
-                  )}
-                </div>
-                {selectedGateway === gateway.id && (
-                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-800">
-                سيتم تحويلك لصفحة الدفع الآمنة. بعد إتمام الدفع، سيتم تفعيل باقتك تلقائياً.
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setShowGatewayModal(false);
-                setPlanToSubscribe("");
-              }}
-              className="flex-1 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 font-semibold"
-            >
-              إلغاء
-            </button>
-            <button
-              onClick={processPayment}
-              disabled={subscribing}
-              className="flex-1 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {subscribing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  جاري المعالجة...
-                </>
-              ) : (
-                'متابعة للدفع'
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    router.push(`/dashboard/subscription/request?plan=${planKey}`);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center min-h-screen dark:bg-gray-900">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+      <div className="p-4 dark:bg-gray-900 min-h-screen">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
           <div>
-            <h3 className="font-semibold text-red-900">خطأ</h3>
-            <p className="text-red-700 text-sm">{error}</p>
+            <h3 className="font-semibold text-red-900 dark:text-red-200">خطأ</h3>
+            <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
           </div>
         </div>
       </div>
@@ -239,65 +99,92 @@ const SubscriptionPage = () => {
   const isFreePlan = data.currentPlan === "free";
   const usagePercentage = data.usage.cases.percentage;
   const isNearLimit = usagePercentage >= 80;
+  const isAtLimit = data.usage.cases.remaining <= 0;
+  const showUsage = data.planDetails.maxCases !== -1; // إخفاء الاستخدام للباقة Enterprise
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8" dir="rtl">
-      <PaymentGatewayModal />
-      
+    <div
+      className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8"
+      dir="rtl"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
             باقات الاشتراك
           </h1>
-          <p className="text-gray-600">اختر الباقة المناسبة لاحتياجات مكتبك</p>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            اختر الباقة المناسبة لاحتياجات مكتبك
+          </p>
         </div>
 
-        {isFreePlan && (
+        {/* عرض الاستخدام الحالي */}
+        {showUsage && (
           <div
-            className={`mb-8 rounded-lg p-6 ${
-              isNearLimit
-                ? "bg-orange-50 border-2 border-orange-200"
-                : "bg-blue-50 border border-blue-200"
+            className={`mb-8 rounded-xl p-6 shadow-lg ${
+              isAtLimit
+                ? "bg-gradient-to-r from-red-500 to-orange-500 text-white"
+                : isNearLimit
+                ? "bg-gradient-to-r from-orange-400 to-yellow-400 text-white"
+                : "bg-gradient-to-r from-blue-500 to-purple-600 text-white"
             }`}
           >
             <div className="flex items-start gap-4">
-              <AlertCircle
-                className={`w-6 h-6 ${
-                  isNearLimit ? "text-orange-600" : "text-blue-600"
-                } mt-1`}
-              />
+              <AlertCircle className="w-7 h-7 mt-1 flex-shrink-0" />
               <div className="flex-1">
-                <h3
-                  className={`font-semibold mb-2 ${
-                    isNearLimit ? "text-orange-900" : "text-blue-900"
-                  }`}
-                >
-                  {isNearLimit
-                    ? "أوشكت على الوصول للحد الأقصى!"
-                    : "أنت في النسخة التجريبية"}
+                <h3 className="text-xl font-bold mb-2">
+                  {isAtLimit
+                    ? "⛔ وصلت للحد الأقصى! قم بالترقية الآن"
+                    : isNearLimit
+                    ? "⚠️ أوشكت على الوصول للحد الأقصى!"
+                    : `📊 أنت في باقة ${data.planDetails.name}`}
                 </h3>
-                <p
-                  className={`text-sm mb-3 ${
-                    isNearLimit ? "text-orange-800" : "text-blue-800"
-                  }`}
-                >
+                <p className="text-sm opacity-90 mb-3">
                   استخدمت {data.usage.cases.current} من {data.usage.cases.max}{" "}
                   دعوى ({usagePercentage}%)
                 </p>
-                <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                <div className="w-full bg-white/30 rounded-full h-3 mb-3 overflow-hidden">
                   <div
-                    className={`h-3 rounded-full transition-all ${
-                      isNearLimit ? "bg-orange-500" : "bg-blue-500"
-                    }`}
+                    className="h-3 bg-white rounded-full transition-all duration-500 shadow-lg"
                     style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                   />
                 </div>
-                {data.usage.cases.remaining <= 10 && (
-                  <p className="text-sm font-semibold text-orange-700">
-                    متبقي {data.usage.cases.remaining} دعاوى فقط! قم بالترقية
+                {isAtLimit ? (
+                  <p className="text-sm font-bold">
+                    ⛔ لا يمكنك إضافة دعاوى جديدة. يجب الترقية للاستمرار
+                  </p>
+                ) : data.usage.cases.remaining <= 10 ? (
+                  <p className="text-sm font-semibold">
+                    ⏰ متبقي {data.usage.cases.remaining} دعاوى فقط! قم بالترقية
                     الآن
                   </p>
+                ) : (
+                  <p className="text-sm font-semibold">
+                    ✅ متبقي {data.usage.cases.remaining} دعوى من أصل {data.usage.cases.max}
+                  </p>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* عرض للباقة Enterprise (بدون حد) */}
+        {!showUsage && (
+          <div className="mb-8 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-6 shadow-lg text-white">
+            <div className="flex items-start gap-4">
+              <Sparkles className="w-7 h-7 mt-1 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-xl font-bold mb-2">
+                  🎉 أنت في باقة {data.planDetails.name}
+                </h3>
+                <p className="text-sm opacity-90 mb-2">
+                  لديك {data.usage.cases.current} دعوى نشطة
+                </p>
+                <p className="text-sm font-semibold">
+                  ✨ دعاوى غير محدودة - استمتع بالحرية الكاملة!
+                </p>
               </div>
             </div>
           </div>
@@ -307,63 +194,68 @@ const SubscriptionPage = () => {
           {Object.entries(data.availablePlans).map(([key, plan]) => {
             const isCurrent = key === data.currentPlan;
             const isPopular = key === "professional";
+            const isRecommended = isFreePlan && key === "basic";
 
             return (
               <div
                 key={key}
-                className={`relative rounded-xl border-2 p-6 transition-all ${
+                className={`relative rounded-2xl border-2 p-6 transition-all duration-300 ${
                   isCurrent
-                    ? "border-green-500 bg-green-50"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20 dark:border-green-600 shadow-xl"
                     : isPopular
-                    ? "border-blue-500 bg-white shadow-lg scale-105"
-                    : "border-gray-200 bg-white hover:border-blue-300"
-                }`}
+                    ? "border-purple-500 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 dark:border-purple-600 shadow-2xl scale-105 lg:scale-110"
+                    : isRecommended
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600 shadow-xl"
+                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-xl"
+                } ${key === "free" ? "opacity-75" : ""}`}
               >
                 {isCurrent && (
-                  <div className="absolute -top-3 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    الباقة الحالية
+                  <div className="absolute -top-3 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">
+                    ✓ الباقة الحالية
                   </div>
                 )}
                 {isPopular && !isCurrent && (
-                  <div className="absolute -top-3 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                    الأكثر شعبية
+                  <div className="absolute -top-3 right-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                    ⭐ الأكثر شعبية
+                  </div>
+                )}
+                {isRecommended && !isCurrent && (
+                  <div className="absolute -top-3 right-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg">
+                    💡 موصى بها
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                     {plan.name}
                   </h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-gray-900">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       {plan.price}
                     </span>
-                    <span className="text-gray-600">جنيه/شهر</span>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium">جنيه/شهر</span>
                   </div>
                 </div>
 
-                <div className="mb-6 space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-green-600" />
-                    <span className="text-gray-700">
+                <div className="mb-6 space-y-3">
+                  <div className="flex items-center gap-3 text-sm font-medium">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span className="text-gray-800 dark:text-gray-200">
                       {plan.maxCases === -1
-                        ? "دعاوى غير محدودة"
+                        ? "∞ دعاوى غير محدودة"
                         : `${plan.maxCases} دعوى`}
                     </span>
                   </div>
-                  {/* <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-green-600" />
-                    <span className="text-gray-700">
-                      {plan.maxEmployees} موظف
-                    </span>
-                  </div> */}
+                 
                 </div>
 
-                <div className="mb-6 space-y-2">
+                <div className="mb-6 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                   {plan.features.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-sm">
-                      <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600">{feature}</span>
+                      <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -371,27 +263,27 @@ const SubscriptionPage = () => {
                 {!isCurrent && key !== "free" && (
                   <button
                     onClick={() => handleSubscribe(key)}
-                    disabled={subscribing}
-                    className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                    className={`w-full py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2 ${
                       isPopular
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-gray-900 text-white hover:bg-gray-800"
-                    } disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700"
+                        : isRecommended
+                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
+                        : "bg-gradient-to-r from-gray-800 to-gray-900 text-white hover:from-gray-900 hover:to-black"
+                    }`}
                   >
-                    {subscribing && selectedPlan === key ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        جاري المعالجة...
-                      </>
-                    ) : (
-                      'اشترك الآن'
-                    )}
+                    اشترك الآن
                   </button>
                 )}
 
                 {isCurrent && (
-                  <div className="w-full py-3 rounded-lg font-semibold bg-green-100 text-green-700 text-center">
-                    باقتك الحالية
+                  <div className="w-full py-4 rounded-xl font-bold bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 text-center shadow-lg">
+                    ✓ باقتك الحالية
+                  </div>
+                )}
+
+                {key === "free" && !isCurrent && (
+                  <div className="w-full py-4 rounded-xl font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-center">
+                    النسخة التجريبية
                   </div>
                 )}
               </div>
@@ -399,30 +291,74 @@ const SubscriptionPage = () => {
           })}
         </div>
 
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-2">ملاحظات هامة:</h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>جميع الأسعار شاملة الضريبة</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>يمكنك الترقية أو التخفيض في أي وقت</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>الدفع آمن ومشفر بالكامل</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>يتم تفعيل الباقة تلقائياً بعد الدفع</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>للتواصل ومعرفة المزيد: support@lawoffice.com</span>
-            </li>
-          </ul>
+        <div className="mt-12 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 shadow-lg">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-xl">
+            ملاحظات هامة:
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  دفع آمن 100%
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  الدفع عبر InstaPay محمي وموثوق
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  مرونة كاملة
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">يمكنك الترقية في أي وقت</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">تفعيل سريع</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  يتم التفعيل خلال 2-6 ساعات
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  دعم عبر WhatsApp
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  تواصل مباشر مع خدمة العملاء
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+            <p className="text-gray-600 dark:text-gray-300 mb-2">
+              هل لديك أسئلة؟ نحن هنا للمساعدة
+            </p>
+            <div className="flex items-center justify-center gap-4 text-sm">
+              <Link
+                href="mailto:mostafaelkhatib26@gmail.com"
+                className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+              >
+                mostafaelkhatib26@gmail.com
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -430,7 +366,3 @@ const SubscriptionPage = () => {
 };
 
 export default SubscriptionPage;
-
-function handlePaymentRedirect(paymentStatus: string, paymentId: string | null, message: string | null) {
-  throw new Error("Function not implemented.");
-}

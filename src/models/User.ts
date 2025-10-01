@@ -105,19 +105,34 @@ const UserSchema = new mongoose.Schema<IUser>({
 
   // معلومات المكتب (للمالك فقط)
   firmInfo: {
-    firmName: { type: String, trim: true },
-    licenseNumber: { type: String, trim: true },
-    address: { type: String, trim: true },
-    phone: { type: String, trim: true },
-    establishedDate: { type: Date },
-    // خطة الاشتراك
-    subscriptionPlan: {
-      type: String,
-      enum: ['free','basic', 'professional', 'enterprise'],
-      default: 'free',
-    },
-    maxEmployees: { type: Number, default: 10 }, // حد أقصى للموظفين حسب الخطة
+  // الحقول الموجودة...
+  
+  subscriptionPlan: {
+    type: String,
+    enum: ['free', 'basic', 'professional', 'enterprise'],
+    default: 'free',
   },
+  
+  maxCases: { 
+    type: Number, 
+    default: 50  // الحد الأقصى في النسخة المجانية
+  },
+  
+  currentCasesCount: {
+    type: Number,
+    default: 0
+  },
+  
+  subscription: {
+    isActive: { type: Boolean, default: false },
+    planName: { type: String },
+    price: { type: Number },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    paymentMethod: { type: String },
+    transactionId: { type: String }
+  }
+},
 
   role: {
     type: String,
