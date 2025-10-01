@@ -71,7 +71,7 @@ interface CaseDetails {
   updatedAt: string;
 }
 
-const ActivityIndicator = ({ size = "medium", color = "text-blue-500" }: {
+const ActivityIndicator = ({ size = "medium", color = "text-green-600" }: {
   size?: "small" | "medium" | "large";
   color?: string;
 }) => {
@@ -104,12 +104,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in-0 duration-500">
-      <Card className="max-w-md w-full bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-0 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
+      <Card className="max-w-md w-full bg-white dark:bg-gray-800 border-0 shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+          <div className="mx-auto w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
             <AlertTriangle className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-red-600 dark:text-red-400 text-2xl font-bold">
+          <CardTitle className="text-green-700 dark:text-green-400 text-2xl font-bold">
             تأكيد الحذف
           </CardTitle>
           <CardDescription className="text-center text-gray-600 dark:text-gray-300 mt-2 leading-relaxed text-base">
@@ -120,7 +120,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Button
             onClick={onConfirm}
             disabled={isLoading}
-            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white flex items-center gap-2 px-8 py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-8 py-3 font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
             {isLoading ? (
               <ActivityIndicator size="small" color="text-white" />
@@ -144,17 +144,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-const DetailItem = ({ icon, label, value, gradient = "from-blue-500 to-purple-600" }: {
+const DetailItem = ({ icon, label, value, color = "bg-blue-600" }: {
   icon: React.ReactNode;
   label: string;
   value: string | undefined;
-  gradient?: string;
+  color?: string;
 }) => (
-  <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-300 hover:shadow-xl hover:scale-105">
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+  <div className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300 hover:shadow-xl hover:scale-105">
     <div className="relative p-6">
       <div className="flex items-center gap-4">
-        <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${gradient} shadow-lg`}>
+        <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl ${color} shadow-lg`}>
           <div className="text-white">
             {icon}
           </div>
@@ -465,11 +464,11 @@ export default function CaseDetailsPage() {
               font-family: 'Arial', sans-serif; 
               direction: rtl; 
               text-align: right; 
-              color: #2c3e50; 
+              color: #1a365d; 
               line-height: 1.4;
               margin: 15px;
               font-size: 13px;
-              background: #f8f9fa;
+              background: #f7fafc;
             }
             
             .container {
@@ -481,7 +480,7 @@ export default function CaseDetailsPage() {
             }
             
             .header {
-              background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+              background: #1a365d;
               color: white;
               text-align: center;
               padding: 20px;
@@ -510,13 +509,13 @@ export default function CaseDetailsPage() {
               width: 100%;
               border-collapse: collapse;
               margin-bottom: 20px;
-              border: 2px solid #34495e;
+              border: 2px solid #2d3748;
               border-radius: 8px;
               overflow: hidden;
             }
             
             .section-header {
-              background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+              background: #2d3748;
               color: white;
               text-align: center;
               font-weight: bold;
@@ -525,11 +524,11 @@ export default function CaseDetailsPage() {
             }
             
             .main-table th {
-              background: #ecf0f1;
-              color: #2c3e50;
+              background: #e2e8f0;
+              color: #1a365d;
               font-weight: bold;
               padding: 12px 15px;
-              border: 1px solid #bdc3c7;
+              border: 1px solid #cbd5e0;
               width: 25%;
               text-align: right;
               font-size: 14px;
@@ -537,7 +536,7 @@ export default function CaseDetailsPage() {
             
             .main-table td {
               padding: 12px 15px;
-              border: 1px solid #bdc3c7;
+              border: 1px solid #cbd5e0;
               background: #ffffff;
               font-size: 13px;
             }
@@ -554,7 +553,7 @@ export default function CaseDetailsPage() {
             
             .notes-section, .opponents-section, .decision-section {
               margin-top: 15px;
-              border: 2px solid #3498db;
+              border: 2px solid #3182ce;
               border-radius: 8px;
               overflow: hidden;
             }
@@ -562,12 +561,12 @@ export default function CaseDetailsPage() {
             .notes-section .section-header,
             .opponents-section .section-header,
             .decision-section .section-header {
-              background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+              background: #3182ce;
             }
             
             .content-box {
               padding: 15px;
-              background: #f8f9fa;
+              background: #f7fafc;
               min-height: 60px;
               font-size: 13px;
               line-height: 1.5;
@@ -581,7 +580,7 @@ export default function CaseDetailsPage() {
             .opponent-item {
               padding: 8px 15px;
               background: #ffffff;
-              border-bottom: 1px solid #ecf0f1;
+              border-bottom: 1px solid #e2e8f0;
               font-size: 13px;
             }
             
@@ -590,18 +589,18 @@ export default function CaseDetailsPage() {
             }
             
             .opponent-item:nth-child(even) {
-              background: #f8f9fa;
+              background: #f7fafc;
             }
             
             .footer {
               text-align: center;
               margin-top: 20px;
               padding: 15px;
-              background: #ecf0f1;
+              background: #e2e8f0;
               border-radius: 8px;
               font-size: 12px;
-              color: #7f8c8d;
-              border-top: 3px solid #3498db;
+              color: #4a5568;
+              border-top: 3px solid #3182ce;
             }
             
             @media print {
@@ -686,7 +685,7 @@ export default function CaseDetailsPage() {
                   </tr>
                   <tr>
                     <th>تاريخ الجلسة القادمة</th>
-                    <td colspan="3" style="font-weight: bold; color: #e74c3c;">${formatDate(details.sessiondate)}</td>
+                    <td colspan="3" style="font-weight: bold; color: #2d3748;">${formatDate(details.sessiondate)}</td>
                   </tr>
                   <tr>
                 
@@ -745,14 +744,14 @@ export default function CaseDetailsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex flex-1 items-center justify-center h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20">
+      <div className="flex flex-1 items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="relative">
-            <div className="w-24 h-24 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin animate-reverse mx-auto mt-4 ml-4"></div>
+            <div className="w-24 h-24 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin animate-reverse mx-auto mt-4 ml-4"></div>
           </div>
           <div className="mt-8 space-y-2">
-            <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <p className="text-2xl font-bold text-green-700">
               جاري تحميل تفاصيل الدعوى
             </p>
             <p className="text-gray-600 dark:text-gray-300">
@@ -766,19 +765,19 @@ export default function CaseDetailsPage() {
 
   if (error) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center h-screen bg-gradient-to-br from-red-100 via-pink-50 to-orange-100 dark:from-red-900/10 dark:via-pink-900/10 dark:to-orange-900/10 p-4">
+      <div className="flex flex-1 flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <AnimatedCard className="max-w-md w-full">
-          <Card className="text-center border-0 shadow-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl">
+          <Card className="text-center border-0 shadow-2xl bg-white dark:bg-gray-800">
             <CardContent className="pt-8 pb-6">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+              <div className="mx-auto w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <X className="h-10 w-10 text-white" />
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-4">حدث خطأ</h2>
+              <h2 className="text-2xl font-bold text-green-700 mb-4">حدث خطأ</h2>
               <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">{error}</p>
               <div className="flex flex-col gap-4">
                 <Button 
                   onClick={() => window.location.reload()} 
-                  className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 >
                   إعادة تحميل الصفحة
                 </Button>
@@ -800,18 +799,18 @@ export default function CaseDetailsPage() {
 
   if (!caseDetails) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center h-screen bg-gradient-to-br from-yellow-100 via-orange-50 to-red-100 dark:from-yellow-900/10 dark:via-orange-900/10 dark:to-red-900/10 p-4">
+      <div className="flex flex-1 flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <AnimatedCard className="max-w-md w-full">
-          <Card className="text-center border-0 shadow-2xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl">
+          <Card className="text-center border-0 shadow-2xl bg-white dark:bg-gray-800">
             <CardContent className="pt-8 pb-6">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+              <div className="mx-auto w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <FileText className="h-10 w-10 text-white" />
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-4">الدعوى غير موجودة</h2>
+              <h2 className="text-2xl font-bold text-green-700 mb-4">الدعوى غير موجودة</h2>
               <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">لم يتم العثور على الدعوى بهذا الرقم التعريفي.</p>
               <Button 
                 onClick={() => router.push("/dashboard/all-cases")} 
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 العودة إلى قائمة الدعاوى
               </Button>
@@ -823,26 +822,26 @@ export default function CaseDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-900 text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Floating Top Toolbar */}
       <div className="sticky top-4 z-20 mx-4 mb-6">
-        <div className="flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50">
+        <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="rounded-full hover:bg-gray-100/80 dark:hover:bg-gray-700/80 transition-all duration-300 transform hover:scale-110"
+              className="rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 transform hover:scale-110"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Scale className="h-5 w-5 text-white" />
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">رقم الدعوى</p>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold text-green-700">
                   {caseDetails.caseNumber}
                 </h1>
               </div>
@@ -851,7 +850,7 @@ export default function CaseDetailsPage() {
           <div className="flex gap-2">
             <Button
               variant="ghost"
-              className="text-gray-600 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 transition-all duration-300 transform hover:scale-105 rounded-xl"
+              className="text-gray-600 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 transition-all duration-300 transform hover:scale-105 rounded-xl"
               onClick={handlePrintReport}
             >
               <Printer className="h-5 w-5 ml-2" />
@@ -867,7 +866,7 @@ export default function CaseDetailsPage() {
             </Button>
             <Button
               variant="ghost"
-              className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all duration-300 transform hover:scale-105 rounded-xl"
+              className="text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-800 transition-all duration-300 transform hover:scale-105 rounded-xl"
               onClick={() => caseDetails && openDeleteModal(caseDetails)}
             >
               <Trash2 className="h-5 w-5 ml-2" />
@@ -882,10 +881,10 @@ export default function CaseDetailsPage() {
         <div className="lg:col-span-2 space-y-8">
           {/* Client Information Hero Card */}
           <AnimatedCard delay={100}>
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-8">
+            <Card className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
+              <div className="bg-green-600 p-8">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
                     <User className="h-8 w-8 text-white" />
                   </div>
                   <div className="flex-1 text-white">
@@ -894,7 +893,7 @@ export default function CaseDetailsPage() {
                       {caseDetails.client?.name || "غير محدد"}
                     </h2>
                   </div>
-                  <div className="hidden sm:flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                  <div className="hidden sm:flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2">
                     <Star className="h-5 w-5 text-yellow-300" />
                     <span className="text-white font-medium">{caseDetails.status}</span>
                   </div>
@@ -907,43 +906,43 @@ export default function CaseDetailsPage() {
                     icon={<Building className="h-6 w-6" />}
                     label="المحكمة"
                     value={caseDetails.court}
-                    gradient="from-blue-500 to-cyan-600"
+                    color="bg-blue-600"
                   />
                   <DetailItem
                     icon={<Scale className="h-6 w-6" />}
                     label="طبيعة الدعوى"
                     value={caseDetails.type}
-                    gradient="from-emerald-500 to-teal-600"
+                    color="bg-green-600"
                   />
                   <DetailItem
                     icon={<Briefcase className="h-6 w-6" />}
                     label="نوع الدعوى"
                     value={caseDetails.caseTypeOF}
-                    gradient="from-violet-500 to-purple-600"
+                    color="bg-gray-700"
                   />
                   <DetailItem
                     icon={<Calendar className="h-6 w-6" />}
                     label="تاريخ الدعوى"
                     value={formatDate(caseDetails.caseDate)}
-                    gradient="from-orange-500 to-red-600"
+                    color="bg-green-700"
                   />
                   <DetailItem
                     icon={<Clock className="h-6 w-6" />}
                     label="الجلسة القادمة"
                     value={formatDate(caseDetails.sessiondate)}
-                    gradient="from-pink-500 to-rose-600"
+                    color="bg-blue-700"
                   />
                   <DetailItem
                     icon={<FileCheck className="h-6 w-6" />}
                     label="رقم التوكيل"
                     value={caseDetails.attorneyNumber}
-                    gradient="from-amber-500 to-yellow-600"
+                    color="bg-gray-600"
                   />
                   <DetailItem
                     icon={<Gavel className="h-6 w-6" />}
                     label="مسمى الدعوى"
                     value={caseDetails.nameOfCase}
-                    gradient="from-amber-500 to-black"
+                    color="bg-black"
                   />
                 </div>
               </div>
@@ -953,10 +952,10 @@ export default function CaseDetailsPage() {
           {/* Opponents Panel */}
           {caseDetails.opponents && caseDetails.opponents.length > 0 && (
             <AnimatedCard delay={200}>
-              <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6">
+              <Card className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
+                <div className="bg-green-600 p-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                       <Megaphone className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1 text-white">
@@ -969,10 +968,9 @@ export default function CaseDetailsPage() {
                 <div className="p-6">
                   <div className="grid gap-4">
                     {caseDetails.opponents.map((opponent, index) => (
-                      <div key={index} className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/10 dark:to-pink-900/10 p-4 border border-red-100 dark:border-red-800/30 hover:shadow-lg transition-all duration-300 transform hover:scale-102">
-                        <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-pink-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-all duration-300"></div>
+                      <div key={index} className="group relative overflow-hidden rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800 hover:shadow-lg transition-all duration-300 transform hover:scale-102">
                         <div className="relative flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                          <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                             {index + 1}
                           </div>
                           <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">{opponent}</span>
@@ -991,11 +989,11 @@ export default function CaseDetailsPage() {
           {/* Decision & Notes Collapsible */}
           {(caseDetails.decision || caseDetails.nots) && (
             <AnimatedCard delay={300}>
-              <Collapsible className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border-0 overflow-hidden">
+              <Collapsible className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between w-full p-6 cursor-pointer bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 transition-all duration-300">
+                  <div className="flex items-center justify-between w-full p-6 cursor-pointer bg-green-600 text-white hover:bg-green-700 transition-all duration-300">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                         <Info className="h-6 w-6" />
                       </div>
                       <h3 className="text-lg font-bold">ملاحظات وقرارات</h3>
@@ -1007,10 +1005,10 @@ export default function CaseDetailsPage() {
                   {caseDetails.decision && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <Gavel className="h-4 w-4 text-teal-600" />
+                        <Gavel className="h-4 w-4 text-green-600" />
                         القرار
                       </h4>
-                      <Alert className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/10 dark:to-cyan-900/10 border-2 border-teal-200 dark:border-teal-800 rounded-2xl">
+                      <Alert className="bg-green-50 dark:bg-green-900/10 border-2 border-green-200 dark:border-green-800 rounded-2xl">
                         <AlertDescription className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">{caseDetails.decision}</AlertDescription>
                       </Alert>
                     </div>
@@ -1018,10 +1016,10 @@ export default function CaseDetailsPage() {
                   {caseDetails.nots && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <Info className="h-4 w-4 text-purple-600" />
+                        <Info className="h-4 w-4 text-blue-600" />
                         الملاحظات
                       </h4>
-                      <Alert className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 border-2 border-purple-200 dark:border-purple-800 rounded-2xl">
+                      <Alert className="bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-200 dark:border-blue-800 rounded-2xl">
                         <AlertDescription className="text-gray-800 dark:text-gray-200 font-medium leading-relaxed">{caseDetails.nots}</AlertDescription>
                       </Alert>
                     </div>
@@ -1034,17 +1032,17 @@ export default function CaseDetailsPage() {
           {/* Enhanced Files Collapsible */}
           {caseDetails.files && caseDetails.files.length > 0 && (
             <AnimatedCard delay={400}>
-              <Collapsible className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border-0 overflow-hidden">
+              <Collapsible className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between w-full p-6 cursor-pointer bg-gradient-to-r from-orange-500 to-amber-600 text-white hover:from-orange-600 hover:to-amber-700 transition-all duration-300">
+                  <div className="flex items-center justify-between w-full p-6 cursor-pointer bg-green-700 text-white hover:bg-green-800 transition-all duration-300">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                      <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                         <FolderOpen className="h-6 w-6" />
                       </div>
                       <h3 className="text-lg font-bold">ملفات مرفقة</h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold">
+                      <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">
                         {caseDetails.files.length}
                       </span>
                       <ChevronDown className="h-6 w-6 transition-transform duration-300 data-[state=open]:rotate-180" />
@@ -1056,12 +1054,11 @@ export default function CaseDetailsPage() {
                     {caseDetails.files.map((fileUrl, index) => (
                       <div 
                         key={index} 
-                        className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700 dark:to-blue-900/20 border-2 border-gray-100 dark:border-gray-600 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-blue-200 dark:hover:border-blue-600"
+                        className="group relative overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-xl hover:scale-105 hover:border-green-300 dark:hover:border-green-600"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-all duration-300"></div>
                         <div className="relative p-4 flex items-center justify-between gap-4">
                           <div className="flex items-center gap-4 min-w-0 flex-1">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
                               <File className="h-6 w-6 text-white" />
                             </div>
                             <div className="min-w-0 flex-1">
@@ -1075,7 +1072,7 @@ export default function CaseDetailsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                              className="h-10 w-10 rounded-xl bg-green-600 text-white hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
                               onClick={() => window.open(fileUrl, "_blank")}
                             >
                               <Eye className="h-5 w-5" />
@@ -1083,7 +1080,7 @@ export default function CaseDetailsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+                              className="h-10 w-10 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
                               onClick={() => {
                                 const link = document.createElement("a");
                                 link.href = fileUrl;
@@ -1109,8 +1106,8 @@ export default function CaseDetailsPage() {
 
           {/* Quick Actions Card */}
           <AnimatedCard delay={500}>
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-              <div className="bg-gradient-to-r from-slate-600 to-gray-700 p-6">
+            <Card className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
+              <div className="bg-gray-700 p-6">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
                   <Share2 className="h-6 w-6" />
                   إجراءات سريعة
@@ -1118,7 +1115,7 @@ export default function CaseDetailsPage() {
               </div>
               <div className="p-6 space-y-4">
                 <Button 
-                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                   onClick={() => router.push(`/dashboard/cases/${caseId}/edit`)}
                 >
                   <Edit className="h-5 w-5 ml-2" />
@@ -1126,7 +1123,7 @@ export default function CaseDetailsPage() {
                 </Button>
                 <Button 
                   variant="outline"
-                  className="w-full border-2 border-purple-300 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full border-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                   onClick={handlePrintReport}
                 >
                   <Printer className="h-5 w-5 ml-2" />
@@ -1134,7 +1131,7 @@ export default function CaseDetailsPage() {
                 </Button>
                 <Button 
                   variant="outline"
-                  className="w-full border-2 border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full border-2 border-green-300 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                   onClick={() => caseDetails && openDeleteModal(caseDetails)}
                 >
                   <Trash2 className="h-5 w-5 ml-2" />
@@ -1146,23 +1143,23 @@ export default function CaseDetailsPage() {
 
           {/* Case Metadata */}
           <AnimatedCard delay={600}>
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-500 to-slate-600 p-6">
+            <Card className="bg-white dark:bg-gray-800 shadow-2xl border-0 rounded-3xl overflow-hidden">
+              <div className="bg-gray-600 p-6">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
                   <Info className="h-6 w-6" />
                   معلومات إضافية
                 </h3>
               </div>
               <div className="p-6 space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-700 dark:to-slate-700 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-2xl">
                   <span className="text-gray-600 dark:text-gray-400 font-medium">تاريخ الإنشاء</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100">{formatDate(caseDetails.createdAt)}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl">
                   <span className="text-gray-600 dark:text-gray-400 font-medium">آخر تحديث</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100">{formatDate(caseDetails.updatedAt)}</span>
                 </div>
-                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10 rounded-2xl">
+                <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl">
                   <span className="text-gray-600 dark:text-gray-400 font-medium">السنة</span>
                   <span className="font-bold text-gray-900 dark:text-gray-100">{caseDetails.year || "غير محدد"}</span>
                 </div>

@@ -42,12 +42,12 @@ type ClientType = {
 };
 
 const COLORS = [
-  "#FF7A59",
-  "#6C5CE7",
-  "#24C1FF",
-  "#00B894",
-  "#FFD700",
-  "#FF69B4",
+  "#1565c0",
+  "#1e7d32",
+  "#42a5f5",
+  "#66bb6a",
+  "#1565c0",
+  "#1e7d32",
 ];
 
 export default function DashboardPage() {
@@ -287,7 +287,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
         <div className="text-center">
-          <ActivityIndicator size="large" color="text-blue-500" />
+          <ActivityIndicator size="large" color="text-[#1565c0] dark:text-[#42a5f5]" />
           <p className="mt-4 text-gray-600 dark:text-gray-400">
             جاري تحميل البيانات...
           </p>
@@ -308,14 +308,14 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
         <div className="text-center p-8 max-w-md">
-          <div className="text-red-600 font-semibold mb-4 text-xl">
+          <div className="text-[#1e7d32] dark:text-[#66bb6a] font-semibold mb-4 text-xl">
             فشل في تحميل البيانات
           </div>
           <div className="mb-6 text-gray-700 dark:text-gray-300">{error}</div>
           <div className="space-y-4">
             <Button
               onClick={handleRetry}
-              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-6 py-2 bg-[#1565c0] text-white rounded hover:bg-[#1565c0] dark:bg-[#42a5f5] dark:hover:bg-[#42a5f5]"
             >
               إعادة المحاولة
             </Button>
@@ -360,25 +360,25 @@ export default function DashboardPage() {
             {
               title: "عدد الدعاوي",
               value: totalCases,
-              color: "text-blue-600",
+              color: "text-[#1565c0] dark:text-[#42a5f5]",
               desc: "إجمالي القضايا في النظام",
             },
             {
               title: "عدد الموكلين",
               value: totalClients,
-              color: "text-blue-600",
+              color: "text-[#1565c0] dark:text-[#42a5f5]",
               desc: "إجمالي الموكلين",
             },
             {
               title: "جلسات الغد",
               value: tomorrowSessions,
-              color: "text-blue-600",
+              color: "text-[#1565c0] dark:text-[#42a5f5]",
               desc: "عدد الجلسات المقررة غداً",
             },
             {
               title: "توزيع الدعاوى",
               value: distributionByType.length,
-              color: "text-blue-600",
+              color: "text-[#1565c0] dark:text-[#42a5f5]",
               desc: "عدد أنواع الدعاوى",
             },
           ].map((item, index) => (
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                         <Legend />
                         <Bar
                           dataKey="count"
-                          fill="#6C5CE7"
+                          fill="#1565c0"
                           name="عدد الدعاوى"
                         />
                       </BarChart>
@@ -593,7 +593,7 @@ export default function DashboardPage() {
                               <span
                                 className={`px-2 py-1 rounded text-xs ${
                                   caseItem.status === "مكتملة"
-                                    ? "bg-green-100 text-green-800"
+                                    ? "bg-[#1e7d32]/10 text-[#1e7d32] dark:bg-[#66bb6a]/20 dark:text-[#66bb6a]"
                                     : caseItem.status === "قيد المراجعة"
                                     ? "bg-yellow-100 text-yellow-800"
                                     : "bg-gray-100 text-gray-800"

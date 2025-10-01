@@ -10,54 +10,125 @@ import User from "@/models/User"; // 🟢 مهم عشان نجيب بيانات 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+// ✅ Route Segment Config
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+export const maxDuration = 30;
 
 export async function GET(req: Request) {
-  await dbConnect();
-
-  const session = await getServerSession(authOptions);
-  console.log(session?.user)
-  if (!session || !session.user || !session.user.id) {
-    return NextResponse.json(
-      { success: false, message: "Authentication required." },
-      { status: 401 }
-    );
-  }
-
+  const startTime = Date.now();
+  
   try {
-    // 🟢 نجيب المستخدم من قاعدة البيانات
-    const user = await User.findById(session.user.id);
+    // ✅ 1. Connect to database with timeout
+    console.log('🔄 Connecting to database...');
+    await Promise.race([
+      dbConnect(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 8000)
+      )
+    ]);
+    console.log(`✅ Database connected in ${Date.now() - startTime}ms`);
+
+    // ✅ 2. Get session with timeout
+    const sessionStart = Date.now();
+    const session = await Promise.race([
+      getServerSession(authOptions),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Session timeout')), 5000)
+      )
+    ]) as any;
+    console.log(`✅ Session retrieved in ${Date.now() - sessionStart}ms`);
+
+    if (!session || !session.user || !session.user.id) {
+      return NextResponse.json(
+        { success: false, message: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    // ✅ 3. Get user with timeout and lean
+    const userStart = Date.now();
+    const user = await User.findById(session.user.id)
+      .select('accountType ownerId permissions')
+      .lean()
+      .maxTimeMS(5000);
+      
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found." },
         { status: 404 }
       );
     }
+    console.log(`✅ User found in ${Date.now() - userStart}ms`);
 
+    // ✅ 4. Build query
     let query: any = {};
 
     if (user.accountType === "owner") {
-      // ✅ صاحب المكتب يشوف كل القضايا اللي تبع المكتب
       query.owner = user._id;
     } else if (user.accountType === "employee") {
-      if (user.hasPermission("cases", "viewAll")) {
-        // ✅ الموظف اللي عنده صلاحية viewAll يشوف كل القضايا
+      // تأكد إن الـ hasPermission موجودة كـ method أو استخدم permissions array
+      const hasViewAllPermission = user.permissions?.some(
+        (p: any) => p.resource === "cases" && p.action === "viewAll"
+      );
+
+      if (hasViewAllPermission) {
         query.owner = user.ownerId;
       } else {
-        // ✅ الموظف العادي يشوف القضايا الخاصة بيه فقط
         query.owner = user.ownerId;
-        query.assignedTo = user._id; // لو عندك في Case field زي assignedTo
+        query.assignedTo = user._id;
       }
     }
 
+    // ✅ 5. Fetch cases with optimizations
+    const casesStart = Date.now();
+    console.log('🔄 Fetching cases with query:', query);
+    
     const cases = await Case.find(query)
       .sort({ createdAt: -1 })
-      .populate("client");
+      .populate({
+        path: "client",
+        select: "name phone email", // ✅ جيب الحقول المهمة بس
+      })
+      .select('-__v') // ✅ ما تجيبش __v
+      .lean() // ✅ مهم جداً للأداء
+      .maxTimeMS(15000); // ✅ 15 seconds max
 
-    return NextResponse.json({ success: true, data: cases }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error fetching cases:", error);
+    console.log(`✅ Cases fetched (${cases.length} records) in ${Date.now() - casesStart}ms`);
+    console.log(`⏱️ Total request time: ${Date.now() - startTime}ms`);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch cases." },
+      { 
+        success: true, 
+        data: cases,
+        meta: {
+          count: cases.length,
+          requestTime: Date.now() - startTime
+        }
+      }, 
+      { 
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        }
+      }
+    );
+
+  } catch (error: any) {
+    console.error('❌ Error in GET /api/cases:', {
+      message: error.message,
+      stack: error.stack,
+      time: Date.now() - startTime
+    });
+
+    // ✅ رجّع رسالة خطأ واضحة
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: error.message || "Failed to fetch cases.",
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
