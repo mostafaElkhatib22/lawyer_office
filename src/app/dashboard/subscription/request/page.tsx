@@ -54,16 +54,13 @@ const SubscriptionRequestContent = () => {
         router.push('/auth/login');
         return;
       }
-
       // التأكد من أنه Owner
       if (userResult.user.accountType !== 'owner') {
         alert('هذه الصفحة متاحة لأصحاب المكاتب فقط');
         router.push('/dashboard');
         return;
       }
-
       setUserData(userResult.user);
-
       // جلب بيانات الباقة
       const subsResponse = await fetch('/api/subscription');
       const subsResult = await subsResponse.json();
@@ -91,13 +88,11 @@ const SubscriptionRequestContent = () => {
       setLoading(false);
     }
   };
-
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(''), 2000);
   };
-
   const generateWhatsAppMessage = () => {
     if (!userData || !planData) return '';
 
@@ -107,8 +102,8 @@ const SubscriptionRequestContent = () => {
 📋 *معلومات الطلب:*
 - الاسم: ${userData.name}
 - البريد الإلكتروني: ${userData.email}
-- رقم الهاتف: ${userData.employeeInfo?.phone || 'غير متوفر'}
-- اسم المكتب: ${userData.firmInfo?.firmName || 'غير متوفر'}
+- رقم الهاتف: ${userData?.phone || 'غير متوفر'}
+- اسم المكتب: ${userData?.firmName || 'غير متوفر'}
 
 💼 *الباقة المختارة:*
 - ${planData.name}
@@ -290,13 +285,13 @@ const SubscriptionRequestContent = () => {
                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
                   <input
                     type="tel"
-                    value={userData.employeeInfo?.phone || 'غير متوفر'}
+                    value={userData?.phone || 'غير متوفر'}
                     readOnly
                     className="flex-1 bg-transparent outline-none text-gray-900 dark:text-gray-100"
                   />
-                  {userData.employeeInfo?.phone && (
+                  {userData?.phone && (
                     <button
-                      onClick={() => copyToClipboard(userData.employeeInfo.phone, 'phone')}
+                      onClick={() => copyToClipboard(userData?.phone, 'phone')}
                       className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       {copiedField === 'phone' ? (
@@ -315,7 +310,7 @@ const SubscriptionRequestContent = () => {
                 <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
                   <input
                     type="text"
-                    value={userData.firmInfo?.firmName || 'غير متوفر'}
+                    value={userData?.firmName || 'غير متوفر'}
                     readOnly
                     className="flex-1 bg-transparent outline-none text-gray-900 dark:text-gray-100"
                   />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/auth/register/page.tsx
 "use client"; // This component runs on the client side
 
@@ -13,6 +14,8 @@ import { ActivityIndicator } from '@/components/ui/activity-indicator'; // Custo
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [firmName,setFirmName] = useState('')
+  const [phone,setPhone] = useState<any>("")
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false); // State for loading indicator
@@ -30,7 +33,7 @@ export default function Register() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password,firmName,phone }),
       });
 
       const data = await res.json();
@@ -90,6 +93,28 @@ export default function Register() {
                 placeholder="m@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">firmName</Label>
+              <Input
+                id="firmName"
+                type="text"
+                placeholder="مكتب الخطيب للمحاماه"
+                value={firmName}
+                onChange={(e) => setFirmName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="01012345678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>

@@ -12,10 +12,11 @@ declare module "next-auth" {
       department: string;
       permissions: any;
       ownerId: string;
-    authProvider?:any;
+      authProvider?: any;
       firmInfo?: any;
       ownerName?: string;
       firmName?: string;
+      phone?: string
       isActive: boolean;
     } & DefaultSession["user"];
   }
@@ -28,9 +29,10 @@ declare module "next-auth" {
     permissions: any;
     ownerId: string;
     firmInfo?: any;
-    authProvider?:any;
+    authProvider?: any;
     ownerName?: string;
     firmName?: string;
+    phone?: string
     isActive: boolean;
   }
 }
@@ -46,6 +48,7 @@ declare module "next-auth/jwt" {
     firmInfo?: any;
     ownerName?: string;
     firmName?: string;
+    phone?: string;
     isActive: boolean;
   }
 }

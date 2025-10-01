@@ -15,7 +15,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-     async authorize(credentials): Promise<any> {
+      async authorize(credentials): Promise<any> {
         await dbConnect();
 
         const email = credentials?.email;
@@ -32,10 +32,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("تم تعطيل حسابك. يرجى الاتصال بالإدارة.");
         }
 
-        const passwordOk = user && password && typeof user.password === "string" && 
-                          bcrypt.compareSync(password, user.password);
+        const passwordOk = user && password && typeof user.password === "string" &&
+          bcrypt.compareSync(password, user.password);
 
-        if (!passwordOk) { 
+        if (!passwordOk) {
           throw new Error("كلمة المرور غير صحيحة.");
         }
 
@@ -45,10 +45,12 @@ export const authOptions: NextAuthOptions = {
 
         // إرجاع بيانات المستخدم مع معلومات المكتب
         if (passwordOk) {
-          let userData : any = {
-           id: (user as any)._id.toString(),
+          let userData: any = {
+            id: (user as any)._id.toString(),
             name: user.name,
             email: user.email,
+            firmName: user.firmName,
+            phone: user.phone,
             role: user.role,
             accountType: user.accountType,
             department: user.department,
@@ -65,7 +67,7 @@ export const authOptions: NextAuthOptions = {
             // Fix: Cast to any to access populated fields or check if populated
             const populatedOwner = user.ownerId as any;
             userData.ownerName = populatedOwner.name;
-            userData.firmName = populatedOwner.firmInfo?.firmName || 'غير محدد';
+            userData.firmName = populatedOwner.firmName || 'غير محدد';
           }
 
           return userData;
@@ -82,6 +84,7 @@ export const authOptions: NextAuthOptions = {
         token.accountType = user.accountType;
         token.department = user.department;
         token.permissions = user.permissions;
+        token.phone = user.phone;
         token.ownerId = user.ownerId;
         token.firmInfo = user.firmInfo;
         token.ownerName = user.ownerName;
@@ -100,6 +103,7 @@ export const authOptions: NextAuthOptions = {
         session.user.permissions = token.permissions;
         session.user.ownerId = token.ownerId as string;
         session.user.firmInfo = token.firmInfo;
+        session.user.phone = token.phone;
         session.user.ownerName = token.ownerName as string;
         session.user.firmName = token.firmName as string;
         session.user.isActive = token.isActive as boolean;
@@ -110,25 +114,25 @@ export const authOptions: NextAuthOptions = {
     // 🔥 الجزء المهم - إضافة redirect callback
     async redirect({ url, baseUrl }) {
       console.log("🔄 NextAuth Redirect:", { url, baseUrl });
-      
+
       // إذا المستخدم جاي من callbackUrl صحيحة
       if (url.startsWith(baseUrl)) {
         console.log("✅ Using provided callback URL:", url);
         return url;
       }
-      
+
       // إذا الـ URL بيبدأ بـ "/" (relative URL)
       if (url.startsWith("/")) {
         const fullUrl = `${baseUrl}${url}`;
         console.log("🔗 Creating full URL:", fullUrl);
         return fullUrl;
       }
-      
+
       // تحقق من وجود callbackUrl في الـ query string
       try {
         const urlObj = new URL(url.startsWith('http') ? url : `${baseUrl}${url}`);
         const callbackUrl = urlObj.searchParams.get('callbackUrl');
-        
+
         if (callbackUrl) {
           const decodedCallback = decodeURIComponent(callbackUrl);
           if (decodedCallback.startsWith('/')) {
@@ -140,7 +144,7 @@ export const authOptions: NextAuthOptions = {
       } catch (error) {
         console.log("⚠️ URL parsing error:", error);
       }
-      
+
       // الافتراضي - dashboard
       const defaultUrl = `${baseUrl}/dashboard`;
       console.log("🏠 Using default dashboard URL:", defaultUrl);
@@ -154,7 +158,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-  
+
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -162,7 +166,7 @@ export const authOptions: NextAuthOptions = {
 
   // إعدادات إضافية للتأكد من عمل الـ redirect
   debug: process.env.NODE_ENV === "development",
-  
+
   // تأكد من الـ cookies settings للـ production
   cookies: {
     sessionToken: {

@@ -11,6 +11,8 @@ interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  firmName: string;
+  phone: string;
   subscriptionPlan: SubscriptionPlanKey;
   subscriptionExpiresAt?: Date;
   authProvider: 'credentials' | 'google';
@@ -62,9 +64,13 @@ const UserSchema = new mongoose.Schema<IUser>({
     enum: ['credentials', 'google'],
     default: 'credentials',
   },
-  googleId: {
+  firmName: {
     type: String,
     sparse: true, // يسمح بقيم null متعددة
+  },
+  phone: {
+    type: String,
+    required: true
   },
   email: {
     type: String,
@@ -105,34 +111,34 @@ const UserSchema = new mongoose.Schema<IUser>({
 
   // معلومات المكتب (للمالك فقط)
   firmInfo: {
-  // الحقول الموجودة...
-  
-  subscriptionPlan: {
-    type: String,
-    enum: ['free', 'basic', 'professional', 'enterprise'],
-    default: 'free',
+    // الحقول الموجودة...
+
+    subscriptionPlan: {
+      type: String,
+      enum: ['free', 'basic', 'professional', 'enterprise'],
+      default: 'free',
+    },
+
+    maxCases: {
+      type: Number,
+      default: 50  // الحد الأقصى في النسخة المجانية
+    },
+
+    currentCasesCount: {
+      type: Number,
+      default: 0
+    },
+
+    subscription: {
+      isActive: { type: Boolean, default: false },
+      planName: { type: String },
+      price: { type: Number },
+      startDate: { type: Date },
+      endDate: { type: Date },
+      paymentMethod: { type: String },
+      transactionId: { type: String }
+    }
   },
-  
-  maxCases: { 
-    type: Number, 
-    default: 50  // الحد الأقصى في النسخة المجانية
-  },
-  
-  currentCasesCount: {
-    type: Number,
-    default: 0
-  },
-  
-  subscription: {
-    isActive: { type: Boolean, default: false },
-    planName: { type: String },
-    price: { type: Number },
-    startDate: { type: Date },
-    endDate: { type: Date },
-    paymentMethod: { type: String },
-    transactionId: { type: String }
-  }
-},
 
   role: {
     type: String,

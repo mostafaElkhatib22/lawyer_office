@@ -8,13 +8,14 @@ export interface IUser extends mongoose.Document {
   password: string;
   accountType: 'owner' | 'employee';
   ownerId?: mongoose.Schema.Types.ObjectId;
+  firmName?: string;
+  phone?: string;
   firmInfo: {
-    firmName?: string;
     licenseNumber?: string;
     address?: string;
     phone?: string;
     establishedDate?: Date;
-    subscriptionPlan: 'basic' | 'professional' | 'enterprise';
+    subscriptionPlan: 'free' | 'basic' | 'professional' | 'enterprise';
     maxEmployees: number;
   };
   role: 'owner' | 'partner' | 'senior_lawyer' | 'lawyer' | 'junior_lawyer' | 'legal_assistant' | 'secretary' | 'accountant' | 'intern';
@@ -55,8 +56,8 @@ export interface IUser extends mongoose.Document {
       viewPayments: boolean;
       editPrices: boolean;
     };
-    sessions:{
-      view:boolean
+    sessions: {
+      view: boolean
     }
     employees: {
       view: boolean;

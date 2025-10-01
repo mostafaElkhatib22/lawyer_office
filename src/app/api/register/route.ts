@@ -10,6 +10,8 @@ interface RegisterRequestBody {
   name: string;
   email: string;
   password: string;
+  firmName: string;
+  phone: string
 }
 
 interface MongoError {
@@ -30,25 +32,25 @@ function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   const mongoError = error as MongoError;
-  
+
   // Handle MongoDB duplicate key error
   if (mongoError.code === 11000 && mongoError.keyValue) {
     const duplicateField = Object.keys(mongoError.keyValue)[0];
     return `A user with this ${duplicateField} already exists.`;
   }
-  
+
   // Handle Mongoose validation errors
   if (mongoError.name === 'ValidationError' && mongoError.errors) {
     const messages = Object.values(mongoError.errors).map((val) => val.message);
     return messages.join(', ');
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   return 'An unknown error occurred during registration.';
 }
 
@@ -63,17 +65,17 @@ function isValidPassword(password: string): { isValid: boolean; message?: string
   if (password.length < 6) {
     return { isValid: false, message: 'Password must be at least 6 characters long.' };
   }
-  
+
   if (password.length > 128) {
     return { isValid: false, message: 'Password must be less than 128 characters long.' };
   }
-  
+
   // Optional: Add more password requirements
   // const hasUpperCase = /[A-Z]/.test(password);
   // const hasLowerCase = /[a-z]/.test(password);
   // const hasNumbers = /\d/.test(password);
   // const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
+
   return { isValid: true };
 }
 
@@ -82,17 +84,17 @@ function isValidName(name: string): { isValid: boolean; message?: string } {
   if (name.length < 2) {
     return { isValid: false, message: 'Name must be at least 2 characters long.' };
   }
-  
+
   if (name.length > 50) {
     return { isValid: false, message: 'Name must be less than 50 characters long.' };
   }
-  
+
   // Check for valid characters (letters, spaces, hyphens, apostrophes)
   const nameRegex = /^[a-zA-Z\u0600-\u06FF\s\-']+$/;
   if (!nameRegex.test(name)) {
     return { isValid: false, message: 'Name can only contain letters, spaces, hyphens, and apostrophes.' };
   }
-  
+
   return { isValid: true };
 }
 
@@ -102,9 +104,9 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Database connection error:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: "Database connection failed. Please try again later." 
+        message: "Database connection failed. Please try again later."
       },
       { status: 503 }
     );
@@ -117,33 +119,33 @@ export async function POST(req: Request) {
       body = await req.json();
     } catch (parseError) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "Invalid JSON format in request body." 
+          message: "Invalid JSON format in request body."
         },
         { status: 400 }
       );
     }
 
-    const { name, email, password } = body;
+    const { name, email, password, firmName, phone } = body;
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !firmName || !phone) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "Please provide all required fields: name, email, and password." 
+          message: "Please provide all required fields: name, email,password,firmName and phone."
         },
         { status: 400 }
       );
     }
 
     // Validate field types
-    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' || typeof firmName !== 'string') {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "All fields must be valid strings." 
+          message: "All fields must be valid strings."
         },
         { status: 400 }
       );
@@ -152,14 +154,14 @@ export async function POST(req: Request) {
     // Trim and validate inputs
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
-    
+
     // Validate name
     const nameValidation = isValidName(trimmedName);
     if (!nameValidation.isValid) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: nameValidation.message 
+          message: nameValidation.message
         },
         { status: 400 }
       );
@@ -168,9 +170,9 @@ export async function POST(req: Request) {
     // Validate email format
     if (!isValidEmail(trimmedEmail)) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "Please provide a valid email address." 
+          message: "Please provide a valid email address."
         },
         { status: 400 }
       );
@@ -180,9 +182,9 @@ export async function POST(req: Request) {
     const passwordValidation = isValidPassword(password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: passwordValidation.message 
+          message: passwordValidation.message
         },
         { status: 400 }
       );
@@ -196,9 +198,9 @@ export async function POST(req: Request) {
 
     if (existingUserByEmail) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "A user with this email address already exists." 
+          message: "A user with this email address already exists."
         },
         { status: 409 }
       );
@@ -206,9 +208,9 @@ export async function POST(req: Request) {
 
     if (existingUserByName) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: "A user with this name already exists." 
+          message: "A user with this name already exists."
         },
         { status: 409 }
       );
@@ -237,19 +239,23 @@ export async function POST(req: Request) {
         email: trimmedEmail,
         password,
         role: "lawyer",
+        firmName,
+        phone
       });
 
       // Log successful registration (without sensitive data)
       console.log(`New user registered: ${newUser.name} (${newUser.email})`);
 
       return NextResponse.json(
-        { 
-          success: true, 
+        {
+          success: true,
           message: "User registered successfully!",
           data: {
             id: newUser._id,
             name: newUser.name,
             email: newUser.email,
+            firmName: newUser.firmName,
+            phone: newUser.phone,
             role: newUser.role
           }
         },
@@ -258,11 +264,11 @@ export async function POST(req: Request) {
     } catch (createError) {
       console.error("User creation error:", createError);
       const errorMessage = getErrorMessage(createError);
-      
+
       return NextResponse.json(
-        { 
+        {
           success: false,
-          message: `Failed to create user account: ${errorMessage}` 
+          message: `Failed to create user account: ${errorMessage}`
         },
         { status: 500 }
       );
@@ -271,11 +277,11 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Registration API Error:", error);
     const errorMessage = getErrorMessage(error);
-    
+
     return NextResponse.json(
-      { 
+      {
         success: false,
-        message: `Server error during registration: ${errorMessage}` 
+        message: `Server error during registration: ${errorMessage}`
       },
       { status: 500 }
     );
@@ -285,11 +291,11 @@ export async function POST(req: Request) {
 // Handle unsupported HTTP methods
 export async function GET() {
   return NextResponse.json(
-    { 
+    {
       success: false,
-      message: "GET method is not allowed for this endpoint. Use POST to register." 
-    }, 
-    { 
+      message: "GET method is not allowed for this endpoint. Use POST to register."
+    },
+    {
       status: 405,
       headers: {
         'Allow': 'POST'
@@ -300,11 +306,11 @@ export async function GET() {
 
 export async function PUT() {
   return NextResponse.json(
-    { 
+    {
       success: false,
-      message: "PUT method is not allowed for this endpoint. Use POST to register." 
-    }, 
-    { 
+      message: "PUT method is not allowed for this endpoint. Use POST to register."
+    },
+    {
       status: 405,
       headers: {
         'Allow': 'POST'
@@ -315,11 +321,11 @@ export async function PUT() {
 
 export async function DELETE() {
   return NextResponse.json(
-    { 
+    {
       success: false,
-      message: "DELETE method is not allowed for this endpoint. Use POST to register." 
-    }, 
-    { 
+      message: "DELETE method is not allowed for this endpoint. Use POST to register."
+    },
+    {
       status: 405,
       headers: {
         'Allow': 'POST'
