@@ -2,7 +2,7 @@
 "use client"
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, Copy, MessageCircle, Loader2, AlertCircle, CheckCircle2, Download, Info } from 'lucide-react';
+import { Check, Copy, MessageCircle, Loader2, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import Image from 'next/image';
 
 interface SubscriptionPlan {
@@ -107,7 +107,7 @@ const SubscriptionRequestContent = () => {
 
 💼 *الباقة المختارة:*
 - ${planData.name}
-- السعر: ${planData.price} جنيه شهرياً
+- السعر: ${planData.price} جنيه 
 
 سأقوم بالتحويل عبر InstaPay وإرسال لقطة الشاشة
     `.trim();
@@ -327,7 +327,7 @@ const SubscriptionRequestContent = () => {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-gray-900 dark:text-white">{planData.price}</span>
-                  <span className="text-gray-600 dark:text-gray-300">جنيه/شهر</span>
+                  <span className="text-gray-600 dark:text-gray-300">جنيه</span>
                 </div>
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -347,7 +347,7 @@ const SubscriptionRequestContent = () => {
                         باقتك الحالية:
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {currentSubscription.planDetails.name} ({currentSubscription.planDetails.price} جنيه/شهر)
+                        {currentSubscription.planDetails.name} ({currentSubscription.planDetails.price} جنيه)
                       </p>
                     </div>
                   </div>

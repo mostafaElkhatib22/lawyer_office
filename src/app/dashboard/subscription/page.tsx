@@ -233,7 +233,7 @@ const SubscriptionPage = () => {
                     <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       {plan.price}
                     </span>
-                    <span className="text-gray-600 dark:text-gray-300 font-medium">جنيه/شهر</span>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium">جنيه</span>
                   </div>
                 </div>
 
