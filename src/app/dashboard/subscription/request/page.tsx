@@ -377,10 +377,7 @@ const SubscriptionRequestContent = () => {
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">امسح الكود للدفع مباشرة</p>
-                <button className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:underline flex items-center justify-center gap-1 mx-auto">
-                  <Download className="w-4 h-4" />
-                  تحميل الكود
-                </button>
+            
               </div>
 
               {/* رقم InstaPay */}
