@@ -13,7 +13,6 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
   await dbConnect();
-
   const session = await getServerSession(authOptions);
   console.log(session?.user)
   if (!session || !session.user || !session.user.id) {
@@ -48,11 +47,10 @@ export async function GET(req: Request) {
         query.assignedTo = user._id; // لو عندك في Case field زي assignedTo
       }
     }
-
+    await Client.find(query)
     const cases = await Case.find(query)
       .sort({ createdAt: -1 })
       .populate("client");
-
     return NextResponse.json({ success: true, data: cases }, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching cases:", error);
