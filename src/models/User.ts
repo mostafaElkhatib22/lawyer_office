@@ -70,7 +70,7 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   phone: {
     type: String,
-    required: true
+    required: false
   },
   email: {
     type: String,
