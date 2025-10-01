@@ -97,8 +97,8 @@ function LoginFormContent() {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-        <CardDescription className="text-center">Login to your lawyer account</CardDescription>
+        <CardTitle className="text-2xl text-center">تسجيل الدخول </CardTitle>
+        <CardDescription className="text-center">سجل الدخول بحسابك</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
@@ -127,12 +127,12 @@ function LoginFormContent() {
           </div>
           <div>
             <Link href="/auth/forgot-password" className="text-sm underline text-primary">
-              Forgot Password?
+              هل نسيت كلمة السر 
             </Link>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <ActivityIndicator className="mr-2" /> : null}
-            {loading ? "Logging in..." : "Login"}
+            {loading ? " جاري الان ..." : "تسجيل الدخول"}
           </Button>
         </form>
         
@@ -147,9 +147,9 @@ function LoginFormContent() {
         )}
         
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
+         ليس لديك حساب ؟{" "}
           <a href="/auth/register" className="underline text-primary">
-            Register here
+            سجل الان 
           </a>
         </div>
       </CardContent>
@@ -162,8 +162,8 @@ function LoginLoading() {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Login</CardTitle>
-        <CardDescription className="text-center">Loading...</CardDescription>
+        <CardTitle className="text-2xl text-center">تسجيل الدخول</CardTitle>
+        <CardDescription className="text-center">انتظار...</CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center items-center py-8">
         <ActivityIndicator />

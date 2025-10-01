@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ActivityIndicator } from '@/components/ui/activity-indicator'; // Custom loading indicator
+import Link from 'next/link';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -139,10 +140,10 @@ export default function Register() {
             </p>
           )}
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <a href="/auth/login" className="underline text-primary">
-              Login here
-            </a>
+          هل تمتلك حساب بالفعل ؟{" "}
+            <Link href="/auth/login" className="underline text-primary">
+              سجل الدخول الان
+            </Link>
           </div>
         </CardContent>
       </Card>
