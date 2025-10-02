@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// src/dashboard/cases/[id]/single_case
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -69,6 +70,11 @@ interface CaseDetails {
   files: string[];
   createdAt: string;
   updatedAt: string;
+ financialInfo: {
+    fees: number;
+    currency: string;
+    financialNotes: string;
+  };
 }
 
 const ActivityIndicator = ({ size = "medium", color = "text-green-600" }: {
@@ -1178,4 +1184,4 @@ export default function CaseDetailsPage() {
       />
     </div>
   );
-}
+} 

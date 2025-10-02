@@ -60,8 +60,6 @@ export async function GET(req: Request) {
     );
   }
 }
-// في src/app/api/cases/route.ts - تعديل دالة POST
-
 export async function POST(req: Request) {
   await dbConnect();
 
@@ -82,13 +80,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🟢 تحديد صاحب المكتب
     const ownerId =
       currentUser.accountType === "owner"
         ? currentUser._id
         : currentUser.ownerId;
 
-    // 🟢 جلب بيانات صاحب المكتب للتحقق من الحدود
     const owner = await User.findById(ownerId);
     if (!owner) {
       return NextResponse.json(
@@ -97,12 +93,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚠️ التحقق من عدد الدعاوى الحالية
     const currentCasesCount = await Case.countDocuments({
       owner: ownerId,
     });
 
-    // ⚠️ التحقق من الحد الأقصى (فقط إذا كانت النسخة المجانية)
     if (owner.firmInfo.subscriptionPlan === 'free') {
       const maxCases = owner.firmInfo.maxCases || 50;
 
@@ -111,7 +105,7 @@ export async function POST(req: Request) {
           {
             success: false,
             limitReached: true,
-            message: `لقد وصلت للحد الأقصى من الدعاوى (${maxCases}) في النسخة التجريبية. يرجى الترقية إلى خطة مدفوعة للاستمرار.`,
+            message: `لقد وصلت للحد الأقصى من الدعاوى (${maxCases}) في النسخة التجريبية.`,
             currentCount: currentCasesCount,
             maxAllowed: maxCases,
             upgradeRequired: true
@@ -121,7 +115,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // 🟢 التحقق من الصلاحية
     if (
       currentUser.accountType === "employee" &&
       !currentUser.permissions?.cases?.create
@@ -150,6 +143,7 @@ export async function POST(req: Request) {
       opponents,
       files,
       assignedTo,
+      financialInfo, // 🟢 إضافة البيانات المالية
     } = body;
 
     if (
@@ -164,12 +158,28 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Please fill all required fields: Client, Case Type, Nature, Court, Case Number, Year, Attorney Number.",
+          message: "Please fill all required fields.",
         },
         { status: 400 }
       );
     }
+
+    // 🟢 تجهيز البيانات المالية
+    const preparedFinancialInfo = {
+      fees: financialInfo?.fees || 0,
+      currency: financialInfo?.currency || 'EGP',
+      financialNotes: financialInfo?.financialNotes || '',
+      paidAmount: financialInfo?.paidAmount || 0,
+      payments: (financialInfo?.payments || []).map((payment: any) => ({
+        amount: payment.amount || 0,
+        date: payment.date ? new Date(payment.date) : new Date(),
+        method: payment.method || 'نقدي',
+        note: payment.note || ''
+      })),
+      lastPaymentDate: financialInfo?.payments?.length > 0 
+        ? new Date(financialInfo.payments[financialInfo.payments.length - 1].date)
+        : null
+    };
 
     const newCase = await Case.create({
       client,
@@ -190,9 +200,9 @@ export async function POST(req: Request) {
       owner: ownerId,
       createdBy: currentUser._id,
       assignedTo: assignedTo || null,
+      financialInfo: preparedFinancialInfo, // 🟢 حفظ البيانات المالية
     });
 
-    // ✅ تحديث عداد الدعاوى لدى صاحب المكتب
     await User.findByIdAndUpdate(ownerId, {
       $set: { 'firmInfo.currentCasesCount': currentCasesCount + 1 }
     });

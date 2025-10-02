@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
+// src/dashboard/add-case
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
@@ -52,6 +54,7 @@ import {
   StickyNote,
   ArrowRight,
   ChartColumnBig,
+  DollarSign,
 } from "lucide-react";
 
 // --- START MOCK for next-auth/react (for environment compatibility) ---
@@ -103,22 +106,24 @@ const useRouter = mockUseRouter;
 // --- END MOCK ---
 
 // --- Optimized ActivityIndicator ---
-const ActivityIndicator = memo(({
-  size = "medium" as "small" | "medium" | "large",
-  className = "text-blue-500",
-}: {
-  size?: "small" | "medium" | "large";
-  className?: string;
-}) => {
-  const sizeClasses = {
-    small: "h-4 w-4",
-    medium: "h-8 w-8",
-    large: "h-12 w-12",
-  };
-  return (
-    <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
-  );
-});
+const ActivityIndicator = memo(
+  ({
+    size = "medium" as "small" | "medium" | "large",
+    className = "text-blue-500",
+  }: {
+    size?: "small" | "medium" | "large";
+    className?: string;
+  }) => {
+    const sizeClasses = {
+      small: "h-4 w-4",
+      medium: "h-8 w-8",
+      large: "h-12 w-12",
+    };
+    return (
+      <Loader2 className={`animate-spin ${sizeClasses[size]} ${className}`} />
+    );
+  }
+);
 
 ActivityIndicator.displayName = "ActivityIndicator";
 
@@ -151,6 +156,12 @@ interface Client {
   _id: string;
   name: string;
 }
+interface Payment {
+  amount?: number;
+  date: Date | string;
+  method?: string;
+  note?: string;
+}
 
 interface FormData {
   client: string;
@@ -159,7 +170,7 @@ interface FormData {
   court: string;
   caseNumber: string;
   year: string;
-  nameOfCase:string;
+  nameOfCase: string;
   attorneyNumber: string;
   decision: string;
   nots: string;
@@ -168,10 +179,24 @@ interface FormData {
   sessiondate: string;
   opponents: string[];
   files: string[];
+  financialInfo: {
+    fees: number;
+    currency: string;
+    financialNotes: string;
+    paidAmount: number;
+    payments: Payment[];
+  };
 }
 
 // Constants moved outside component for better performance
-const CASE_TYPE_OPTIONS = ["مدني", "جنائي", "إداري", "أحوال شخصية", "تجاري", "عمالي"];
+const CASE_TYPE_OPTIONS = [
+  "مدني",
+  "جنائي",
+  "إداري",
+  "أحوال شخصية",
+  "تجاري",
+  "عمالي",
+];
 const TYPE_OPTIONS = ["ابتدائي", "استئناف", "نقض", "تنفيذ"];
 const CASE_STATUS_OPTIONS = ["مفتوحة", "مغلقة", "مؤجلة", "استئناف", "مشطوبة"];
 
@@ -185,231 +210,173 @@ const INITIAL_FORM_DATA: FormData = {
   year: new Date().getFullYear().toString(),
   attorneyNumber: "",
   decision: "",
-  nameOfCase:"",
+  nameOfCase: "",
   status: "مفتوحة",
   nots: "",
   sessiondate: new Date().toISOString().split("T")[0],
   opponents: [],
   files: [],
+  financialInfo: {
+    fees: 0,
+    currency: "",
+    financialNotes: "",
+    paidAmount: 0,
+    payments: [],
+  },
 };
 
 // Memoized components for better performance
-const InputField = memo(({
-  id,
-  type,
-  label,
-  placeholder,
-  required,
-  Icon,
-  value,
-  onChange,
-  validationError,
-  min,
-  max,
-}: {
-  id: keyof FormData;
-  type: string;
-  label: string;
-  placeholder: string;
-  required: boolean;
-  Icon: React.ElementType;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  validationError?: string;
-  min?: string;
-  max?: string;
-}) => (
-  <div className="space-y-2 relative">
-    <Label
-      htmlFor={id}
-      className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
-    >
-      <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-      {label} {required && <span className="text-red-500">*</span>}
-    </Label>
-    <Input
-      id={id}
-      name={id}
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      required={required}
-      min={min}
-      max={max}
-      className={`h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 ${
-        validationError
-          ? "border-red-500 ring-red-500"
-          : "focus:ring-blue-400 focus:border-blue-400"
-      } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-      dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-    />
-    {validationError && (
-      <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
-        {validationError}
-      </p>
-    )}
-  </div>
-));
-
-InputField.displayName = "InputField";
-
-const SelectField = memo(({
-  id,
-  label,
-  placeholder,
-  required,
-  Icon,
-  options,
-  value,
-  onChange,
-  validationError,
-}: {
-  id: keyof FormData;
-  label: string;
-  placeholder: string;
-  required: boolean;
-  Icon: React.ElementType;
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-  validationError?: string;
-}) => (
-  <div className="space-y-2 relative">
-    <Label
-      htmlFor={id}
-      className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
-    >
-      <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-      {label} {required && <span className="text-red-500">*</span>}
-    </Label>
-    <Select onValueChange={onChange} value={value}>
-      <SelectTrigger
+const InputField = memo(
+  ({
+    id,
+    type,
+    label,
+    placeholder,
+    required,
+    Icon,
+    value,
+    onChange,
+    validationError,
+    min,
+    max,
+  }: {
+    id: keyof FormData;
+    type: string;
+    label: string;
+    placeholder: string;
+    required: boolean;
+    Icon: React.ElementType;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    validationError?: string;
+    min?: string;
+    max?: string;
+  }) => (
+    <div className="space-y-2 relative">
+      <Label
+        htmlFor={id}
+        className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
+      >
+        <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
+      <Input
         id={id}
-        className={`w-full h-12 rounded-lg px-4 bg-white border border-gray-300 ${
+        name={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        min={min}
+        max={max}
+        className={`h-12 rounded-lg px-4 bg-white border border-gray-300 focus:ring-2 ${
           validationError
             ? "border-red-500 ring-red-500"
             : "focus:ring-blue-400 focus:border-blue-400"
         } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
-        dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+      dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+      />
+      {validationError && (
+        <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
+          {validationError}
+        </p>
+      )}
+    </div>
+  )
+);
+
+InputField.displayName = "InputField";
+
+const SelectField = memo(
+  ({
+    id,
+    label,
+    placeholder,
+    required,
+    Icon,
+    options,
+    value,
+    onChange,
+    validationError,
+  }: {
+    id: keyof FormData;
+    label: string;
+    placeholder: string;
+    required: boolean;
+    Icon: React.ElementType;
+    options: string[];
+    value: string;
+    onChange: (value: string) => void;
+    validationError?: string;
+  }) => (
+    <div className="space-y-2 relative">
+      <Label
+        htmlFor={id}
+        className="flex items-center gap-2 mb-2 text-base font-medium text-gray-700 dark:text-gray-300"
       >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent className="dark:bg-gray-800 dark:text-gray-200 border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
-        {options.map((option) => (
-          <SelectItem
-            key={option}
-            value={option}
-            className="hover:bg-blue-50 focus:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700"
-          >
-            {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    {validationError && (
-      <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
-        {validationError}
-      </p>
-    )}
-  </div>
-));
+        <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
+      <Select onValueChange={onChange} value={value}>
+        <SelectTrigger
+          id={id}
+          className={`w-full h-12 rounded-lg px-4 bg-white border border-gray-300 ${
+            validationError
+              ? "border-red-500 ring-red-500"
+              : "focus:ring-blue-400 focus:border-blue-400"
+          } text-gray-800 placeholder:text-gray-500 transition-all duration-300 shadow-sm
+        dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent className="dark:bg-gray-800 dark:text-gray-200 border border-gray-300 rounded-lg shadow-md dark:border-gray-700">
+          {options.map((option) => (
+            <SelectItem
+              key={option}
+              value={option}
+              className="hover:bg-blue-50 focus:bg-blue-50 dark:hover:bg-gray-700 dark:focus:bg-gray-700"
+            >
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {validationError && (
+        <p className="text-red-500 text-sm mt-1 absolute -bottom-6 right-0">
+          {validationError}
+        </p>
+      )}
+    </div>
+  )
+);
 
 SelectField.displayName = "SelectField";
 
-const OpponentList = memo(({
-  opponents,
-  onRemove,
-}: {
-  opponents: string[];
-  onRemove: (index: number) => void;
-}) => {
-  if (opponents.length === 0) return null;
+const OpponentList = memo(
+  ({
+    opponents,
+    onRemove,
+  }: {
+    opponents: string[];
+    onRemove: (index: number) => void;
+  }) => {
+    if (opponents.length === 0) return null;
 
-  return (
-    <div className="mt-5 border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-inner dark:bg-gray-900 dark:border-gray-700">
-      <h4 className="text-base font-semibold mb-3 text-gray-600 dark:text-gray-400">
-        الخصوم المضافين:
-      </h4>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {opponents.map((opponent, index) => (
-          <div
-            key={`${opponent}-${index}`}
-            className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
-          >
-            <span className="text-base font-medium text-gray-800 dark:text-gray-200">
-              {opponent}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => onRemove(index)}
-              className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 dark:hover:bg-red-900"
+    return (
+      <div className="mt-5 border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-inner dark:bg-gray-900 dark:border-gray-700">
+        <h4 className="text-base font-semibold mb-3 text-gray-600 dark:text-gray-400">
+          الخصوم المضافين:
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {opponents.map((opponent, index) => (
+            <div
+              key={`${opponent}-${index}`}
+              className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
             >
-              <XCircle className="h-5 w-5" />
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
-
-OpponentList.displayName = "OpponentList";
-
-const FileList = memo(({
-  files,
-  onRemove,
-  title,
-  type,
-}: {
-  files: File[] | string[];
-  onRemove: (index: number) => void;
-  title: string;
-  type: "selected" | "uploaded";
-}) => {
-  if (files.length === 0) return null;
-
-  return (
-    <div className={`mt-4 p-4 rounded-lg border shadow-sm ${
-      type === "selected" 
-        ? "bg-blue-50 border-blue-200 dark:bg-indigo-950 dark:border-indigo-800"
-        : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700"
-    }`}>
-      <h3 className={`text-base font-semibold mb-3 ${
-        type === "selected"
-          ? "text-blue-600 dark:text-blue-300"
-          : "text-gray-600 dark:text-gray-400"
-      }`}>
-        {title}
-      </h3>
-      <ul className="space-y-2">
-        {files.map((file, index) => (
-          <li
-            key={type === "selected" ? `${(file as File).name}-${index}` : `file-${index}`}
-            className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
-          >
-            <div className="flex items-center gap-3">
-              <FileText className={`h-5 w-5 ${
-                type === "selected" ? "text-blue-400 dark:text-blue-500" : "text-indigo-500 dark:text-indigo-400"
-              }`} />
-              {type === "selected" ? (
-                <span className="text-base font-medium truncate max-w-[calc(100%-60px)] text-gray-800 dark:text-gray-200">
-                  {(file as File).name}
-                </span>
-              ) : (
-                <a
-                  href={file as string}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:underline truncate max-w-[calc(100%-60px)] dark:text-indigo-300 dark:hover:text-indigo-200"
-                >
-                  ملف {index + 1}
-                </a>
-              )}
-            </div>
-            {type === "selected" ? (
+              <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                {opponent}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
@@ -417,17 +384,104 @@ const FileList = memo(({
                 onClick={() => onRemove(index)}
                 className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 dark:hover:bg-red-900"
               >
-                <Trash2 className="h-5 w-5" />
+                <XCircle className="h-5 w-5" />
               </Button>
-            ) : (
-              <span className="text-xs text-gray-500 dark:text-gray-400">مرفق</span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-});
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+);
+
+OpponentList.displayName = "OpponentList";
+
+const FileList = memo(
+  ({
+    files,
+    onRemove,
+    title,
+    type,
+  }: {
+    files: File[] | string[];
+    onRemove: (index: number) => void;
+    title: string;
+    type: "selected" | "uploaded";
+  }) => {
+    if (files.length === 0) return null;
+
+    return (
+      <div
+        className={`mt-4 p-4 rounded-lg border shadow-sm ${
+          type === "selected"
+            ? "bg-blue-50 border-blue-200 dark:bg-indigo-950 dark:border-indigo-800"
+            : "bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700"
+        }`}
+      >
+        <h3
+          className={`text-base font-semibold mb-3 ${
+            type === "selected"
+              ? "text-blue-600 dark:text-blue-300"
+              : "text-gray-600 dark:text-gray-400"
+          }`}
+        >
+          {title}
+        </h3>
+        <ul className="space-y-2">
+          {files.map((file, index) => (
+            <li
+              key={
+                type === "selected"
+                  ? `${(file as File).name}-${index}`
+                  : `file-${index}`
+              }
+              className="flex items-center justify-between p-3 bg-white rounded border border-gray-200 shadow-xs transition-transform duration-200 hover:scale-[1.01] dark:bg-gray-700 dark:border-gray-600"
+            >
+              <div className="flex items-center gap-3">
+                <FileText
+                  className={`h-5 w-5 ${
+                    type === "selected"
+                      ? "text-blue-400 dark:text-blue-500"
+                      : "text-indigo-500 dark:text-indigo-400"
+                  }`}
+                />
+                {type === "selected" ? (
+                  <span className="text-base font-medium truncate max-w-[calc(100%-60px)] text-gray-800 dark:text-gray-200">
+                    {(file as File).name}
+                  </span>
+                ) : (
+                  <a
+                    href={file as string}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:underline truncate max-w-[calc(100%-60px)] dark:text-indigo-300 dark:hover:text-indigo-200"
+                  >
+                    ملف {index + 1}
+                  </a>
+                )}
+              </div>
+              {type === "selected" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(index)}
+                  className="h-9 w-9 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 dark:hover:bg-red-900"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              ) : (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  مرفق
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+);
 
 FileList.displayName = "FileList";
 
@@ -439,16 +493,30 @@ export default function AddCasePage() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
   const [isClientsLoading, setIsClientsLoading] = useState(true);
+  const [newPayment, setNewPayment] = useState<{
+    amount?: number;
+    method?: string;
+  }>({
+    amount: 0,
+    method: "نقدي",
+  });
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingDuringSubmit, setUploadingDuringSubmit] = useState(false);
   const [newOpponent, setNewOpponent] = useState("");
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
   const [activeTab, setActiveTab] = useState("basic");
 
   // Debounced validation to reduce unnecessary re-renders
-  const debouncedValidationErrors = useMemo(() => validationErrors, [validationErrors]);
+  const debouncedValidationErrors = useMemo(
+    () => validationErrors,
+    [validationErrors]
+  );
 
   const fetchClients = useCallback(async () => {
     if (status === "loading") return;
@@ -457,6 +525,30 @@ export default function AddCasePage() {
       router.push("/auth/login");
       return;
     }
+    const addPayment = () => {
+      setPayments([
+        ...payments,
+        {
+          amount: 0,
+          date: new Date().toISOString().split("T")[0], // yyyy-mm-dd
+          method: "",
+          note: "",
+        },
+      ]);
+    };
+    const handlePaymentChange = (
+      index: number,
+      field: keyof Payment,
+      value: string | number
+    ) => {
+      const updatedPayments = [...payments];
+      updatedPayments[index][field] = value as never;
+      setPayments(updatedPayments);
+    };
+    const removePayment = (index: number) => {
+      const updatedPayments = payments.filter((_, i) => i !== index);
+      setPayments(updatedPayments);
+    };
 
     setIsClientsLoading(true);
     setError(null);
@@ -476,7 +568,8 @@ export default function AddCasePage() {
       }
     } catch (err: any) {
       console.error("Error fetching clients:", err);
-      const errorMessage = err.response?.data?.message || err.message || "خطأ غير معروف";
+      const errorMessage =
+        err.response?.data?.message || err.message || "خطأ غير معروف";
       setError(`فشل في جلب قائمة الموكلين: ${errorMessage}`);
       toast.error(`فشل في جلب قائمة الموكلين: ${errorMessage}`);
     } finally {
@@ -491,47 +584,58 @@ export default function AddCasePage() {
   }, [fetchClients, status]);
 
   // Optimized change handlers
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  }, [validationErrors]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
 
-  const handleSelectChange = useCallback((name: string) => (value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  }, [validationErrors]);
+      // Clear validation error for this field
+      if (validationErrors[name]) {
+        setValidationErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    },
+    [validationErrors]
+  );
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024);
-    const invalidFiles = files.filter((file) => file.size > 10 * 1024 * 1024);
+  const handleSelectChange = useCallback(
+    (name: string) => (value: string) => {
+      setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (invalidFiles.length > 0) {
-      invalidFiles.forEach((file) => {
-        toast.error(`الملف "${file.name}" يتجاوز الحد الأقصى للحجم (10MB) وسيتم تجاهله.`);
-      });
-    }
+      // Clear validation error for this field
+      if (validationErrors[name]) {
+        setValidationErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    },
+    [validationErrors]
+  );
 
-    setSelectedFiles((prev) => [...prev, ...validFiles]);
-    e.target.value = ""; // Clear input
-  }, []);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024);
+      const invalidFiles = files.filter((file) => file.size > 10 * 1024 * 1024);
+
+      if (invalidFiles.length > 0) {
+        invalidFiles.forEach((file) => {
+          toast.error(
+            `الملف "${file.name}" يتجاوز الحد الأقصى للحجم (10MB) وسيتم تجاهله.`
+          );
+        });
+      }
+
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
+      e.target.value = ""; // Clear input
+    },
+    []
+  );
 
   const handleRemoveSelectedFile = useCallback((indexToRemove: number) => {
     setSelectedFiles((prev) => {
@@ -552,7 +656,7 @@ export default function AddCasePage() {
       toast.warning("هذا الخصم موجود بالفعل.");
       return;
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       opponents: [...prev.opponents, trimmedOpponent],
@@ -564,194 +668,244 @@ export default function AddCasePage() {
   const handleRemoveOpponent = useCallback((indexToRemove: number) => {
     setFormData((prev) => {
       const removedOpponentName = prev.opponents[indexToRemove];
-      const newOpponents = prev.opponents.filter((_, index) => index !== indexToRemove);
+      const newOpponents = prev.opponents.filter(
+        (_, index) => index !== indexToRemove
+      );
       toast.info(`تم إزالة الخصم "${removedOpponentName}"`);
       return { ...prev, opponents: newOpponents };
     });
   }, []);
 
-  const uploadFileToCloudinary = useCallback(async (file: File): Promise<string | null> => {
-    const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-    const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const uploadFileToCloudinary = useCallback(
+    async (file: File): Promise<string | null> => {
+      const CLOUDINARY_UPLOAD_PRESET =
+        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+      const CLOUDINARY_CLOUD_NAME =
+        process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
-    if (!CLOUDINARY_UPLOAD_PRESET || !CLOUDINARY_CLOUD_NAME) {
-      toast.error("إعدادات Cloudinary غير موجودة أو غير صحيحة. يرجى التحقق من ملف .env.local والبادئة NEXT_PUBLIC_.");
-      return null;
-    }
+      if (!CLOUDINARY_UPLOAD_PRESET || !CLOUDINARY_CLOUD_NAME) {
+        toast.error(
+          "إعدادات Cloudinary غير موجودة أو غير صحيحة. يرجى التحقق من ملف .env.local والبادئة NEXT_PUBLIC_."
+        );
+        return null;
+      }
 
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append("file", file);
-    cloudinaryFormData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append("file", file);
+      cloudinaryFormData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
-    try {
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
-        cloudinaryFormData,
-        { timeout: 30000 }
-      );
-      return response.data?.secure_url || null;
-    } catch (err: any) {
-      console.error(`Error uploading file ${file.name} to Cloudinary:`, err.response?.data || err.message);
-      toast.error(`فشل في رفع الملف ${file.name}. يرجى المحاولة مرة أخرى.`);
-      return null;
-    }
-  }, []);
+      try {
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+          cloudinaryFormData,
+          { timeout: 30000 }
+        );
+        return response.data?.secure_url || null;
+      } catch (err: any) {
+        console.error(
+          `Error uploading file ${file.name} to Cloudinary:`,
+          err.response?.data || err.message
+        );
+        toast.error(`فشل في رفع الملف ${file.name}. يرجى المحاولة مرة أخرى.`);
+        return null;
+      }
+    },
+    []
+  );
 
-  const validateForm = useCallback((fieldsToValidate?: (keyof FormData)[]): boolean => {
-    const allRequiredFields: (keyof FormData)[] = [
-      "client", "caseTypeOF", "type", "court", "caseNumber", "year", "attorneyNumber",
-    ];
+  const validateForm = useCallback(
+    (fieldsToValidate?: (keyof FormData)[]): boolean => {
+      const allRequiredFields: (keyof FormData)[] = [
+        "client",
+        "caseTypeOF",
+        "type",
+        "court",
+        "caseNumber",
+        "year",
+        "attorneyNumber",
+      ];
 
-    const fieldsToCheck = fieldsToValidate || allRequiredFields;
-    const currentErrors: Record<string, string> = {};
+      const fieldsToCheck = fieldsToValidate || allRequiredFields;
+      const currentErrors: Record<string, string> = {};
 
-    // Validate required fields
-    for (const field of fieldsToCheck) {
-      if (allRequiredFields.includes(field)) {
-        const value = formData[field];
-        if (!value || (typeof value === "string" && !value.trim())) {
-          currentErrors[field] = "هذا الحقل مطلوب.";
+      // Validate required fields
+      for (const field of fieldsToCheck) {
+        if (allRequiredFields.includes(field)) {
+          const value = formData[field];
+          if (!value || (typeof value === "string" && !value.trim())) {
+            currentErrors[field] = "هذا الحقل مطلوب.";
+          }
         }
       }
-    }
 
-    // Validate dates
-    if (fieldsToCheck.includes("caseDate") && formData.caseDate) {
-      const caseDateObj = new Date(formData.caseDate);
-      if (isNaN(caseDateObj.getTime())) {
-        currentErrors.caseDate = "تاريخ الدعوى غير صالح.";
-      }
-    }
-
-    if (fieldsToCheck.includes("sessiondate") && formData.sessiondate) {
-      const sessionDateObj = new Date(formData.sessiondate);
-      if (isNaN(sessionDateObj.getTime())) {
-        currentErrors.sessiondate = "تاريخ الجلسة غير صالح.";
-      }
-    }
-
-    // Date comparison
-    if (fieldsToCheck.includes("caseDate") && fieldsToCheck.includes("sessiondate") && 
-        formData.caseDate && formData.sessiondate) {
-      const caseDateObj = new Date(formData.caseDate);
-      const sessionDateObj = new Date(formData.sessiondate);
-      
-      if (!isNaN(caseDateObj.getTime()) && !isNaN(sessionDateObj.getTime()) && 
-          sessionDateObj < caseDateObj) {
-        currentErrors.sessiondate = "يجب أن يكون تاريخ الجلسة بعد تاريخ الدعوى.";
-      }
-    }
-
-    // Update validation errors
-    setValidationErrors((prevErrors) => {
-      const newErrors = { ...prevErrors };
-      fieldsToCheck.forEach((field) => {
-        if (!currentErrors[field]) {
-          delete newErrors[field];
+      // Validate dates
+      if (fieldsToCheck.includes("caseDate") && formData.caseDate) {
+        const caseDateObj = new Date(formData.caseDate);
+        if (isNaN(caseDateObj.getTime())) {
+          currentErrors.caseDate = "تاريخ الدعوى غير صالح.";
         }
+      }
+
+      if (fieldsToCheck.includes("sessiondate") && formData.sessiondate) {
+        const sessionDateObj = new Date(formData.sessiondate);
+        if (isNaN(sessionDateObj.getTime())) {
+          currentErrors.sessiondate = "تاريخ الجلسة غير صالح.";
+        }
+      }
+
+      // Date comparison
+      if (
+        fieldsToCheck.includes("caseDate") &&
+        fieldsToCheck.includes("sessiondate") &&
+        formData.caseDate &&
+        formData.sessiondate
+      ) {
+        const caseDateObj = new Date(formData.caseDate);
+        const sessionDateObj = new Date(formData.sessiondate);
+
+        if (
+          !isNaN(caseDateObj.getTime()) &&
+          !isNaN(sessionDateObj.getTime()) &&
+          sessionDateObj < caseDateObj
+        ) {
+          currentErrors.sessiondate =
+            "يجب أن يكون تاريخ الجلسة بعد تاريخ الدعوى.";
+        }
+      }
+
+      // Update validation errors
+      setValidationErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        fieldsToCheck.forEach((field) => {
+          if (!currentErrors[field]) {
+            delete newErrors[field];
+          }
+        });
+        Object.assign(newErrors, currentErrors);
+        return newErrors;
       });
-      Object.assign(newErrors, currentErrors);
-      return newErrors;
-    });
 
-    return Object.keys(currentErrors).length === 0;
-  }, [formData]);
+      return Object.keys(currentErrors).length === 0;
+    },
+    [formData]
+  );
 
-  const handleNextTab = useCallback(() => {
-    const tabFieldsMap = {
-      basic: ["client", "caseTypeOF", "type", "court", "caseNumber", "year"] as (keyof FormData)[],
-      details: ["attorneyNumber", "caseDate", "sessiondate"] as (keyof FormData)[],
+const handleNextTab = useCallback(() => {
+  const tabFieldsMap = {
+    basic: ["client", "caseTypeOF", "type", "court", "caseNumber", "year"] as (keyof FormData)[],
+    details: ["attorneyNumber", "caseDate", "sessiondate"] as (keyof FormData)[],
+    // لا توجد validation للبيانات المالية لأنها اختيارية
+  };
+
+  const tabNextMap = {
+    basic: "details",
+    details: "financial",
+    financial: "attachments",
+  };
+
+  const currentTabFields = tabFieldsMap[activeTab as keyof typeof tabFieldsMap];
+  const nextTab = tabNextMap[activeTab as keyof typeof tabNextMap];
+
+  if (!nextTab) return;
+
+  // إذا كان هناك حقول للتحقق منها
+  if (currentTabFields) {
+    const isValid = validateForm(currentTabFields);
+    if (!isValid) {
+      toast.error("يرجى تصحيح الأخطاء في الحقول الحالية قبل المتابعة.");
+      return;
+    }
+  }
+
+  setActiveTab(nextTab);
+}, [activeTab, validateForm]);
+
+const handleSubmit = useCallback(async () => {
+  if (!session?.user?.id) {
+    toast.error("لا توجد صلاحية لإضافة دعوى. يرجى تسجيل الدخول");
+    return;
+  }
+
+  const isValid = validateForm();
+  if (!isValid) {
+    toast.error("يرجى تصحيح الأخطاء في النموذج قبل الحفظ.");
+
+    // الانتقال إلى أول تاب به أخطاء
+    if (validationErrors.client || validationErrors.caseTypeOF || 
+        validationErrors.type || validationErrors.court || 
+        validationErrors.caseNumber || validationErrors.year) {
+      setActiveTab("basic");
+    } else if (validationErrors.attorneyNumber || validationErrors.caseDate || 
+               validationErrors.sessiondate) {
+      setActiveTab("details");
+    }
+    return;
+  }
+
+  setIsLoading(true);
+  setError(null);
+  setUploadingDuringSubmit(true);
+
+  try {
+    const uploadedFileUrls: string[] = [];
+
+    // رفع الملفات
+    if (selectedFiles.length > 0) {
+      const uploadPromises = selectedFiles.map((file) =>
+        uploadFileToCloudinary(file)
+      );
+      const results = await Promise.all(uploadPromises);
+      uploadedFileUrls.push(
+        ...results.filter((url): url is string => url !== null)
+      );
+    }
+
+    const payload = {
+      ...formData,
+      files: [...formData.files, ...uploadedFileUrls],
     };
 
-    const tabNextMap = { basic: "details", details: "attachments" };
+    const response = await axios.post(`${API_BASE_URL}/cases`, payload, {
+      headers: {
+        Authorization: `Bearer ${session.user.id}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 60000,
+    });
 
-    const currentTabFields = tabFieldsMap[activeTab as keyof typeof tabFieldsMap];
-    const nextTab = tabNextMap[activeTab as keyof typeof tabNextMap];
+    if (response.data?.success) {
+      toast.success("تم إضافة الدعوى بنجاح!");
 
-    if (!currentTabFields || !nextTab) return;
+      // إعادة تعيين النموذج
+      setSelectedFiles([]);
+      setFormData(INITIAL_FORM_DATA);
+      setNewOpponent("");
+      setValidationErrors({});
+      setActiveTab("basic");
 
-    const isValid = validateForm(currentTabFields);
-
-    if (isValid) {
-      setActiveTab(nextTab);
+      router.push("/dashboard/all-cases");
     } else {
-      toast.error("يرجى تصحيح الأخطاء في الحقول الحالية قبل المتابعة.");
+      throw new Error(response.data?.message || "فشل في إضافة الدعوى");
     }
-  }, [activeTab, validateForm]);
-
-  const handleSubmit = useCallback(async () => {
-    if (!session?.user?.id) {
-      toast.error("لا توجد صلاحية لإضافة دعوى. يرجى تسجيل الدخول");
-      return;
-    }
-
-    const isValid = validateForm();
-    if (!isValid) {
-      toast.error("يرجى تصحيح الأخطاء في النموذج قبل الحفظ.");
-      
-      // Navigate to first tab with errors
-      if (debouncedValidationErrors.client || debouncedValidationErrors.caseTypeOF || 
-          debouncedValidationErrors.type || debouncedValidationErrors.court || 
-          debouncedValidationErrors.caseNumber || debouncedValidationErrors.year) {
-        setActiveTab("basic");
-      } else if (debouncedValidationErrors.attorneyNumber || debouncedValidationErrors.caseDate || 
-                 debouncedValidationErrors.sessiondate) {
-        setActiveTab("details");
-      }
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    setUploadingDuringSubmit(true);
-
-    try {
-      const uploadedFileUrls: string[] = [];
-
-      // Upload files concurrently for better performance
-      if (selectedFiles.length > 0) {
-        const uploadPromises = selectedFiles.map(file => uploadFileToCloudinary(file));
-        const results = await Promise.all(uploadPromises);
-        uploadedFileUrls.push(...results.filter((url): url is string => url !== null));
-      }
-
-      const payload = {
-        ...formData,
-        files: [...formData.files, ...uploadedFileUrls],
-      };
-
-      const response = await axios.post(`${API_BASE_URL}/cases`, payload, {
-        headers: {
-          Authorization: `Bearer ${session.user.id}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 60000,
-      });
-
-      if (response.data?.success) {
-        toast.success("تم إضافة الدعوى بنجاح!");
-        
-        // Reset form
-        setSelectedFiles([]);
-        setFormData(INITIAL_FORM_DATA);
-        setNewOpponent("");
-        setValidationErrors({});
-        setActiveTab("basic");
-        
-        router.push("/dashboard/all-cases");
-      } else {
-        throw new Error(response.data?.message || "فشل في إضافة الدعوى");
-      }
-    } catch (err: any) {
-      console.error("Error adding case:", err.response?.data || err.message);
-      const errorMessage = err.response?.data?.message || err.message || "خطأ غير معروف";
-      toast.error(`فشل في إضافة الدعوى: ${errorMessage}`);
-      setError(`فشل في إضافة الدعوى: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-      setUploadingDuringSubmit(false);
-    }
-  }, [session?.user?.id, validateForm, selectedFiles, formData, router, debouncedValidationErrors, uploadFileToCloudinary]);
+  } catch (err: any) {
+    console.error("Error adding case:", err.response?.data || err.message);
+    const errorMessage =
+      err.response?.data?.message || err.message || "خطأ غير معروف";
+    toast.error(`فشل في إضافة الدعوى: ${errorMessage}`);
+    setError(`فشل في إضافة الدعوى: ${errorMessage}`);
+  } finally {
+    setIsLoading(false);
+    setUploadingDuringSubmit(false);
+  }
+}, [
+  session?.user?.id,
+  validateForm,
+  selectedFiles,
+  formData,
+  router,
+  validationErrors,
+  uploadFileToCloudinary,
+]);
 
   // Loading states
   if (status === "loading" || isClientsLoading) {
@@ -857,6 +1011,12 @@ export default function AddCasePage() {
               className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400 dark:hover:bg-gray-700 dark:hover:text-blue-300"
             >
               <Users className="w-5 h-5" /> مرفقات وخصوم
+            </TabsTrigger>
+            <TabsTrigger
+              value="financial"
+              className="py-3 px-4 flex items-center gap-2 text-lg font-semibold text-gray-700 rounded-lg transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-800 data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:text-gray-300 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-blue-200 dark:data-[state=active]:border-blue-400 dark:hover:bg-gray-700 dark:hover:text-blue-300"
+            >
+              <Users className="w-5 h-5" /> الاتعاب
             </TabsTrigger>
           </TabsList>
 
@@ -1108,6 +1268,204 @@ export default function AddCasePage() {
               </CardContent>
             </Card>
           </TabsContent>
+          {/* Tab 3: Financial Data */}
+          <TabsContent value="financial" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>البيانات المالية</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* إجمالي الأتعاب */}
+                <div>
+                  <Label>إجمالي الأتعاب المتفق عليها</Label>
+                  <Input
+                    type="number"
+                    value={formData.financialInfo?.fees || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        financialInfo: {
+                          ...formData.financialInfo,
+                          fees: Number(e.target.value),
+                        },
+                      })
+                    }
+                    placeholder="أدخل المبلغ"
+                  />
+                </div>
+
+                {/* العملة */}
+                <div>
+                  <Label>العملة</Label>
+                  <Select
+                    value={formData.financialInfo?.currency || "EGP"}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        financialInfo: {
+                          ...formData.financialInfo,
+                          currency: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر العملة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EGP">EGP - الجنيه المصري</SelectItem>
+                      <SelectItem value="USD">USD - الدولار</SelectItem>
+                      <SelectItem value="EUR">EUR - اليورو</SelectItem>
+                      <SelectItem value="SAR">SAR - الريال السعودي</SelectItem>
+                      <SelectItem value="AED">
+                        AED - الدرهم الإماراتي
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* الملخص المالي */}
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm">المدفوع</p>
+                    <p className="text-lg font-bold">
+                      {formData.financialInfo?.paidAmount || 0}{" "}
+                      {formData.financialInfo?.currency || "EGP"}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm">المتبقي</p>
+                    <p className="text-lg font-bold">
+                      {(formData.financialInfo?.fees || 0) -
+                        (formData.financialInfo?.paidAmount || 0)}{" "}
+                      {formData.financialInfo?.currency || "EGP"}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm">حالة الدفع</p>
+                    <p className="text-lg font-bold">
+                      {(() => {
+                        const fees = formData.financialInfo?.fees || 0;
+                        const paid = formData.financialInfo?.paidAmount || 0;
+                        if (fees === 0) return "بدون أتعاب";
+                        if (paid === 0) return "غير مدفوع";
+                        if (paid >= fees) return "مدفوع";
+                        return "مدفوع جزئيًا";
+                      })()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* إضافة دفعة */}
+                <div>
+                  <Label>إضافة دفعة جديدة</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="المبلغ"
+                      value={newPayment.amount || ""}
+                      onChange={(e) =>
+                        setNewPayment({
+                          ...newPayment,
+                          amount: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <Select
+                      value={newPayment.method || "نقدي"}
+                      onValueChange={(value) =>
+                        setNewPayment({ ...newPayment, method: value })
+                      }
+                    >
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="طريقة الدفع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="نقدي">نقدي</SelectItem>
+                        <SelectItem value="تحويل بنكي">تحويل بنكي</SelectItem>
+                        <SelectItem value="شيك">شيك</SelectItem>
+                        <SelectItem value="بطاقة ائتمان">
+                          بطاقة ائتمان
+                        </SelectItem>
+                        <SelectItem value="أخرى">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (!newPayment.amount) return;
+                        const updatedPayments = [
+                          ...(formData.financialInfo?.payments || []),
+                          { ...newPayment, date: new Date() },
+                        ];
+                        const paidAmount = updatedPayments.reduce(
+                          (sum, p) => sum + (p.amount || 0),
+                          0
+                        );
+                        setFormData({
+                          ...formData,
+                          financialInfo: {
+                            ...formData.financialInfo,
+                            payments: updatedPayments,
+                            paidAmount,
+                          },
+                        });
+                        setNewPayment({ amount: 0, method: "نقدي" });
+                      }}
+                    >
+                      إضافة
+                    </Button>
+                  </div>
+                </div>
+
+                {/* سجل المدفوعات */}
+                {formData.financialInfo?.payments?.length > 0 && (
+                  <div className="mt-4">
+                    <Label>سجل المدفوعات</Label>
+                    <ul className="space-y-2">
+                      {formData.financialInfo.payments.map((p, i) => (
+                        <li
+                          key={i}
+                          className="flex justify-between items-center border p-2 rounded"
+                        >
+                          <span>
+                            {p.amount} {formData.financialInfo?.currency} -{" "}
+                            {p.method} -{" "}
+                            {new Date(p.date).toLocaleDateString("ar-EG")}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const updatedPayments =
+                                formData.financialInfo?.payments.filter(
+                                  (_, idx) => idx !== i
+                                );
+                              const paidAmount = updatedPayments.reduce(
+                                (sum, pay) => sum + (pay.amount || 0),
+                                0
+                              );
+                              setFormData({
+                                ...formData,
+                                financialInfo: {
+                                  ...formData.financialInfo,
+                                  payments: updatedPayments,
+                                  paidAmount,
+                                },
+                              });
+                            }}
+                          >
+                            حذف
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Tab 3: Attachments and Opponents */}
           <TabsContent value="attachments">
@@ -1261,5 +1619,5 @@ export default function AddCasePage() {
         </div>
       </div>
     </div>
-    )
-  }
+  );
+}
